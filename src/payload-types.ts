@@ -72,6 +72,14 @@ export interface Config {
     media: Media;
     categories: Category;
     users: User;
+    countries: Country;
+    regions: Region;
+    towns: Town;
+    'property-types': PropertyType;
+    amenities: Amenity;
+    agents: Agent;
+    properties: Property;
+    agencies: Agency;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -94,6 +102,14 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    countries: CountriesSelect<false> | CountriesSelect<true>;
+    regions: RegionsSelect<false> | RegionsSelect<true>;
+    towns: TownsSelect<false> | TownsSelect<true>;
+    'property-types': PropertyTypesSelect<false> | PropertyTypesSelect<true>;
+    amenities: AmenitiesSelect<false> | AmenitiesSelect<true>;
+    agents: AgentsSelect<false> | AgentsSelect<true>;
+    properties: PropertiesSelect<false> | PropertiesSelect<true>;
+    agencies: AgenciesSelect<false> | AgenciesSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -783,6 +799,164 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "countries".
+ */
+export interface Country {
+  id: string;
+  name: string;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "regions".
+ */
+export interface Region {
+  id: string;
+  name: string;
+  slug: string;
+  country: string | Country;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "towns".
+ */
+export interface Town {
+  id: string;
+  name: string;
+  slug: string;
+  region: string | Region;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "property-types".
+ */
+export interface PropertyType {
+  id: string;
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "amenities".
+ */
+export interface Amenity {
+  id: string;
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agents".
+ */
+export interface Agent {
+  id: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  agency?: (string | null) | Agency;
+  photo?: (string | null) | Media;
+  jobTitle?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agencies".
+ */
+export interface Agency {
+  id: string;
+  name: string;
+  slug: string;
+  logo?: (string | null) | Media;
+  website?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  description?: string | null;
+  address?: {
+    street?: string | null;
+    city?: string | null;
+    postcode?: string | null;
+    country?: string | null;
+  };
+  featured?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "properties".
+ */
+export interface Property {
+  id: string;
+  title: string;
+  slug: string;
+  reference?: string | null;
+  price: number;
+  /**
+   * Short summary shown on listing cards.
+   */
+  excerpt?: string | null;
+  status?: ('for-sale' | 'sold' | 'reserved') | null;
+  featured?: boolean | null;
+  /**
+   * Interior size in square metres.
+   */
+  internalArea?: number | null;
+  /**
+   * Land size in acres or square metres.
+   */
+  landArea?: number | null;
+  yearBuilt?: number | null;
+  energyRating?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  virtualTour?: string | null;
+  youtubeVideo?: string | null;
+  region: string | Region;
+  town: string | Town;
+  propertyType?: (string | null) | PropertyType;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  featuredImage?: (string | null) | Media;
+  gallery?: (string | Media)[] | null;
+  floorPlans?: (string | Media)[] | null;
+  amenities?: (string | Amenity)[] | null;
+  propertyFeatures?:
+    | {
+        feature?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  agency?: (string | null) | Agency;
+  agent?: (string | null) | Agent;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -990,6 +1164,38 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: string | User;
+      } | null)
+    | ({
+        relationTo: 'countries';
+        value: string | Country;
+      } | null)
+    | ({
+        relationTo: 'regions';
+        value: string | Region;
+      } | null)
+    | ({
+        relationTo: 'towns';
+        value: string | Town;
+      } | null)
+    | ({
+        relationTo: 'property-types';
+        value: string | PropertyType;
+      } | null)
+    | ({
+        relationTo: 'amenities';
+        value: string | Amenity;
+      } | null)
+    | ({
+        relationTo: 'agents';
+        value: string | Agent;
+      } | null)
+    | ({
+        relationTo: 'properties';
+        value: string | Property;
+      } | null)
+    | ({
+        relationTo: 'agencies';
+        value: string | Agency;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1355,6 +1561,135 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "countries_select".
+ */
+export interface CountriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "regions_select".
+ */
+export interface RegionsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  country?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "towns_select".
+ */
+export interface TownsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  region?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "property-types_select".
+ */
+export interface PropertyTypesSelect<T extends boolean = true> {
+  name?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "amenities_select".
+ */
+export interface AmenitiesSelect<T extends boolean = true> {
+  name?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agents_select".
+ */
+export interface AgentsSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  phone?: T;
+  agency?: T;
+  photo?: T;
+  jobTitle?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "properties_select".
+ */
+export interface PropertiesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  reference?: T;
+  price?: T;
+  excerpt?: T;
+  status?: T;
+  featured?: T;
+  internalArea?: T;
+  landArea?: T;
+  yearBuilt?: T;
+  energyRating?: T;
+  latitude?: T;
+  longitude?: T;
+  virtualTour?: T;
+  youtubeVideo?: T;
+  region?: T;
+  town?: T;
+  propertyType?: T;
+  bedrooms?: T;
+  bathrooms?: T;
+  description?: T;
+  featuredImage?: T;
+  gallery?: T;
+  floorPlans?: T;
+  amenities?: T;
+  propertyFeatures?:
+    | T
+    | {
+        feature?: T;
+        id?: T;
+      };
+  agency?: T;
+  agent?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agencies_select".
+ */
+export interface AgenciesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  logo?: T;
+  website?: T;
+  email?: T;
+  phone?: T;
+  description?: T;
+  address?:
+    | T
+    | {
+        street?: T;
+        city?: T;
+        postcode?: T;
+        country?: T;
+      };
+  featured?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

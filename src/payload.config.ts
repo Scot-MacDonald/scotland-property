@@ -9,6 +9,16 @@ import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Users } from './collections/Users'
+
+import { Countries } from './collections/Countries'
+import { Regions } from './collections/Regions'
+import { Towns } from './collections/Towns'
+import { PropertyTypes } from './collections/PropertyTypes'
+import { Amenities } from './collections/Amenities'
+import { Agents } from './collections/Agents'
+import { Properties } from './collections/Properties'
+import { Agencies } from './collections/Agencies'
+
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
@@ -60,7 +70,22 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),
-  collections: [Pages, Posts, Media, Categories, Users],
+  collections: [
+    Pages,
+    Posts,
+    Media,
+    Categories,
+    Users,
+
+    Countries,
+    Regions,
+    Towns,
+    PropertyTypes,
+    Amenities,
+    Agents,
+    Properties,
+    Agencies,
+  ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins,
