@@ -12,6 +12,25 @@ type Props = {
 
 export default async function PropertiesPage({ searchParams }: Props) {
   const params = await searchParams
+  function createFilterHref(newParams: {
+    region?: string | null
+    town?: string | null
+    type?: string | null
+  }) {
+    const query = new URLSearchParams()
+
+    const region = newParams.region !== undefined ? newParams.region : params.region
+    const town = newParams.town !== undefined ? newParams.town : params.town
+    const type = newParams.type !== undefined ? newParams.type : params.type
+
+    if (region) query.set('region', region)
+    if (town) query.set('town', town)
+    if (type) query.set('type', type)
+
+    const queryString = query.toString()
+
+    return queryString ? `/properties?${queryString}` : '/properties'
+  }
 
   const payload = await getPayload({ config: configPromise })
 
@@ -72,16 +91,22 @@ export default async function PropertiesPage({ searchParams }: Props) {
         <Link
           href="/properties"
           className={`border px-4 py-2 text-sm ${
-            !params.region && !params.type ? 'bg-black text-white' : ''
+            !params.region && !params.town && !params.type ? 'bg-black text-white' : ''
           }`}
         >
           All Properties
         </Link>
 
+        {params.region || params.town || params.type ? (
+          <Link href="/properties" className="border px-4 py-2 text-sm">
+            Clear Filters
+          </Link>
+        ) : null}
+
         {regions.docs.map((region) => (
           <Link
             key={region.id}
-            href={`/properties?region=${region.id}`}
+            href={createFilterHref({ region: region.id })}
             className={`border px-4 py-2 text-sm ${
               params.region === region.id ? 'bg-black text-white' : ''
             }`}
@@ -93,7 +118,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
         {towns.docs.map((town) => (
           <Link
             key={town.id}
-            href={`/properties?town=${town.id}`}
+            href={createFilterHref({ town: town.id })}
             className={`border px-4 py-2 text-sm ${
               params.town === town.id ? 'bg-black text-white' : ''
             }`}
@@ -105,7 +130,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
         {propertyTypes.docs.map((type) => (
           <Link
             key={type.id}
-            href={`/properties?type=${type.id}`}
+            href={createFilterHref({ type: type.id })}
             className={`border px-4 py-2 text-sm ${
               params.type === type.id ? 'bg-black text-white' : ''
             }`}
