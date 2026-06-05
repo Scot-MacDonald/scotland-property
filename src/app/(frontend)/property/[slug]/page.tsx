@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import RichText from '@/components/RichText'
+import { PropertyGallery } from '@/components/PropertyGallery'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -32,8 +33,14 @@ export default async function PropertyPage({ params }: Props) {
       ? property.featuredImage
       : null
 
-  const gallery = property.gallery?.filter((image) => typeof image === 'object' && image?.url) || []
-  const images = featuredImage ? [featuredImage, ...gallery] : gallery
+  const gallery = property.gallery || []
+
+  const images = [featuredImage, ...gallery]
+    .filter((image) => typeof image === 'object' && image !== null && 'url' in image && image.url)
+    .map((image) => ({
+      url: image.url as string,
+      alt: 'alt' in image && image.alt ? image.alt : property.title,
+    }))
 
   return (
     <main className="bg-background">
@@ -49,32 +56,7 @@ export default async function PropertyPage({ params }: Props) {
           </div>
         </div>
 
-        <div className="grid gap-[2px] lg:h-[58vh] lg:grid-cols-[2fr_1fr_1fr]">
-          <div className="overflow-hidden bg-muted lg:row-span-2">
-            {images[0]?.url ? (
-              <img
-                src={images[0].url}
-                alt={property.title}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center text-muted-foreground">
-                No image
-              </div>
-            )}
-          </div>
-          {[images[1], images[2], images[3], images[4]].map((image, index) => (
-            <div key={index} className="overflow-hidden bg-muted">
-              {image?.url ? (
-                <img src={image.url} alt={property.title} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full items-center justify-center text-muted-foreground">
-                  No image
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <PropertyGallery images={images} title={property.title} />
       </section>
 
       <section className="mx-auto w-full max-w-[1680px] px-4 py-10 md:px-8">
@@ -195,6 +177,7 @@ export default async function PropertyPage({ params }: Props) {
               </section>
             ) : null}
           </article>
+
           <aside className="mt-[120px] h-fit border p-6 lg:sticky lg:top-8">
             {agency?.name && (
               <Link href={`/agency/${agency.slug}`} className="mb-6 block">
@@ -203,6 +186,7 @@ export default async function PropertyPage({ params }: Props) {
                 </p>
               </Link>
             )}
+
             {agent?.name && (
               <div className="mb-6 border-t pt-6">
                 <p className="mb-3 text-xs uppercase tracking-wide text-muted-foreground">
@@ -242,6 +226,7 @@ export default async function PropertyPage({ params }: Props) {
                 </div>
               </div>
             )}
+
             <div className="space-y-3 border-t pt-6">
               <button className="w-full bg-black px-4 py-3 text-white">Contact Agent</button>
               <button className="w-full border px-4 py-3">Request Details</button>
