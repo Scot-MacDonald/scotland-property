@@ -87,57 +87,83 @@ export default async function PropertiesPage({ searchParams }: Props) {
         <p className="mt-2 text-muted-foreground">{properties.totalDocs} properties found</p>
       </div>
 
-      <div className="mb-10 flex flex-wrap gap-3">
-        <Link
-          href="/properties"
-          className={`border px-4 py-2 text-sm ${
-            !params.region && !params.town && !params.type ? 'bg-black text-white' : ''
-          }`}
-        >
-          All Properties
-        </Link>
+      <div className="mb-12 space-y-6">
+        <div>
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            Regions
+          </h2>
 
-        {params.region || params.town || params.type ? (
-          <Link href="/properties" className="border px-4 py-2 text-sm">
-            Clear Filters
-          </Link>
-        ) : null}
+          <div className="flex flex-wrap gap-3">
+            {regions.docs.map((region) => (
+              <Link
+                key={region.id}
+                href={createFilterHref({ region: region.id })}
+                className={`border px-4 py-2 text-sm ${
+                  params.region === region.id ? 'bg-black text-white' : ''
+                }`}
+              >
+                {region.name}
+              </Link>
+            ))}
+          </div>
+        </div>
 
-        {regions.docs.map((region) => (
+        <div>
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            Towns
+          </h2>
+
+          <div className="flex flex-wrap gap-3">
+            {towns.docs.map((town) => (
+              <Link
+                key={town.id}
+                href={createFilterHref({ town: town.id })}
+                className={`border px-4 py-2 text-sm ${
+                  params.town === town.id ? 'bg-black text-white' : ''
+                }`}
+              >
+                {town.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            Property Types
+          </h2>
+
+          <div className="flex flex-wrap gap-3">
+            {propertyTypes.docs.map((type) => (
+              <Link
+                key={type.id}
+                href={createFilterHref({ type: type.id })}
+                className={`border px-4 py-2 text-sm ${
+                  params.type === type.id ? 'bg-black text-white' : ''
+                }`}
+              >
+                {type.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex gap-3">
           <Link
-            key={region.id}
-            href={createFilterHref({ region: region.id })}
+            href="/properties"
             className={`border px-4 py-2 text-sm ${
-              params.region === region.id ? 'bg-black text-white' : ''
+              !params.region && !params.town && !params.type ? 'bg-black text-white' : ''
             }`}
           >
-            {region.name}
+            All Properties
           </Link>
-        ))}
 
-        {towns.docs.map((town) => (
-          <Link
-            key={town.id}
-            href={createFilterHref({ town: town.id })}
-            className={`border px-4 py-2 text-sm ${
-              params.town === town.id ? 'bg-black text-white' : ''
-            }`}
-          >
-            {town.name}
-          </Link>
-        ))}
-
-        {propertyTypes.docs.map((type) => (
-          <Link
-            key={type.id}
-            href={createFilterHref({ type: type.id })}
-            className={`border px-4 py-2 text-sm ${
-              params.type === type.id ? 'bg-black text-white' : ''
-            }`}
-          >
-            {type.name}
-          </Link>
-        ))}
+          {(params.region || params.town || params.type) && (
+            <Link href="/properties" className="border px-4 py-2 text-sm">
+              Clear Filters
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
