@@ -5,9 +5,7 @@ import Link from 'next/link'
 import RichText from '@/components/RichText'
 
 type Props = {
-  params: Promise<{
-    slug: string
-  }>
+  params: Promise<{ slug: string }>
 }
 
 export default async function PropertyPage({ params }: Props) {
@@ -18,62 +16,240 @@ export default async function PropertyPage({ params }: Props) {
     collection: 'properties',
     depth: 2,
     limit: 1,
-    where: {
-      slug: {
-        equals: slug,
-      },
-    },
+    where: { slug: { equals: slug } },
   })
 
   const property = result.docs[0]
+  if (!property) notFound()
 
-  if (!property) {
-    notFound()
-  }
+  const region = typeof property.region === 'object' ? property.region : null
+  const town = typeof property.town === 'object' ? property.town : null
+  const agency = typeof property.agency === 'object' ? property.agency : null
+  const agent = typeof property.agent === 'object' ? property.agent : null
 
-  const image =
+  const featuredImage =
     typeof property.featuredImage === 'object' && property.featuredImage?.url
-      ? property.featuredImage.url
+      ? property.featuredImage
       : null
 
+  const gallery = property.gallery?.filter((image) => typeof image === 'object' && image?.url) || []
+  const images = featuredImage ? [featuredImage, ...gallery] : gallery
+
   return (
-    <main className="container py-10">
-      <Link href="/properties" className="mb-8 inline-block text-sm underline">
-        ← Back to properties
-      </Link>
+    <main className="bg-background">
+      <section className="mx-auto w-full max-w-[1680px] px-4 pt-6 md:px-8">
+        <div className="mb-4 flex items-center justify-between text-sm">
+          <Link href="/properties" className="text-muted-foreground hover:underline">
+            ← Back to search
+          </Link>
 
-      {image && (
-        <img
-          src={image}
-          alt={property.title}
-          className="mb-10 aspect-[16/9] w-full rounded-lg object-cover"
-        />
-      )}
+          <div className="flex gap-4">
+            <button className="text-muted-foreground hover:text-foreground">Save</button>
+            <button className="text-muted-foreground hover:text-foreground">Share</button>
+          </div>
+        </div>
 
-      <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
-        <article>
-          <p className="mb-3 text-2xl font-medium">£{property.price?.toLocaleString('en-GB')}</p>
+        <div className="grid gap-[2px] lg:h-[58vh] lg:grid-cols-[2fr_1fr_1fr]">
+          <div className="overflow-hidden bg-muted lg:row-span-2">
+            {images[0]?.url ? (
+              <img
+                src={images[0].url}
+                alt={property.title}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground">
+                No image
+              </div>
+            )}
+          </div>
+          {[images[1], images[2], images[3], images[4]].map((image, index) => (
+            <div key={index} className="overflow-hidden bg-muted">
+              {image?.url ? (
+                <img src={image.url} alt={property.title} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center text-muted-foreground">
+                  No image
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
 
-          <h1 className="mb-4 text-4xl font-medium tracking-tight">{property.title}</h1>
+      <section className="mx-auto w-full max-w-[1680px] px-4 py-10 md:px-8">
+        <div className="grid gap-20 lg:grid-cols-[minmax(0,1fr)_380px]">
+          <article>
+            <div className="mb-4 flex flex-wrap gap-2 text-sm text-muted-foreground">
+              {region?.slug && (
+                <Link href={`/scotland/${region.slug}`} className="underline">
+                  {region.name}
+                </Link>
+              )}
 
-          <p className="mb-8 text-muted-foreground">
-            {property.bedrooms ? `${property.bedrooms} beds` : null}
-            {property.bathrooms ? ` · ${property.bathrooms} baths` : null}
-          </p>
+              {region?.slug && town?.slug && <span>→</span>}
 
-          {property.description && <RichText data={property.description} />}
-        </article>
+              {region?.slug && town?.slug && (
+                <Link href={`/scotland/${region.slug}/${town.slug}`} className="underline">
+                  {town.name}
+                </Link>
+              )}
+            </div>
 
-        <aside className="h-fit rounded-lg border p-6">
-          <h2 className="mb-4 text-lg font-medium">Enquire about this property</h2>
+            <p className="mb-3 text-3xl font-medium">£{property.price?.toLocaleString('en-GB')}</p>
 
-          <p className="mb-6 text-sm text-muted-foreground">
-            Contact the agent for more information.
-          </p>
+            <h1 className="mb-5 max-w-4xl text-3xl font-medium tracking-tight lg:text-[52px]">
+              {property.title}
+            </h1>
 
-          <button className="w-full rounded-md bg-black px-4 py-3 text-white">Contact agent</button>
-        </aside>
-      </div>
+            <div className="mb-10 border-y py-6">
+              <h2 className="mb-5 text-xl font-medium">Property Details</h2>
+
+              <dl className="grid gap-x-10 gap-y-4 text-sm md:grid-cols-2 lg:max-w-3xl">
+                {property.bedrooms && (
+                  <div className="flex justify-between border-b pb-3">
+                    <dt className="text-muted-foreground">Bedrooms</dt>
+                    <dd>{property.bedrooms}</dd>
+                  </div>
+                )}
+
+                {property.bathrooms && (
+                  <div className="flex justify-between border-b pb-3">
+                    <dt className="text-muted-foreground">Bathrooms</dt>
+                    <dd>{property.bathrooms}</dd>
+                  </div>
+                )}
+
+                {property.internalArea && (
+                  <div className="flex justify-between border-b pb-3">
+                    <dt className="text-muted-foreground">Internal Area</dt>
+                    <dd>{property.internalArea} m²</dd>
+                  </div>
+                )}
+
+                {property.landArea && (
+                  <div className="flex justify-between border-b pb-3">
+                    <dt className="text-muted-foreground">Land Area</dt>
+                    <dd>{property.landArea} m²</dd>
+                  </div>
+                )}
+
+                {property.yearBuilt && (
+                  <div className="flex justify-between border-b pb-3">
+                    <dt className="text-muted-foreground">Year Built</dt>
+                    <dd>{property.yearBuilt}</dd>
+                  </div>
+                )}
+
+                {property.reference && (
+                  <div className="flex justify-between border-b pb-3">
+                    <dt className="text-muted-foreground">Reference</dt>
+                    <dd>{property.reference}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+
+            {property.excerpt && (
+              <p className="mb-10 max-w-3xl text-xl leading-relaxed text-muted-foreground">
+                {property.excerpt}
+              </p>
+            )}
+
+            <section className="mb-12">
+              <h2 className="mb-5 text-2xl font-medium">About the Property</h2>
+              {property.description ? (
+                <RichText data={property.description} />
+              ) : (
+                <p className="text-muted-foreground">No description added yet.</p>
+              )}
+            </section>
+
+            {property.propertyFeatures?.length ? (
+              <section className="mb-12">
+                <h2 className="mb-5 text-2xl font-medium">Property Features</h2>
+
+                <ul className="grid gap-3 md:grid-cols-2">
+                  {property.propertyFeatures.map((item, index) => (
+                    <li key={index} className="border p-4">
+                      {item.feature}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {property.amenities?.length ? (
+              <section className="mb-12">
+                <h2 className="mb-5 text-2xl font-medium">Amenities</h2>
+
+                <div className="flex flex-wrap gap-2">
+                  {property.amenities.map((amenity) =>
+                    typeof amenity === 'object' ? (
+                      <span key={amenity.id} className="rounded-full border px-4 py-2 text-sm">
+                        {amenity.name}
+                      </span>
+                    ) : null,
+                  )}
+                </div>
+              </section>
+            ) : null}
+          </article>
+          <aside className="mt-[120px] h-fit border p-6 lg:sticky lg:top-8">
+            {agency?.name && (
+              <Link href={`/agency/${agency.slug}`} className="mb-6 block">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  {agency.name}
+                </p>
+              </Link>
+            )}
+            {agent?.name && (
+              <div className="mb-6 border-t pt-6">
+                <p className="mb-3 text-xs uppercase tracking-wide text-muted-foreground">
+                  Contact agent
+                </p>
+
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-16 overflow-hidden rounded-full bg-muted">
+                    {typeof agent.photo === 'object' && agent.photo?.url ? (
+                      <img
+                        src={agent.photo.url}
+                        alt={agent.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-lg font-medium">
+                        {agent.name
+                          .split(' ')
+                          .map((word) => word[0])
+                          .join('')
+                          .slice(0, 2)}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-lg font-medium">{agent.name}</p>
+                    {agent.jobTitle && (
+                      <p className="text-sm text-muted-foreground">{agent.jobTitle}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-5 space-y-2 text-sm text-muted-foreground">
+                  {agent.email && <p>{agent.email}</p>}
+                  {agent.phone && <p>{agent.phone}</p>}
+                </div>
+              </div>
+            )}
+            <div className="space-y-3 border-t pt-6">
+              <button className="w-full bg-black px-4 py-3 text-white">Contact Agent</button>
+              <button className="w-full border px-4 py-3">Request Details</button>
+              <button className="w-full border px-4 py-3">Schedule Viewing</button>
+            </div>
+          </aside>
+        </div>
+      </section>
     </main>
   )
 }
