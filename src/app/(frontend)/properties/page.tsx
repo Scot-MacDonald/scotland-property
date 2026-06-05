@@ -7,28 +7,36 @@ type Props = {
     region?: string
     town?: string
     type?: string
+    minPrice?: string
+    maxPrice?: string
   }>
 }
 
 export default async function PropertiesPage({ searchParams }: Props) {
   const params = await searchParams
+
   function createFilterHref(newParams: {
     region?: string | null
     town?: string | null
     type?: string | null
+    minPrice?: string | null
+    maxPrice?: string | null
   }) {
     const query = new URLSearchParams()
 
     const region = newParams.region !== undefined ? newParams.region : params.region
     const town = newParams.town !== undefined ? newParams.town : params.town
     const type = newParams.type !== undefined ? newParams.type : params.type
+    const minPrice = newParams.minPrice !== undefined ? newParams.minPrice : params.minPrice
+    const maxPrice = newParams.maxPrice !== undefined ? newParams.maxPrice : params.maxPrice
 
     if (region) query.set('region', region)
     if (town) query.set('town', town)
     if (type) query.set('type', type)
+    if (minPrice) query.set('minPrice', minPrice)
+    if (maxPrice) query.set('maxPrice', maxPrice)
 
     const queryString = query.toString()
-
     return queryString ? `/properties?${queryString}` : '/properties'
   }
 
@@ -49,7 +57,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
     limit: 100,
   })
 
-  const where: Record<string, unknown> = {}
+  const where: Record<string, any> = {}
 
   if (params.region) {
     where.region = {
@@ -69,6 +77,18 @@ export default async function PropertiesPage({ searchParams }: Props) {
     }
   }
 
+  if (params.minPrice || params.maxPrice) {
+    where.price = {}
+
+    if (params.minPrice) {
+      where.price.greater_than_equal = Number(params.minPrice)
+    }
+
+    if (params.maxPrice) {
+      where.price.less_than_equal = Number(params.maxPrice)
+    }
+  }
+
   const properties = await payload.find({
     collection: 'properties',
     depth: 2,
@@ -76,6 +96,10 @@ export default async function PropertiesPage({ searchParams }: Props) {
     sort: '-createdAt',
     where,
   })
+
+  const isPrice500To1m = params.minPrice === '500000' && params.maxPrice === '1000000'
+  const isPrice1mTo25m = params.minPrice === '1000000' && params.maxPrice === '2500000'
+  const isPrice25mPlus = params.minPrice === '2500000' && !params.maxPrice
 
   return (
     <main className="container py-16">
@@ -130,6 +154,44 @@ export default async function PropertiesPage({ searchParams }: Props) {
 
         <div>
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            Price Range
+          </h2>
+
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={createFilterHref({
+                minPrice: '500000',
+                maxPrice: '1000000',
+              })}
+              className={`border px-4 py-2 text-sm ${isPrice500To1m ? 'bg-black text-white' : ''}`}
+            >
+              £500k – £1m
+            </Link>
+
+            <Link
+              href={createFilterHref({
+                minPrice: '1000000',
+                maxPrice: '2500000',
+              })}
+              className={`border px-4 py-2 text-sm ${isPrice1mTo25m ? 'bg-black text-white' : ''}`}
+            >
+              £1m – £2.5m
+            </Link>
+
+            <Link
+              href={createFilterHref({
+                minPrice: '2500000',
+                maxPrice: null,
+              })}
+              className={`border px-4 py-2 text-sm ${isPrice25mPlus ? 'bg-black text-white' : ''}`}
+            >
+              £2.5m+
+            </Link>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
             Property Types
           </h2>
 
@@ -152,13 +214,15 @@ export default async function PropertiesPage({ searchParams }: Props) {
           <Link
             href="/properties"
             className={`border px-4 py-2 text-sm ${
-              !params.region && !params.town && !params.type ? 'bg-black text-white' : ''
+              !params.region && !params.town && !params.type && !params.minPrice && !params.maxPrice
+                ? 'bg-black text-white'
+                : ''
             }`}
           >
             All Properties
           </Link>
 
-          {(params.region || params.town || params.type) && (
+          {(params.region || params.town || params.type || params.minPrice || params.maxPrice) && (
             <Link href="/properties" className="border px-4 py-2 text-sm">
               Clear Filters
             </Link>
@@ -202,7 +266,6 @@ export default async function PropertiesPage({ searchParams }: Props) {
 
                 <p className="text-sm text-muted-foreground">
                   {property.bedrooms ? `${property.bedrooms} beds` : null}
-
                   {property.bathrooms ? ` · ${property.bathrooms} baths` : null}
                 </p>
               </div>
