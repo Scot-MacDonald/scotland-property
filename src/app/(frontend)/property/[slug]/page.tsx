@@ -129,6 +129,48 @@ export default async function PropertyPage({ params }: Props) {
                     <dd>{property.reference}</dd>
                   </div>
                 )}
+                {property.propertyType && typeof property.propertyType === 'object' && (
+                  <div className="flex justify-between border-b pb-3">
+                    <dt className="text-muted-foreground">Property Type</dt>
+                    <dd>{property.propertyType.name}</dd>
+                  </div>
+                )}
+
+                {property.status && (
+                  <div className="flex justify-between border-b pb-3">
+                    <dt className="text-muted-foreground">Status</dt>
+                    <dd>{property.status}</dd>
+                  </div>
+                )}
+
+                {region && (
+                  <div className="flex justify-between border-b pb-3">
+                    <dt className="text-muted-foreground">Region</dt>
+                    <dd>
+                      <Link href={`/scotland/${region.slug}`} className="underline">
+                        {region.name}
+                      </Link>
+                    </dd>
+                  </div>
+                )}
+
+                {town && (
+                  <div className="flex justify-between border-b pb-3">
+                    <dt className="text-muted-foreground">Town</dt>
+                    <dd>
+                      <Link href={`/scotland/${region?.slug}/${town.slug}`} className="underline">
+                        {town.name}
+                      </Link>
+                    </dd>
+                  </div>
+                )}
+
+                {property.energyRating && (
+                  <div className="flex justify-between border-b pb-3">
+                    <dt className="text-muted-foreground">Energy Rating</dt>
+                    <dd>{property.energyRating}</dd>
+                  </div>
+                )}
               </dl>
             </div>
 
@@ -146,6 +188,34 @@ export default async function PropertyPage({ params }: Props) {
                 <p className="text-muted-foreground">No description added yet.</p>
               )}
             </section>
+            {property.virtualTour && (
+              <section className="mb-12">
+                <h2 className="mb-5 text-2xl font-medium">Virtual Tour</h2>
+
+                <a
+                  href={property.virtualTour}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  Open Virtual Tour
+                </a>
+              </section>
+            )}
+            {property.youtubeVideo && (
+              <section className="mb-12">
+                <h2 className="mb-5 text-2xl font-medium">Property Video</h2>
+
+                <a
+                  href={property.youtubeVideo}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  Watch Video
+                </a>
+              </section>
+            )}
 
             {property.propertyFeatures?.length ? (
               <section className="mb-12">
