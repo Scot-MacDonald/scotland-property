@@ -71,7 +71,14 @@ export function PropertyGallery({ images, title }: Props) {
 
   return (
     <>
-      <div className="grid gap-[2px] lg:h-[58vh] lg:grid-cols-[2fr_1fr_1fr]">
+      <div className="relative grid gap-[2px] lg:h-[58vh] lg:grid-cols-[2fr_1fr_1fr]">
+        <button
+          type="button"
+          onClick={openGrid}
+          className="absolute bottom-4 right-4 z-10 bg-white/95 px-4 py-2 text-sm font-medium text-black shadow-md backdrop-blur"
+        >
+          View all {images.length} photos
+        </button>{' '}
         <button
           type="button"
           className="overflow-hidden bg-muted text-left lg:row-span-2"
@@ -89,7 +96,6 @@ export function PropertyGallery({ images, title }: Props) {
             </div>
           )}
         </button>
-
         {[images[1], images[2], images[3], images[4]].map((image, index) => (
           <button
             key={index}
