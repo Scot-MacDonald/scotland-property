@@ -9,6 +9,7 @@ type Props = {
     type?: string
     minPrice?: string
     maxPrice?: string
+    bedrooms?: string
   }>
 }
 
@@ -21,6 +22,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
     type?: string | null
     minPrice?: string | null
     maxPrice?: string | null
+    bedrooms?: string | null
   }) {
     const query = new URLSearchParams()
 
@@ -29,12 +31,13 @@ export default async function PropertiesPage({ searchParams }: Props) {
     const type = newParams.type !== undefined ? newParams.type : params.type
     const minPrice = newParams.minPrice !== undefined ? newParams.minPrice : params.minPrice
     const maxPrice = newParams.maxPrice !== undefined ? newParams.maxPrice : params.maxPrice
-
+    const bedrooms = newParams.bedrooms !== undefined ? newParams.bedrooms : params.bedrooms
     if (region) query.set('region', region)
     if (town) query.set('town', town)
     if (type) query.set('type', type)
     if (minPrice) query.set('minPrice', minPrice)
     if (maxPrice) query.set('maxPrice', maxPrice)
+    if (bedrooms) query.set('bedrooms', bedrooms)
 
     const queryString = query.toString()
     return queryString ? `/properties?${queryString}` : '/properties'
@@ -86,6 +89,11 @@ export default async function PropertiesPage({ searchParams }: Props) {
 
     if (params.maxPrice) {
       where.price.less_than_equal = Number(params.maxPrice)
+    }
+    if (params.bedrooms) {
+      where.bedrooms = {
+        greater_than_equal: Number(params.bedrooms),
+      }
     }
   }
 
@@ -210,11 +218,36 @@ export default async function PropertiesPage({ searchParams }: Props) {
           </div>
         </div>
 
+        <div>
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            Bedrooms
+          </h2>
+
+          <div className="flex flex-wrap gap-3">
+            {['1', '2', '3', '4', '5'].map((bedroom) => (
+              <Link
+                key={bedroom}
+                href={createFilterHref({ bedrooms: bedroom })}
+                className={`border px-4 py-2 text-sm ${
+                  params.bedrooms === bedroom ? 'bg-black text-white' : ''
+                }`}
+              >
+                {bedroom}+
+              </Link>
+            ))}
+          </div>
+        </div>
+
         <div className="flex gap-3">
           <Link
             href="/properties"
             className={`border px-4 py-2 text-sm ${
-              !params.region && !params.town && !params.type && !params.minPrice && !params.maxPrice
+              !params.region &&
+              !params.town &&
+              !params.type &&
+              !params.minPrice &&
+              !params.maxPrice &&
+              !params.bedrooms
                 ? 'bg-black text-white'
                 : ''
             }`}
@@ -222,7 +255,12 @@ export default async function PropertiesPage({ searchParams }: Props) {
             All Properties
           </Link>
 
-          {(params.region || params.town || params.type || params.minPrice || params.maxPrice) && (
+          {(params.region ||
+            params.town ||
+            params.type ||
+            params.minPrice ||
+            params.maxPrice ||
+            params.bedrooms) && (
             <Link href="/properties" className="border px-4 py-2 text-sm">
               Clear Filters
             </Link>
