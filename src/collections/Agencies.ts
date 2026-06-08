@@ -1,7 +1,33 @@
 import type { CollectionConfig } from 'payload'
+import { authenticated } from '../access/authenticated'
+
+const isSuperAdmin = ({ req }: any) => req.user?.role === 'super-admin'
+
+const agencyOnly = ({ req }: any) => {
+  if (req.user?.role === 'super-admin') return true
+
+  if (req.user?.agency) {
+    const agencyId = typeof req.user.agency === 'object' ? req.user.agency.id : req.user.agency
+
+    return {
+      id: {
+        equals: agencyId,
+      },
+    }
+  }
+
+  return false
+}
 
 export const Agencies: CollectionConfig = {
   slug: 'agencies',
+
+  access: {
+    read: () => true,
+    create: authenticated,
+    update: agencyOnly,
+    delete: isSuperAdmin,
+  },
 
   admin: {
     useAsTitle: 'name',
