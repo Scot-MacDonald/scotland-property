@@ -436,6 +436,8 @@ export interface Category {
 export interface User {
   id: string;
   name?: string | null;
+  role: 'super-admin' | 'agency-admin' | 'agent';
+  agency?: (string | null) | Agency;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -454,6 +456,29 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agencies".
+ */
+export interface Agency {
+  id: string;
+  name: string;
+  slug: string;
+  logo?: (string | null) | Media;
+  website?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  description?: string | null;
+  address?: {
+    street?: string | null;
+    city?: string | null;
+    postcode?: string | null;
+    country?: string | null;
+  };
+  featured?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -864,29 +889,6 @@ export interface Agent {
   agency?: (string | null) | Agency;
   photo?: (string | null) | Media;
   jobTitle?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "agencies".
- */
-export interface Agency {
-  id: string;
-  name: string;
-  slug: string;
-  logo?: (string | null) | Media;
-  website?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  description?: string | null;
-  address?: {
-    street?: string | null;
-    city?: string | null;
-    postcode?: string | null;
-    country?: string | null;
-  };
-  featured?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1545,6 +1547,8 @@ export interface CategoriesSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  role?: T;
+  agency?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
