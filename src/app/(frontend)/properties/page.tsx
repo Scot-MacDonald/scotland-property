@@ -102,6 +102,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
     depth: 2,
     limit: 24,
     sort: '-createdAt',
+    overrideAccess: true,
     where,
   })
 

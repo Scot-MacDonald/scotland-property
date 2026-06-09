@@ -48,6 +48,7 @@ export default async function AgencyPage({ params }: Props) {
     collection: 'properties',
     depth: 2,
     limit: 50,
+    overrideAccess: true,
     where: {
       agency: {
         equals: agency.id,

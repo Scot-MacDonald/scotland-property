@@ -21,7 +21,7 @@ export const Properties: CollectionConfig = {
   slug: 'properties',
 
   access: {
-    read: () => true,
+    read: agencyOnly,
     create: authenticated,
     update: agencyOnly,
     delete: isSuperAdmin,
@@ -209,6 +209,17 @@ export const Properties: CollectionConfig = {
       name: 'agency',
       type: 'relationship',
       relationTo: 'agencies',
+      required: true,
+      defaultValue: ({ user }) => {
+        if (user?.role === 'super-admin') return undefined
+        if (!user?.agency) return undefined
+
+        return typeof user.agency === 'object' ? user.agency.id : user.agency
+      },
+      admin: {
+        readOnly: true,
+        condition: (_, __, { user }) => user?.role === 'super-admin',
+      },
     },
     {
       name: 'agent',

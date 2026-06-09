@@ -14,6 +14,7 @@ export const Categories: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
+    hidden: ({ user }) => user?.role !== 'super-admin',
   },
   fields: [
     {

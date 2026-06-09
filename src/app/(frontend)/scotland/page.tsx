@@ -17,6 +17,7 @@ export default async function ScotlandPage() {
     depth: 2,
     limit: 12,
     sort: '-createdAt',
+    overrideAccess: true,
   })
 
   return (

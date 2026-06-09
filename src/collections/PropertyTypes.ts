@@ -4,6 +4,7 @@ export const PropertyTypes: CollectionConfig = {
   slug: 'property-types',
   admin: {
     useAsTitle: 'name',
+    hidden: ({ user }) => user?.role !== 'super-admin',
   },
   fields: [
     {

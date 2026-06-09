@@ -17,6 +17,7 @@ export default async function PropertyPage({ params }: Props) {
     collection: 'properties',
     depth: 2,
     limit: 1,
+    overrideAccess: true,
     where: { slug: { equals: slug } },
   })
 

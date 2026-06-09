@@ -47,6 +47,7 @@ export default async function RegionPage({ params }: Props) {
     depth: 2,
     limit: 12,
     sort: '-createdAt',
+    overrideAccess: true,
     where: {
       region: {
         equals: currentRegion.id,

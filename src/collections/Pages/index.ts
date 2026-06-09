@@ -53,6 +53,8 @@ export const Pages: CollectionConfig<'pages'> = {
         req,
       }),
     useAsTitle: 'title',
+
+    hidden: ({ user }) => user?.role !== 'super-admin',
   },
   fields: [
     {

@@ -59,6 +59,7 @@ export default async function TownPage({ params }: Props) {
     collection: 'properties',
     depth: 2,
     limit: 24,
+    overrideAccess: true,
     sort: '-createdAt',
     where: {
       town: {

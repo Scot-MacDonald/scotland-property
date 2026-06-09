@@ -4,6 +4,7 @@ export const Regions: CollectionConfig = {
   slug: 'regions',
   admin: {
     useAsTitle: 'name',
+    hidden: ({ user }) => user?.role !== 'super-admin',
   },
   fields: [
     {

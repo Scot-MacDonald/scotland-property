@@ -64,6 +64,8 @@ export const Posts: CollectionConfig<'posts'> = {
         req,
       }),
     useAsTitle: 'title',
+
+    hidden: ({ user }) => user?.role !== 'super-admin',
   },
   fields: [
     {
