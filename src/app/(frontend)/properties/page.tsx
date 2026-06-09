@@ -119,6 +119,11 @@ export default async function PropertiesPage({ searchParams }: Props) {
 
         <p className="mt-2 text-muted-foreground">{properties.totalDocs} properties found</p>
       </div>
+      <div className="mb-10">
+        <Link href="/properties/map" className="border px-4 py-2 text-sm">
+          View Map
+        </Link>
+      </div>
 
       <div className="mb-12 space-y-6">
         <div>
