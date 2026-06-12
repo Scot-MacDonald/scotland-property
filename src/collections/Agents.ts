@@ -37,14 +37,24 @@ export const Agents: CollectionConfig = {
       type: 'text',
       required: true,
     },
+
+    {
+      name: 'slug',
+      type: 'text',
+      required: true,
+      unique: true,
+    },
+
     {
       name: 'email',
       type: 'email',
     },
+
     {
       name: 'phone',
       type: 'text',
     },
+
     {
       name: 'agency',
       type: 'relationship',
@@ -57,15 +67,16 @@ export const Agents: CollectionConfig = {
         return typeof user.agency === 'object' ? user.agency.id : user.agency
       },
       admin: {
-        readOnly: true,
         condition: (_, __, { user }) => user?.role === 'super-admin',
       },
     },
+
     {
       name: 'photo',
       type: 'upload',
       relationTo: 'media',
     },
+
     {
       name: 'jobTitle',
       type: 'text',

@@ -882,6 +882,7 @@ export interface Amenity {
 export interface Agent {
   id: string;
   name: string;
+  slug: string;
   email?: string | null;
   phone?: string | null;
   agency?: (string | null) | Agency;
@@ -1603,6 +1604,7 @@ export interface AgenciesSelect<T extends boolean = true> {
  */
 export interface AgentsSelect<T extends boolean = true> {
   name?: T;
+  slug?: T;
   email?: T;
   phone?: T;
   agency?: T;

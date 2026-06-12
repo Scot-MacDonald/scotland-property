@@ -30,7 +30,8 @@ export const Enquiries: CollectionConfig = {
 
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'email', 'property', 'agency', 'status', 'createdAt'],
+    group: 'Agency Dashboard',
+    defaultColumns: ['createdAt', 'name', 'property', 'email', 'phone', 'status'],
   },
 
   hooks: {
@@ -105,6 +106,9 @@ export const Enquiries: CollectionConfig = {
       name: 'status',
       type: 'select',
       defaultValue: 'new',
+      admin: {
+        position: 'sidebar',
+      },
       options: [
         {
           label: 'New',
