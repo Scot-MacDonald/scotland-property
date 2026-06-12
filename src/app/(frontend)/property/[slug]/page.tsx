@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import RichText from '@/components/RichText'
 import { PropertyGallery } from '@/components/PropertyGallery'
-
+import { PropertyEnquiryForm } from '@/components/PropertyEnquiryForm'
 type Props = {
   params: Promise<{ slug: string }>
 }
@@ -50,7 +50,6 @@ export default async function PropertyPage({ params }: Props) {
           <Link href="/properties" className="text-muted-foreground hover:underline">
             ← Back to search
           </Link>
-
           <div className="flex gap-4">
             <button className="text-muted-foreground hover:text-foreground">Save</button>
             <button className="text-muted-foreground hover:text-foreground">Share</button>
@@ -299,7 +298,7 @@ export default async function PropertyPage({ params }: Props) {
             )}
 
             <div className="space-y-3 border-t pt-6">
-              <button className="w-full bg-black px-4 py-3 text-white">Contact Agent</button>
+              <PropertyEnquiryForm propertyId={String(property.id)} />
               <button className="w-full border px-4 py-3">Request Details</button>
               <button className="w-full border px-4 py-3">Schedule Viewing</button>
             </div>

@@ -47,6 +47,23 @@
   --font-sans: var(--font-geist-sans);
 }
 
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #000 !important;
+  font-size: 11px !important;
+}
+.leaflet-control-attribution .leaflet-attribution-flag {
+  display: none !important;
+}
+
+.leaflet-control-attribution a[href*='leafletjs.com'] {
+  display: none !important;
+}
+
+.leaflet-control-attribution span {
+  display: none !important;
+}
+
 @layer utilities {
   .container {
     width: 100%;

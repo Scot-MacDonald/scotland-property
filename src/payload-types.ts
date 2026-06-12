@@ -77,9 +77,10 @@ export interface Config {
     towns: Town;
     'property-types': PropertyType;
     amenities: Amenity;
+    agencies: Agency;
     agents: Agent;
     properties: Property;
-    agencies: Agency;
+    enquiries: Enquiry;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-kv': PayloadKv;
@@ -105,9 +106,10 @@ export interface Config {
     towns: TownsSelect<false> | TownsSelect<true>;
     'property-types': PropertyTypesSelect<false> | PropertyTypesSelect<true>;
     amenities: AmenitiesSelect<false> | AmenitiesSelect<true>;
+    agencies: AgenciesSelect<false> | AgenciesSelect<true>;
     agents: AgentsSelect<false> | AgentsSelect<true>;
     properties: PropertiesSelect<false> | PropertiesSelect<true>;
-    agencies: AgenciesSelect<false> | AgenciesSelect<true>;
+    enquiries: EnquiriesSelect<false> | EnquiriesSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -955,6 +957,26 @@ export interface Property {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enquiries".
+ */
+export interface Enquiry {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  message: string;
+  property: string | Property;
+  agency: string | Agency;
+  status?: ('new' | 'contacted' | 'viewing-booked' | 'offer-made' | 'closed') | null;
+  /**
+   * Internal agency notes. Not visible to the public.
+   */
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
@@ -1127,6 +1149,10 @@ export interface PayloadLockedDocument {
         value: string | Amenity;
       } | null)
     | ({
+        relationTo: 'agencies';
+        value: string | Agency;
+      } | null)
+    | ({
         relationTo: 'agents';
         value: string | Agent;
       } | null)
@@ -1135,8 +1161,8 @@ export interface PayloadLockedDocument {
         value: string | Property;
       } | null)
     | ({
-        relationTo: 'agencies';
-        value: string | Agency;
+        relationTo: 'enquiries';
+        value: string | Enquiry;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1549,6 +1575,30 @@ export interface AmenitiesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agencies_select".
+ */
+export interface AgenciesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  logo?: T;
+  website?: T;
+  email?: T;
+  phone?: T;
+  description?: T;
+  address?:
+    | T
+    | {
+        street?: T;
+        city?: T;
+        postcode?: T;
+        country?: T;
+      };
+  featured?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "agents_select".
  */
 export interface AgentsSelect<T extends boolean = true> {
@@ -1604,25 +1654,17 @@ export interface PropertiesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "agencies_select".
+ * via the `definition` "enquiries_select".
  */
-export interface AgenciesSelect<T extends boolean = true> {
+export interface EnquiriesSelect<T extends boolean = true> {
   name?: T;
-  slug?: T;
-  logo?: T;
-  website?: T;
   email?: T;
   phone?: T;
-  description?: T;
-  address?:
-    | T
-    | {
-        street?: T;
-        city?: T;
-        postcode?: T;
-        country?: T;
-      };
-  featured?: T;
+  message?: T;
+  property?: T;
+  agency?: T;
+  status?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

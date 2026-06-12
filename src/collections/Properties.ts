@@ -217,7 +217,6 @@ export const Properties: CollectionConfig = {
         return typeof user.agency === 'object' ? user.agency.id : user.agency
       },
       admin: {
-        readOnly: true,
         condition: (_, __, { user }) => user?.role === 'super-admin',
       },
     },
@@ -225,6 +224,19 @@ export const Properties: CollectionConfig = {
       name: 'agent',
       type: 'relationship',
       relationTo: 'agents',
+      admin: {
+        condition: (_, siblingData: any) => Boolean(siblingData?.agency),
+      },
+      filterOptions: ({ siblingData }: any) => {
+        if (!siblingData?.agency) return false
+
+        return {
+          agency: {
+            equals:
+              typeof siblingData.agency === 'object' ? siblingData.agency.id : siblingData.agency,
+          },
+        }
+      },
     },
   ],
 }

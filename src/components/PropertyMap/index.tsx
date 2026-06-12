@@ -4,8 +4,8 @@ import 'leaflet/dist/leaflet.css'
 
 import L from 'leaflet'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
-
 import Link from 'next/link'
+import { useEffect } from 'react'
 
 type MapProperty = {
   id: string
@@ -26,11 +26,7 @@ type Props = {
 function formatPrice(price?: number | null) {
   if (!price) return 'POA'
 
-  if (price >= 1000000) {
-    return `£${(price / 1000000).toFixed(price >= 10000000 ? 0 : 1)}m`
-  }
-
-  return `£${Math.round(price / 1000)}k`
+  return `£${price.toLocaleString('en-GB')}`
 }
 
 const dotIcon = L.divIcon({
@@ -59,20 +55,21 @@ function FitBounds({
 }) {
   const map = useMap()
 
-  const points = properties
-    .filter((p) => p.latitude && p.longitude)
-    .map((p) => [p.latitude!, p.longitude!] as [number, number])
+  useEffect(() => {
+    const points = properties
+      .filter((p) => p.latitude && p.longitude)
+      .map((p) => [p.latitude!, p.longitude!] as [number, number])
 
-  if (points.length === 1) {
-    map.setView(points[0], 12)
-    return null
-  }
+    if (points.length === 1) {
+      map.setView(points[0], 12)
+    }
 
-  if (points.length > 1) {
-    map.fitBounds(points, {
-      padding: [50, 50],
-    })
-  }
+    if (points.length > 1) {
+      map.fitBounds(points, {
+        padding: [50, 50],
+      })
+    }
+  }, [map, properties])
 
   return null
 }
@@ -93,15 +90,22 @@ export function PropertyMap({ properties }: Props) {
         attribution="&copy; OpenStreetMap contributors"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+
       <FitBounds properties={propertiesWithCoords} />
+
       {propertiesWithCoords.map((property) => (
         <Marker
           key={property.id}
           position={[property.latitude!, property.longitude!]}
           icon={dotIcon}
+          eventHandlers={{
+            mouseover: (event) => {
+              event.target.openPopup()
+            },
+          }}
         >
-          <Popup>
-            <div className="w-[220px] space-y-2">
+          <Popup closeButton={false}>
+            <div className="w-[260px] overflow-hidden bg-white">
               {property.image && (
                 <img
                   src={property.image}
@@ -110,18 +114,23 @@ export function PropertyMap({ properties }: Props) {
                 />
               )}
 
-              <p className="font-medium">{property.title}</p>
+              <div className="space-y-2 p-3">
+                <p className="text-base font-medium leading-snug">{property.title}</p>
 
-              {property.price && <p>£{property.price.toLocaleString('en-GB')}</p>}
+                <p className="text-sm font-medium">{formatPrice(property.price)}</p>
 
-              <p className="text-xs text-muted-foreground">
-                {property.bedrooms ? `${property.bedrooms} beds` : null}
-                {property.bathrooms ? ` · ${property.bathrooms} baths` : null}
-              </p>
+                <p className="text-xs text-muted-foreground">
+                  {property.bedrooms ? `${property.bedrooms} beds` : null}
+                  {property.bathrooms ? ` · ${property.bathrooms} baths` : null}
+                </p>
 
-              <Link href={`/property/${property.slug}`} className="underline">
-                View property
-              </Link>
+                <Link
+                  href={`/property/${property.slug}`}
+                  className="inline-block border px-3 py-2 text-xs uppercase tracking-wide hover:bg-black hover:text-white"
+                >
+                  View property
+                </Link>
+              </div>
             </div>
           </Popup>
         </Marker>

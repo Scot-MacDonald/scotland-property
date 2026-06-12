@@ -18,12 +18,14 @@ import { Amenities } from './collections/Amenities'
 import { Agents } from './collections/Agents'
 import { Properties } from './collections/Properties'
 import { Agencies } from './collections/Agencies'
+import { Enquiries } from './collections/Enquiries'
 
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
+// import { resendAdapter } from '@payloadcms/email-resend'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -70,21 +72,26 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),
+  // email: resendAdapter({
+  //   defaultFromAddress: 'hello@yourdomain.com',
+  //   defaultFromName: 'Scotland Property Portal',
+  //   apiKey: process.env.RESEND_API_KEY || '',
+  // }),
   collections: [
     Pages,
     Posts,
     Media,
     Categories,
     Users,
-
     Countries,
     Regions,
     Towns,
     PropertyTypes,
     Amenities,
+    Agencies,
     Agents,
     Properties,
-    Agencies,
+    Enquiries,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

@@ -4,6 +4,7 @@ import Link from 'next/link'
 
 type Props = {
   searchParams: Promise<{
+    q?: string
     region?: string
     town?: string
     type?: string
@@ -17,6 +18,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
   const params = await searchParams
 
   function createFilterHref(newParams: {
+    q?: string | null
     region?: string | null
     town?: string | null
     type?: string | null
@@ -26,12 +28,15 @@ export default async function PropertiesPage({ searchParams }: Props) {
   }) {
     const query = new URLSearchParams()
 
+    const q = newParams.q !== undefined ? newParams.q : params.q
     const region = newParams.region !== undefined ? newParams.region : params.region
     const town = newParams.town !== undefined ? newParams.town : params.town
     const type = newParams.type !== undefined ? newParams.type : params.type
     const minPrice = newParams.minPrice !== undefined ? newParams.minPrice : params.minPrice
     const maxPrice = newParams.maxPrice !== undefined ? newParams.maxPrice : params.maxPrice
     const bedrooms = newParams.bedrooms !== undefined ? newParams.bedrooms : params.bedrooms
+
+    if (q) query.set('q', q)
     if (region) query.set('region', region)
     if (town) query.set('town', town)
     if (type) query.set('type', type)
@@ -60,42 +65,84 @@ export default async function PropertiesPage({ searchParams }: Props) {
     limit: 100,
   })
 
-  const where: Record<string, any> = {}
+  const andFilters: any[] = []
+
+  if (params.q) {
+    andFilters.push({
+      or: [
+        {
+          title: {
+            contains: params.q,
+          },
+        },
+        {
+          excerpt: {
+            contains: params.q,
+          },
+        },
+        {
+          'town.name': {
+            contains: params.q,
+          },
+        },
+        {
+          'region.name': {
+            contains: params.q,
+          },
+        },
+      ],
+    })
+  }
 
   if (params.region) {
-    where.region = {
-      equals: params.region,
-    }
+    andFilters.push({
+      region: {
+        equals: params.region,
+      },
+    })
   }
 
   if (params.town) {
-    where.town = {
-      equals: params.town,
-    }
+    andFilters.push({
+      town: {
+        equals: params.town,
+      },
+    })
   }
 
   if (params.type) {
-    where.propertyType = {
-      equals: params.type,
-    }
+    andFilters.push({
+      propertyType: {
+        equals: params.type,
+      },
+    })
   }
 
   if (params.minPrice || params.maxPrice) {
-    where.price = {}
+    const priceFilter: any = {}
 
     if (params.minPrice) {
-      where.price.greater_than_equal = Number(params.minPrice)
+      priceFilter.greater_than_equal = Number(params.minPrice)
     }
 
     if (params.maxPrice) {
-      where.price.less_than_equal = Number(params.maxPrice)
+      priceFilter.less_than_equal = Number(params.maxPrice)
     }
-    if (params.bedrooms) {
-      where.bedrooms = {
-        greater_than_equal: Number(params.bedrooms),
-      }
-    }
+
+    andFilters.push({
+      price: priceFilter,
+    })
   }
+
+  if (params.bedrooms) {
+    andFilters.push({
+      bedrooms: {
+        greater_than_equal: Number(params.bedrooms),
+      },
+    })
+  }
+
+  const where = andFilters.length > 0 ? { and: andFilters } : {}
 
   const properties = await payload.find({
     collection: 'properties',
@@ -117,8 +164,15 @@ export default async function PropertiesPage({ searchParams }: Props) {
 
         <h1 className="text-4xl font-medium tracking-tight">Properties for Sale in Scotland</h1>
 
+        {params.q && (
+          <p className="mt-2 text-muted-foreground">
+            Search results for <span className="font-medium text-foreground">“{params.q}”</span>
+          </p>
+        )}
+
         <p className="mt-2 text-muted-foreground">{properties.totalDocs} properties found</p>
       </div>
+
       <div className="mb-10">
         <Link href="/properties/map" className="border px-4 py-2 text-sm">
           View Map
@@ -248,6 +302,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
           <Link
             href="/properties"
             className={`border px-4 py-2 text-sm ${
+              !params.q &&
               !params.region &&
               !params.town &&
               !params.type &&
@@ -261,7 +316,8 @@ export default async function PropertiesPage({ searchParams }: Props) {
             All Properties
           </Link>
 
-          {(params.region ||
+          {(params.q ||
+            params.region ||
             params.town ||
             params.type ||
             params.minPrice ||
