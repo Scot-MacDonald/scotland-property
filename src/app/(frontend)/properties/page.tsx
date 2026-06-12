@@ -1,7 +1,7 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import Link from 'next/link'
-
+import { PropertyFiltersBar } from '@/components/PropertyFiltersBar'
 type Props = {
   searchParams: Promise<{
     q?: string
@@ -161,15 +161,27 @@ export default async function PropertiesPage({ searchParams }: Props) {
     <main className="container py-16">
       <div className="mb-10">
         <p className="text-sm uppercase tracking-wide text-muted-foreground">Real Estate</p>
-
         <h1 className="text-4xl font-medium tracking-tight">Properties for Sale in Scotland</h1>
-
+        <PropertyFiltersBar
+          currentRegion={params.region}
+          currentBedrooms={params.bedrooms}
+          currentMinPrice={params.minPrice}
+          currentMaxPrice={params.maxPrice}
+          currentType={params.type}
+          regions={regions.docs.map((region) => ({
+            id: String(region.id),
+            name: region.name,
+          }))}
+          propertyTypes={propertyTypes.docs.map((type) => ({
+            id: String(type.id),
+            name: type.name,
+          }))}
+        />
         {params.q && (
           <p className="mt-2 text-muted-foreground">
             Search results for <span className="font-medium text-foreground">“{params.q}”</span>
           </p>
         )}
-
         <p className="mt-2 text-muted-foreground">{properties.totalDocs} properties found</p>
       </div>
 
@@ -178,158 +190,158 @@ export default async function PropertiesPage({ searchParams }: Props) {
           View Map
         </Link>
       </div>
+      {false && (
+        <div className="mb-12 space-y-6">
+          <div>
+            <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Regions
+            </h2>
 
-      <div className="mb-12 space-y-6">
-        <div>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Regions
-          </h2>
-
-          <div className="flex flex-wrap gap-3">
-            {regions.docs.map((region) => (
-              <Link
-                key={region.id}
-                href={createFilterHref({ region: region.id })}
-                className={`border px-4 py-2 text-sm ${
-                  params.region === region.id ? 'bg-black text-white' : ''
-                }`}
-              >
-                {region.name}
-              </Link>
-            ))}
+            <div className="flex flex-wrap gap-3">
+              {regions.docs.map((region) => (
+                <Link
+                  key={region.id}
+                  href={createFilterHref({ region: region.id })}
+                  className={`border px-4 py-2 text-sm ${
+                    params.region === region.id ? 'bg-black text-white' : ''
+                  }`}
+                >
+                  {region.name}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Towns
-          </h2>
+          <div>
+            <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Towns
+            </h2>
 
-          <div className="flex flex-wrap gap-3">
-            {towns.docs.map((town) => (
-              <Link
-                key={town.id}
-                href={createFilterHref({ town: town.id })}
-                className={`border px-4 py-2 text-sm ${
-                  params.town === town.id ? 'bg-black text-white' : ''
-                }`}
-              >
-                {town.name}
-              </Link>
-            ))}
+            <div className="flex flex-wrap gap-3">
+              {towns.docs.map((town) => (
+                <Link
+                  key={town.id}
+                  href={createFilterHref({ town: town.id })}
+                  className={`border px-4 py-2 text-sm ${
+                    params.town === town.id ? 'bg-black text-white' : ''
+                  }`}
+                >
+                  {town.name}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Price Range
-          </h2>
+          <div>
+            <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Price Range
+            </h2>
 
-          <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href={createFilterHref({
+                  minPrice: '500000',
+                  maxPrice: '1000000',
+                })}
+                className={`border px-4 py-2 text-sm ${isPrice500To1m ? 'bg-black text-white' : ''}`}
+              >
+                £500k – £1m
+              </Link>
+
+              <Link
+                href={createFilterHref({
+                  minPrice: '1000000',
+                  maxPrice: '2500000',
+                })}
+                className={`border px-4 py-2 text-sm ${isPrice1mTo25m ? 'bg-black text-white' : ''}`}
+              >
+                £1m – £2.5m
+              </Link>
+
+              <Link
+                href={createFilterHref({
+                  minPrice: '2500000',
+                  maxPrice: null,
+                })}
+                className={`border px-4 py-2 text-sm ${isPrice25mPlus ? 'bg-black text-white' : ''}`}
+              >
+                £2.5m+
+              </Link>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Property Types
+            </h2>
+
+            <div className="flex flex-wrap gap-3">
+              {propertyTypes.docs.map((type) => (
+                <Link
+                  key={type.id}
+                  href={createFilterHref({ type: type.id })}
+                  className={`border px-4 py-2 text-sm ${
+                    params.type === type.id ? 'bg-black text-white' : ''
+                  }`}
+                >
+                  {type.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Bedrooms
+            </h2>
+
+            <div className="flex flex-wrap gap-3">
+              {['1', '2', '3', '4', '5'].map((bedroom) => (
+                <Link
+                  key={bedroom}
+                  href={createFilterHref({ bedrooms: bedroom })}
+                  className={`border px-4 py-2 text-sm ${
+                    params.bedrooms === bedroom ? 'bg-black text-white' : ''
+                  }`}
+                >
+                  {bedroom}+
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-3">
             <Link
-              href={createFilterHref({
-                minPrice: '500000',
-                maxPrice: '1000000',
-              })}
-              className={`border px-4 py-2 text-sm ${isPrice500To1m ? 'bg-black text-white' : ''}`}
+              href="/properties"
+              className={`border px-4 py-2 text-sm ${
+                !params.q &&
+                !params.region &&
+                !params.town &&
+                !params.type &&
+                !params.minPrice &&
+                !params.maxPrice &&
+                !params.bedrooms
+                  ? 'bg-black text-white'
+                  : ''
+              }`}
             >
-              £500k – £1m
+              All Properties
             </Link>
 
-            <Link
-              href={createFilterHref({
-                minPrice: '1000000',
-                maxPrice: '2500000',
-              })}
-              className={`border px-4 py-2 text-sm ${isPrice1mTo25m ? 'bg-black text-white' : ''}`}
-            >
-              £1m – £2.5m
-            </Link>
-
-            <Link
-              href={createFilterHref({
-                minPrice: '2500000',
-                maxPrice: null,
-              })}
-              className={`border px-4 py-2 text-sm ${isPrice25mPlus ? 'bg-black text-white' : ''}`}
-            >
-              £2.5m+
-            </Link>
-          </div>
-        </div>
-
-        <div>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Property Types
-          </h2>
-
-          <div className="flex flex-wrap gap-3">
-            {propertyTypes.docs.map((type) => (
-              <Link
-                key={type.id}
-                href={createFilterHref({ type: type.id })}
-                className={`border px-4 py-2 text-sm ${
-                  params.type === type.id ? 'bg-black text-white' : ''
-                }`}
-              >
-                {type.name}
+            {(params.q ||
+              params.region ||
+              params.town ||
+              params.type ||
+              params.minPrice ||
+              params.maxPrice ||
+              params.bedrooms) && (
+              <Link href="/properties" className="border px-4 py-2 text-sm">
+                Clear Filters
               </Link>
-            ))}
+            )}
           </div>
         </div>
-
-        <div>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Bedrooms
-          </h2>
-
-          <div className="flex flex-wrap gap-3">
-            {['1', '2', '3', '4', '5'].map((bedroom) => (
-              <Link
-                key={bedroom}
-                href={createFilterHref({ bedrooms: bedroom })}
-                className={`border px-4 py-2 text-sm ${
-                  params.bedrooms === bedroom ? 'bg-black text-white' : ''
-                }`}
-              >
-                {bedroom}+
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          <Link
-            href="/properties"
-            className={`border px-4 py-2 text-sm ${
-              !params.q &&
-              !params.region &&
-              !params.town &&
-              !params.type &&
-              !params.minPrice &&
-              !params.maxPrice &&
-              !params.bedrooms
-                ? 'bg-black text-white'
-                : ''
-            }`}
-          >
-            All Properties
-          </Link>
-
-          {(params.q ||
-            params.region ||
-            params.town ||
-            params.type ||
-            params.minPrice ||
-            params.maxPrice ||
-            params.bedrooms) && (
-            <Link href="/properties" className="border px-4 py-2 text-sm">
-              Clear Filters
-            </Link>
-          )}
-        </div>
-      </div>
-
+      )}
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {properties.docs.map((property) => {
           const image =
