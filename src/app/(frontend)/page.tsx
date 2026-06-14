@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import Link from 'next/link'
 import { PropertyMap } from '@/components/PropertyMap'
 import { HomeSearch } from '@/components/HomeSearch'
+import { PropertyCardSlider } from '@/components/PropertyCardSlider'
 
 export default async function HomePage() {
   const payload = await getPayload({ config: configPromise })
@@ -258,18 +259,30 @@ function PropertyCard({ property }: { property: any }) {
       ? property.featuredImage.url
       : null
 
+  const images = [
+    ...(image
+      ? [
+          {
+            url: image,
+            alt: property.title,
+          },
+        ]
+      : []),
+
+    ...(property.gallery || [])
+      .filter((item: any) => typeof item === 'object' && item?.url && item.url !== image)
+      .map((item: any) => ({
+        url: item.url,
+        alt: property.title,
+      })),
+  ]
+
   const region = typeof property.region === 'object' ? property.region : null
   const town = typeof property.town === 'object' ? property.town : null
 
   return (
-    <Link href={`/property/${property.slug}`} className="block border overflow-hidden">
-      {image ? (
-        <img src={image} alt={property.title} className="h-[320px] w-full object-cover" />
-      ) : (
-        <div className="flex h-[320px] items-center justify-center bg-muted text-muted-foreground">
-          No image
-        </div>
-      )}
+    <Link href={`/property/${property.slug}`} className="group block border overflow-hidden">
+      <PropertyCardSlider images={images} title={property.title} />
 
       <div className="space-y-2  p-6">
         <p className="text-xl font-medium">£{property.price?.toLocaleString('en-GB')}</p>
