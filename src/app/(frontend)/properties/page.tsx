@@ -11,6 +11,7 @@ type Props = {
     minPrice?: string
     maxPrice?: string
     bedrooms?: string
+    amenities?: string
   }>
 }
 
@@ -25,6 +26,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
     minPrice?: string | null
     maxPrice?: string | null
     bedrooms?: string | null
+    amenities?: string | null
   }) {
     const query = new URLSearchParams()
 
@@ -35,7 +37,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
     const minPrice = newParams.minPrice !== undefined ? newParams.minPrice : params.minPrice
     const maxPrice = newParams.maxPrice !== undefined ? newParams.maxPrice : params.maxPrice
     const bedrooms = newParams.bedrooms !== undefined ? newParams.bedrooms : params.bedrooms
-
+    const amenities = newParams.amenities !== undefined ? newParams.amenities : params.amenities
     if (q) query.set('q', q)
     if (region) query.set('region', region)
     if (town) query.set('town', town)
@@ -43,6 +45,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
     if (minPrice) query.set('minPrice', minPrice)
     if (maxPrice) query.set('maxPrice', maxPrice)
     if (bedrooms) query.set('bedrooms', bedrooms)
+    if (amenities) query.set('amenities', amenities)
 
     const queryString = query.toString()
     return queryString ? `/properties?${queryString}` : '/properties'
@@ -62,6 +65,10 @@ export default async function PropertiesPage({ searchParams }: Props) {
 
   const propertyTypes = await payload.find({
     collection: 'property-types',
+    limit: 100,
+  })
+  const amenities = await payload.find({
+    collection: 'amenities',
     limit: 100,
   })
 
@@ -142,6 +149,14 @@ export default async function PropertiesPage({ searchParams }: Props) {
     })
   }
 
+  if (params.amenities) {
+    andFilters.push({
+      amenities: {
+        contains: params.amenities,
+      },
+    })
+  }
+
   const where = andFilters.length > 0 ? { and: andFilters } : {}
 
   const properties = await payload.find({
@@ -165,9 +180,11 @@ export default async function PropertiesPage({ searchParams }: Props) {
         <PropertyFiltersBar
           currentRegion={params.region}
           currentBedrooms={params.bedrooms}
+          currentTown={params.town}
           currentMinPrice={params.minPrice}
           currentMaxPrice={params.maxPrice}
           currentType={params.type}
+          currentAmenities={params.amenities}
           regions={regions.docs.map((region) => ({
             id: String(region.id),
             name: region.name,
@@ -175,6 +192,14 @@ export default async function PropertiesPage({ searchParams }: Props) {
           propertyTypes={propertyTypes.docs.map((type) => ({
             id: String(type.id),
             name: type.name,
+          }))}
+          amenities={amenities.docs.map((amenity) => ({
+            id: String(amenity.id),
+            name: amenity.name,
+          }))}
+          towns={towns.docs.map((town) => ({
+            id: String(town.id),
+            name: town.name,
           }))}
         />
         {params.q && (
