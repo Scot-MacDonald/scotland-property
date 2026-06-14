@@ -173,7 +173,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
   const isPrice25mPlus = params.minPrice === '2500000' && !params.maxPrice
 
   return (
-    <main className="container py-16">
+    <main className="mx-auto w-full max-w-[1680px] px-4 py-16 md:px-8">
       <div className="mb-10">
         <p className="text-sm uppercase tracking-wide text-muted-foreground">Real Estate</p>
         <h1 className="text-4xl font-medium tracking-tight">Properties for Sale in Scotland</h1>
@@ -367,7 +367,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
           </div>
         </div>
       )}
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {properties.docs.map((property) => {
           const image =
             typeof property.featuredImage === 'object' && property.featuredImage?.url
@@ -375,29 +375,31 @@ export default async function PropertiesPage({ searchParams }: Props) {
               : null
 
           const region = typeof property.region === 'object' ? property.region : null
+          const town = typeof property.town === 'object' ? property.town : null
 
           return (
             <Link
               key={property.id}
               href={`/property/${property.slug}`}
-              className="group block overflow-hidden rounded-lg border bg-card"
+              className="block overflow-hidden border"
             >
               {image ? (
-                <img
-                  src={image}
-                  alt={property.title}
-                  className="aspect-[4/3] w-full object-cover transition group-hover:scale-105"
-                />
+                <img src={image} alt={property.title} className="h-[320px] w-full object-cover" />
               ) : (
-                <div className="flex aspect-[4/3] items-center justify-center bg-muted text-muted-foreground">
+                <div className="flex h-[320px] items-center justify-center bg-muted text-muted-foreground">
                   No image
                 </div>
               )}
 
-              <div className="space-y-2 p-5">
+              <div className="space-y-2 px-1 pb-2 pt-4">
                 <p className="text-xl font-medium">£{property.price?.toLocaleString('en-GB')}</p>
 
-                {region && <p className="text-sm text-muted-foreground">{region.name}</p>}
+                {(region || town) && (
+                  <p className="text-sm text-muted-foreground">
+                    {town?.name ? `${town.name}, ` : ''}
+                    {region?.name || ''}
+                  </p>
+                )}
 
                 <h2 className="text-lg font-medium">{property.title}</h2>
 

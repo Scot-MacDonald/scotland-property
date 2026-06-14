@@ -41,6 +41,10 @@ function updateQuery(key: string, value: string) {
   window.location.href = queryString ? `/properties?${queryString}` : '/properties'
 }
 
+function Arrow({ open }: { open: boolean }) {
+  return <span className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`}>⌄</span>
+}
+
 export function PropertyFiltersBar({
   currentRegion,
   currentBedrooms,
@@ -70,29 +74,36 @@ export function PropertyFiltersBar({
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
+
+  const dropdownClass =
+    'absolute left-0 top-full z-40 mt-2 w-full origin-top border bg-white shadow-lg animate-in fade-in slide-in-from-top-1 duration-150'
+
+  const triggerClass =
+    'flex min-w-[180px] items-center justify-between border px-5 py-3 text-left text-sm'
+
+  const optionClass = 'block w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50'
+
   return (
     <div ref={wrapperRef} className="mb-8 mt-8 flex flex-wrap gap-3">
       <div className="relative">
         <button
           type="button"
           onClick={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
-          className="flex min-w-[180px] items-center justify-between border px-5 py-3 text-left text-sm"
+          className={triggerClass}
         >
           <span>{propertyTypes?.find((type) => type.id === currentType)?.name || 'Type'}</span>
-          <span>⌄</span>
+          <Arrow open={openFilter === 'type'} />
         </button>
 
         {openFilter === 'type' && (
-          <div className="absolute left-0 top-full z-40 mt-2 w-full border bg-white shadow-lg">
+          <div className={dropdownClass}>
             <button
               type="button"
               onClick={() => {
                 updateQuery('type', '')
                 setOpenFilter(null)
               }}
-              className={`block w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 ${
-                !currentType ? 'bg-black text-white hover:bg-black' : ''
-              }`}
+              className={`${optionClass} ${!currentType ? 'bg-black text-white hover:bg-black' : ''}`}
             >
               Any type
             </button>
@@ -105,7 +116,7 @@ export function PropertyFiltersBar({
                   updateQuery('type', type.id)
                   setOpenFilter(null)
                 }}
-                className={`block w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 ${
+                className={`${optionClass} ${
                   currentType === type.id ? 'bg-black text-white hover:bg-black' : ''
                 }`}
               >
@@ -120,7 +131,7 @@ export function PropertyFiltersBar({
         <button
           type="button"
           onClick={() => setOpenFilter(openFilter === 'price' ? null : 'price')}
-          className="flex min-w-[180px] items-center justify-between border px-5 py-3 text-left text-sm"
+          className={triggerClass}
         >
           <span>
             {currentMinPrice === '500000' && currentMaxPrice === '1000000'
@@ -131,60 +142,64 @@ export function PropertyFiltersBar({
                   ? '£2.5m+'
                   : 'Price'}
           </span>
-          <span>⌄</span>
+          <Arrow open={openFilter === 'price'} />
         </button>
 
         {openFilter === 'price' && (
-          <div className="absolute left-0 top-full z-40 mt-2 w-full border bg-white shadow-lg">
+          <div className={dropdownClass}>
             {[
               { label: 'Any price', value: '' },
               { label: '£500k – £1m', value: '500000-1000000' },
               { label: '£1m – £2.5m', value: '1000000-2500000' },
               { label: '£2.5m+', value: '2500000-' },
-            ].map((option) => (
-              <button
-                key={option.label}
-                type="button"
-                onClick={() => {
-                  const params = new URLSearchParams(window.location.search)
+            ].map((option) => {
+              const selected =
+                (option.value === '' && !currentMinPrice && !currentMaxPrice) ||
+                (option.value === '500000-1000000' &&
+                  currentMinPrice === '500000' &&
+                  currentMaxPrice === '1000000') ||
+                (option.value === '1000000-2500000' &&
+                  currentMinPrice === '1000000' &&
+                  currentMaxPrice === '2500000') ||
+                (option.value === '2500000-' && currentMinPrice === '2500000' && !currentMaxPrice)
 
-                  params.delete('minPrice')
-                  params.delete('maxPrice')
+              return (
+                <button
+                  key={option.label}
+                  type="button"
+                  onClick={() => {
+                    const params = new URLSearchParams(window.location.search)
 
-                  if (option.value === '500000-1000000') {
-                    params.set('minPrice', '500000')
-                    params.set('maxPrice', '1000000')
-                  }
+                    params.delete('minPrice')
+                    params.delete('maxPrice')
 
-                  if (option.value === '1000000-2500000') {
-                    params.set('minPrice', '1000000')
-                    params.set('maxPrice', '2500000')
-                  }
+                    if (option.value === '500000-1000000') {
+                      params.set('minPrice', '500000')
+                      params.set('maxPrice', '1000000')
+                    }
 
-                  if (option.value === '2500000-') {
-                    params.set('minPrice', '2500000')
-                  }
+                    if (option.value === '1000000-2500000') {
+                      params.set('minPrice', '1000000')
+                      params.set('maxPrice', '2500000')
+                    }
 
-                  const queryString = params.toString()
-                  window.location.href = queryString ? `/properties?${queryString}` : '/properties'
+                    if (option.value === '2500000-') {
+                      params.set('minPrice', '2500000')
+                    }
 
-                  setOpenFilter(null)
-                }}
-                className={`block w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 ${
-                  (option.value === '500000-1000000' &&
-                    currentMinPrice === '500000' &&
-                    currentMaxPrice === '1000000') ||
-                  (option.value === '1000000-2500000' &&
-                    currentMinPrice === '1000000' &&
-                    currentMaxPrice === '2500000') ||
-                  (option.value === '2500000-' && currentMinPrice === '2500000' && !currentMaxPrice)
-                    ? 'bg-black text-white hover:bg-black'
-                    : ''
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
+                    const queryString = params.toString()
+                    window.location.href = queryString
+                      ? `/properties?${queryString}`
+                      : '/properties'
+
+                    setOpenFilter(null)
+                  }}
+                  className={`${optionClass} ${selected ? 'bg-black text-white hover:bg-black' : ''}`}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
           </div>
         )}
       </div>
@@ -193,16 +208,14 @@ export function PropertyFiltersBar({
         <button
           type="button"
           onClick={() => setOpenFilter(openFilter === 'beds' ? null : 'beds')}
-          className="min-w-[180px] border px-5 py-3 text-left text-sm flex items-center justify-between"
+          className={triggerClass}
         >
-          <>
-            <span>{currentBedrooms ? `${currentBedrooms}+ Beds` : 'Beds'}</span>
-            <span>⌄</span>
-          </>
+          <span>{currentBedrooms ? `${currentBedrooms}+ Beds` : 'Beds'}</span>
+          <Arrow open={openFilter === 'beds'} />
         </button>
 
         {openFilter === 'beds' && (
-          <div className="absolute left-0 top-full z-40 mt-2 w-full border bg-white shadow-lg">
+          <div className={dropdownClass}>
             {[
               { label: 'Any beds', value: '' },
               { label: '1+ Beds', value: '1' },
@@ -218,7 +231,7 @@ export function PropertyFiltersBar({
                   updateQuery('bedrooms', option.value)
                   setOpenFilter(null)
                 }}
-                className={`block w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 ${
+                className={`${optionClass} ${
                   currentBedrooms === option.value ? 'bg-black text-white hover:bg-black' : ''
                 }`}
               >
@@ -233,21 +246,21 @@ export function PropertyFiltersBar({
         <button
           type="button"
           onClick={() => setOpenFilter(openFilter === 'region' ? null : 'region')}
-          className="flex min-w-[180px] items-center justify-between border px-5 py-3 text-left text-sm"
+          className={triggerClass}
         >
           <span>{regions?.find((region) => region.id === currentRegion)?.name || 'Region'}</span>
-          <span>⌄</span>
+          <Arrow open={openFilter === 'region'} />
         </button>
 
         {openFilter === 'region' && (
-          <div className="absolute left-0 top-full z-40 mt-2 w-full border bg-white shadow-lg">
+          <div className={dropdownClass}>
             <button
               type="button"
               onClick={() => {
                 updateQuery('region', '')
                 setOpenFilter(null)
               }}
-              className={`block w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 ${
+              className={`${optionClass} ${
                 !currentRegion ? 'bg-black text-white hover:bg-black' : ''
               }`}
             >
@@ -262,7 +275,7 @@ export function PropertyFiltersBar({
                   updateQuery('region', region.id)
                   setOpenFilter(null)
                 }}
-                className={`block w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 ${
+                className={`${optionClass} ${
                   currentRegion === region.id ? 'bg-black text-white hover:bg-black' : ''
                 }`}
               >
@@ -272,27 +285,26 @@ export function PropertyFiltersBar({
           </div>
         )}
       </div>
+
       <div className="relative">
         <button
           type="button"
           onClick={() => setOpenFilter(openFilter === 'town' ? null : 'town')}
-          className="flex min-w-[180px] items-center justify-between border px-5 py-3 text-left text-sm"
+          className={triggerClass}
         >
           <span>{towns?.find((town) => town.id === currentTown)?.name || 'Town'}</span>
-          <span>⌄</span>
+          <Arrow open={openFilter === 'town'} />
         </button>
 
         {openFilter === 'town' && (
-          <div className="absolute left-0 top-full z-40 mt-2 w-full border bg-white shadow-lg">
+          <div className={dropdownClass}>
             <button
               type="button"
               onClick={() => {
                 updateQuery('town', '')
                 setOpenFilter(null)
               }}
-              className={`block w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 ${
-                !currentTown ? 'bg-black text-white hover:bg-black' : ''
-              }`}
+              className={`${optionClass} ${!currentTown ? 'bg-black text-white hover:bg-black' : ''}`}
             >
               Any town
             </button>
@@ -305,7 +317,7 @@ export function PropertyFiltersBar({
                   updateQuery('town', town.id)
                   setOpenFilter(null)
                 }}
-                className={`block w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 ${
+                className={`${optionClass} ${
                   currentTown === town.id ? 'bg-black text-white hover:bg-black' : ''
                 }`}
               >
@@ -315,27 +327,28 @@ export function PropertyFiltersBar({
           </div>
         )}
       </div>
+
       <div className="relative">
         <button
           type="button"
           onClick={() => setOpenFilter(openFilter === 'amenities' ? null : 'amenities')}
-          className="flex min-w-[180px] items-center justify-between border px-5 py-3 text-left text-sm"
+          className={triggerClass}
         >
           <span>
             {amenities?.find((amenity) => amenity.id === currentAmenities)?.name || 'Amenities'}
           </span>
-          <span>⌄</span>
+          <Arrow open={openFilter === 'amenities'} />
         </button>
 
         {openFilter === 'amenities' && (
-          <div className="absolute left-0 top-full z-40 mt-2 w-full border bg-white shadow-lg">
+          <div className={dropdownClass}>
             <button
               type="button"
               onClick={() => {
                 updateQuery('amenities', '')
                 setOpenFilter(null)
               }}
-              className={`block w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 ${
+              className={`${optionClass} ${
                 !currentAmenities ? 'bg-black text-white hover:bg-black' : ''
               }`}
             >
@@ -350,7 +363,7 @@ export function PropertyFiltersBar({
                   updateQuery('amenities', amenity.id)
                   setOpenFilter(null)
                 }}
-                className={`block w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 ${
+                className={`${optionClass} ${
                   currentAmenities === amenity.id ? 'bg-black text-white hover:bg-black' : ''
                 }`}
               >
