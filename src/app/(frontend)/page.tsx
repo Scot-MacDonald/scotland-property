@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { PropertyMap } from '@/components/PropertyMap'
 import { HomeSearch } from '@/components/HomeSearch'
 import { PropertyCardSlider } from '@/components/PropertyCardSlider'
+import { SavePropertyButton } from '@/components/SavePropertyButton'
 
 export default async function HomePage() {
   const payload = await getPayload({ config: configPromise })
@@ -281,7 +282,11 @@ function PropertyCard({ property }: { property: any }) {
   const town = typeof property.town === 'object' ? property.town : null
 
   return (
-    <Link href={`/property/${property.slug}`} className="group block border overflow-hidden">
+    <Link
+      href={`/property/${property.slug}`}
+      className="group relative  block border overflow-hidden"
+    >
+      <SavePropertyButton propertyId={String(property.id)} />
       <PropertyCardSlider images={images} title={property.title} />
 
       <div className="space-y-2  p-6">

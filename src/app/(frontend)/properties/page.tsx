@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import Link from 'next/link'
 import { PropertyFiltersBar } from '@/components/PropertyFiltersBar'
 import { PropertyCardSlider } from '@/components/PropertyCardSlider'
+import { SavePropertyButton } from '@/components/SavePropertyButton'
 type Props = {
   searchParams: Promise<{
     q?: string
@@ -399,8 +400,9 @@ export default async function PropertiesPage({ searchParams }: Props) {
             <Link
               key={property.id}
               href={`/property/${property.slug}`}
-              className="group block overflow-hidden border"
+              className="group block relative  overflow-hidden border"
             >
+              <SavePropertyButton propertyId={String(property.id)} />
               <PropertyCardSlider images={images} title={property.title} />
 
               <div className="space-y-2 px-1 pb-2 pt-4">
