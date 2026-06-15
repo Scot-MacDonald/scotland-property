@@ -88,7 +88,7 @@ export function PropertyGallery({ images, title }: Props) {
             <img
               src={images[0].url}
               alt={images[0].alt || title}
-              className="h-full w-full object-cover transition duration-300 hover:scale-[1.02]"
+              className="h-full w-full object-cover "
             />
           ) : (
             <div className="flex h-full min-h-[280px] items-center justify-center text-muted-foreground">
@@ -107,7 +107,7 @@ export function PropertyGallery({ images, title }: Props) {
               <img
                 src={image.url}
                 alt={image.alt || title}
-                className="h-full w-full object-cover transition duration-300 hover:scale-[1.02]"
+                className="h-full w-full object-cover "
               />
             ) : (
               <div className="flex h-full min-h-[140px] items-center justify-center text-muted-foreground">
@@ -142,7 +142,7 @@ export function PropertyGallery({ images, title }: Props) {
                 <img
                   src={image.url}
                   alt={image.alt || title}
-                  className="aspect-[4/3] w-full object-cover transition duration-300 hover:scale-[1.02]"
+                  className="aspect-[4/3] w-full object-cover "
                 />
               </button>
             ))}
@@ -170,12 +170,33 @@ export function PropertyGallery({ images, title }: Props) {
             </button>
           )}
 
-          <div className="flex h-full items-center justify-center px-16">
+          <div className="flex h-full flex-col items-center justify-center px-16">
             <img
               src={activeImage.url}
               alt={activeImage.alt || title}
-              className="max-h-[86vh] max-w-full object-contain"
+              className="max-h-[75vh] max-w-full object-contain"
             />
+
+            {images.length > 1 && (
+              <div className="mt-6 flex max-w-full gap-2 overflow-x-auto">
+                {images.map((image, index) => (
+                  <button
+                    key={`${image.url}-${index}`}
+                    type="button"
+                    onClick={() => setActiveIndex(index)}
+                    className={`overflow-hidden border ${
+                      index === activeIndex ? 'border-white' : 'border-white/20'
+                    }`}
+                  >
+                    <img
+                      src={image.url}
+                      alt={image.alt || title}
+                      className="h-16 w-24 object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {images.length > 1 && (
