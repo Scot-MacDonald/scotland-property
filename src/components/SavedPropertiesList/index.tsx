@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { RemoveSavedButton } from '@/components/RemoveSavedButton'
 
 const STORAGE_KEY = 'savedProperties'
 
@@ -116,6 +117,9 @@ export function SavedPropertiesList() {
                 {property.bedrooms ? `${property.bedrooms} beds` : null}
                 {property.bathrooms ? ` · ${property.bathrooms} baths` : null}
               </p>
+            </div>
+            <div className="pt-3 z-10">
+              <RemoveSavedButton propertyId={property.id} />
             </div>
           </Link>
         )
