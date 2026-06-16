@@ -4,6 +4,9 @@ import Link from 'next/link'
 import { PropertyFiltersBar } from '@/components/PropertyFiltersBar'
 import { PropertyCardSlider } from '@/components/PropertyCardSlider'
 import { SavePropertyButton } from '@/components/SavePropertyButton'
+import { SaveSearchButton } from '@/components/SaveSearchButton'
+import { SavedHeaderLinks } from '@/components/SavedHeaderLinks'
+
 type Props = {
   searchParams: Promise<{
     q?: string
@@ -173,12 +176,39 @@ export default async function PropertiesPage({ searchParams }: Props) {
   const isPrice500To1m = params.minPrice === '500000' && params.maxPrice === '1000000'
   const isPrice1mTo25m = params.minPrice === '1000000' && params.maxPrice === '2500000'
   const isPrice25mPlus = params.minPrice === '2500000' && !params.maxPrice
+  const selectedRegion = regions.docs.find((region) => String(region.id) === params.region)
+  console.log({
+    regionParam: params.region,
+    selectedRegion,
+  })
+  const selectedTown = towns.docs.find((town) => String(town.id) === params.town)
+  const selectedType = propertyTypes.docs.find((type) => String(type.id) === params.type)
+  const selectedAmenity = amenities.docs.find((amenity) => String(amenity.id) === params.amenities)
 
+  const savedSearchLabelParts = [
+    selectedTown?.name,
+    selectedRegion?.name,
+    selectedType?.name,
+    selectedAmenity?.name,
+    params.minPrice === '500000' && params.maxPrice === '1000000'
+      ? '£500k – £1m'
+      : params.minPrice === '1000000' && params.maxPrice === '2500000'
+        ? '£1m – £2.5m'
+        : params.minPrice === '2500000'
+          ? '£2.5m+'
+          : null,
+    params.bedrooms ? `${params.bedrooms}+ Beds` : null,
+    params.q ? `Search: ${params.q}` : null,
+  ].filter(Boolean)
+
+  const savedSearchLabel =
+    savedSearchLabelParts.length > 0 ? savedSearchLabelParts.join(' · ') : 'All properties'
   return (
     <main className="mx-auto w-full max-w-[1680px] px-4 py-16 md:px-8">
       <div className="mb-10">
         <p className="text-sm uppercase tracking-wide text-muted-foreground">Real Estate</p>
         <h1 className="text-4xl font-medium tracking-tight">Properties for Sale in Scotland</h1>
+
         <PropertyFiltersBar
           currentRegion={params.region}
           currentBedrooms={params.bedrooms}
@@ -204,6 +234,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
             name: town.name,
           }))}
         />
+
         {params.q && (
           <p className="mt-2 text-muted-foreground">
             Search results for <span className="font-medium text-foreground">“{params.q}”</span>
@@ -211,8 +242,27 @@ export default async function PropertiesPage({ searchParams }: Props) {
         )}
         <p className="mt-2 text-muted-foreground">{properties.totalDocs} properties found</p>
       </div>
+      <div className="mt-4 flex items-center gap-3">
+        <SaveSearchButton
+          searchLabel={savedSearchLabel}
+          searchParams={{
+            region: params.region,
+            town: params.town,
+            type: params.type,
+            minPrice: params.minPrice,
+            maxPrice: params.maxPrice,
+            bedrooms: params.bedrooms,
+            amenities: params.amenities,
+            q: params.q,
+          }}
+        />
 
-      <div className="mb-10">
+        <p className="text-sm text-muted-foreground">Save this search and return to it later.</p>
+      </div>
+      <div className="my-10">
+        <SavedHeaderLinks />
+      </div>
+      <div className="my-10">
         <Link href="/properties/map" className="border px-4 py-2 text-sm">
           View Map
         </Link>

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import RichText from '@/components/RichText'
 import { PropertyGallery } from '@/components/PropertyGallery'
 import { PropertyEnquiryForm } from '@/components/PropertyEnquiryForm'
+import { TrackRecentlyViewed } from '@/components/TrackRecentlyViewed'
 type Props = {
   params: Promise<{ slug: string }>
 }
@@ -45,6 +46,7 @@ export default async function PropertyPage({ params }: Props) {
 
   return (
     <main className="bg-background">
+      <TrackRecentlyViewed propertyId={String(property.id)} />
       <section className="mx-auto w-full max-w-[1680px] px-4 pt-6 md:px-8">
         <div className="mb-4 flex items-center justify-between text-sm">
           <Link href="/properties" className="text-muted-foreground hover:underline">

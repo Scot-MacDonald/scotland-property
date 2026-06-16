@@ -5,6 +5,7 @@ import { PropertyMap } from '@/components/PropertyMap'
 import { HomeSearch } from '@/components/HomeSearch'
 import { PropertyCardSlider } from '@/components/PropertyCardSlider'
 import { SavePropertyButton } from '@/components/SavePropertyButton'
+import { SavedHeaderLinks } from '@/components/SavedHeaderLinks'
 
 export default async function HomePage() {
   const payload = await getPayload({ config: configPromise })
@@ -170,7 +171,9 @@ export default async function HomePage() {
             </Link>
           </div>
         </div>
-
+        <div className="my-10">
+          <SavedHeaderLinks />
+        </div>
         <div className="grid gap-3 lg:grid-cols-3">
           {properties.docs.slice(0, 2).map((property) => (
             <PropertyCard key={property.id} property={property} />
