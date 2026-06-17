@@ -81,6 +81,7 @@ export interface Config {
     agents: Agent;
     properties: Property;
     enquiries: Enquiry;
+    buyers: Buyer;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-kv': PayloadKv;
@@ -110,6 +111,7 @@ export interface Config {
     agents: AgentsSelect<false> | AgentsSelect<true>;
     properties: PropertiesSelect<false> | PropertiesSelect<true>;
     enquiries: EnquiriesSelect<false> | EnquiriesSelect<true>;
+    buyers: BuyersSelect<false> | BuyersSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -978,6 +980,27 @@ export interface Enquiry {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "buyers".
+ */
+export interface Buyer {
+  id: string;
+  name?: string | null;
+  email: string;
+  savedProperties?: (string | Property)[] | null;
+  savedSearches?:
+    | {
+        label: string;
+        queryString: string;
+        createdAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  alertsEnabled?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
@@ -1164,6 +1187,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'enquiries';
         value: string | Enquiry;
+      } | null)
+    | ({
+        relationTo: 'buyers';
+        value: string | Buyer;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1667,6 +1694,26 @@ export interface EnquiriesSelect<T extends boolean = true> {
   agency?: T;
   status?: T;
   notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "buyers_select".
+ */
+export interface BuyersSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  savedProperties?: T;
+  savedSearches?:
+    | T
+    | {
+        label?: T;
+        queryString?: T;
+        createdAt?: T;
+        id?: T;
+      };
+  alertsEnabled?: T;
   updatedAt?: T;
   createdAt?: T;
 }
