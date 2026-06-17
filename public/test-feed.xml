@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<properties>
+  <property>
+    <reference>TEST-001</reference>
+    <title>Imported Highland House</title>
+    <price>1250000</price>
+    <bedrooms>4</bedrooms>
+    <bathrooms>3</bathrooms>
+    <latitude>57.4778</latitude>
+    <longitude>-4.2247</longitude>
+    <region>Highlands</region>
+<town>Inverness</town>
+    <description>A test imported property from an XML feed.</description>
+  </property>
+</properties>

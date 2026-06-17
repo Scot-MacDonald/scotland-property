@@ -477,6 +477,24 @@ export interface Agency {
     country?: string | null;
   };
   featured?: boolean | null;
+  /**
+   * Optional CRM/feed settings for automatic property imports.
+   */
+  crm?: {
+    enabled?: boolean | null;
+    type?: ('generic-xml' | 'manual') | null;
+    /**
+     * URL to the agency property feed.
+     */
+    feedUrl?: string | null;
+    username?: string | null;
+    /**
+     * For MVP only. Later this should be encrypted.
+     */
+    password?: string | null;
+    lastImportAt?: string | null;
+    lastImportStatus?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -1622,6 +1640,17 @@ export interface AgenciesSelect<T extends boolean = true> {
         country?: T;
       };
   featured?: T;
+  crm?:
+    | T
+    | {
+        enabled?: T;
+        type?: T;
+        feedUrl?: T;
+        username?: T;
+        password?: T;
+        lastImportAt?: T;
+        lastImportStatus?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

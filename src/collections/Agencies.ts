@@ -102,5 +102,66 @@ export const Agencies: CollectionConfig = {
       type: 'checkbox',
       defaultValue: false,
     },
+    {
+      name: 'crm',
+      type: 'group',
+      admin: {
+        description: 'Optional CRM/feed settings for automatic property imports.',
+      },
+      fields: [
+        {
+          name: 'enabled',
+          type: 'checkbox',
+          defaultValue: false,
+        },
+        {
+          name: 'type',
+          type: 'select',
+          options: [
+            {
+              label: 'Generic XML Feed',
+              value: 'generic-xml',
+            },
+            {
+              label: 'Manual / No CRM',
+              value: 'manual',
+            },
+          ],
+          defaultValue: 'manual',
+        },
+        {
+          name: 'feedUrl',
+          type: 'text',
+          admin: {
+            description: 'URL to the agency property feed.',
+          },
+        },
+        {
+          name: 'username',
+          type: 'text',
+        },
+        {
+          name: 'password',
+          type: 'text',
+          admin: {
+            description: 'For MVP only. Later this should be encrypted.',
+          },
+        },
+        {
+          name: 'lastImportAt',
+          type: 'date',
+          admin: {
+            readOnly: true,
+          },
+        },
+        {
+          name: 'lastImportStatus',
+          type: 'textarea',
+          admin: {
+            readOnly: true,
+          },
+        },
+      ],
+    },
   ],
 }
