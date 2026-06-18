@@ -13,9 +13,7 @@ function createSlug(value: string) {
 function mapPropertyStatus(status: string) {
   const cleanStatus = status.toLowerCase().trim()
 
-  if (cleanStatus === 'sold') {
-    return 'sold'
-  }
+  if (cleanStatus === 'sold') return 'sold'
 
   if (
     cleanStatus === 'reserved' ||
@@ -57,8 +55,8 @@ async function uploadImageFromUrl(payload: any, imageUrl: string, alt: string) {
   const buffer = Buffer.from(arrayBuffer)
 
   const contentType = res.headers.get('content-type') || 'image/jpeg'
-
   const rawFilename = imageUrl.split('/').pop()?.split('?')[0]
+
   const filename =
     rawFilename && rawFilename.includes('.') ? rawFilename : `${createSlug(alt)}-${Date.now()}.jpg`
 
@@ -86,9 +84,7 @@ async function uploadImageFromUrl(payload: any, imageUrl: string, alt: string) {
 function getImageUrls(feedProperty: any) {
   const rawImages = feedProperty.images?.image
 
-  if (!rawImages) {
-    return []
-  }
+  if (!rawImages) return []
 
   if (Array.isArray(rawImages)) {
     return rawImages.map((image) => String(image).trim()).filter(Boolean)
@@ -100,9 +96,7 @@ function getImageUrls(feedProperty: any) {
 function getAmenityNames(feedProperty: any) {
   const rawAmenities = feedProperty.amenities?.amenity
 
-  if (!rawAmenities) {
-    return []
-  }
+  if (!rawAmenities) return []
 
   if (Array.isArray(rawAmenities)) {
     return rawAmenities.map((amenity) => String(amenity).trim()).filter(Boolean)
@@ -112,9 +106,7 @@ function getAmenityNames(feedProperty: any) {
 }
 
 async function findPropertyType(payload: any, propertyTypeName: string) {
-  if (!propertyTypeName) {
-    return null
-  }
+  if (!propertyTypeName) return null
 
   const result = await payload.find({
     collection: 'property-types',
@@ -163,9 +155,7 @@ async function findOrCreateAgent(payload: any, feedAgent: any, agencyId: string)
   const agentEmail = String(feedAgent?.email || '').trim()
   const agentPhone = String(feedAgent?.phone || '').trim()
 
-  if (!agentName && !agentEmail) {
-    return null
-  }
+  if (!agentName && !agentEmail) return null
 
   if (agentEmail) {
     const existingByEmail = await payload.find({
@@ -280,6 +270,16 @@ export async function GET() {
     const res = await fetch(agency.crm.feedUrl)
 
     if (!res.ok) {
+      await payload.create({
+        collection: 'import-logs',
+        data: {
+          agencyName: agency.name,
+          status: 'failed',
+          errorMessage: `Feed could not be fetched. Status: ${res.status}`,
+        },
+        overrideAccess: true,
+      })
+
       return NextResponse.json({
         ok: false,
         agency: agency.name,
@@ -451,6 +451,23 @@ export async function GET() {
       }
     }
 
+    await payload.create({
+      collection: 'import-logs',
+      data: {
+        agencyName: agency.name,
+        status: 'success',
+        found: feedProperties.length,
+        created,
+        updated,
+        skipped,
+        imagesUploaded,
+        imagesReused,
+        agentsMatched: agentsCreatedOrMatched,
+        amenitiesMatched,
+      },
+      overrideAccess: true,
+    })
+
     return NextResponse.json({
       ok: true,
       agency: agency.name,
@@ -466,6 +483,16 @@ export async function GET() {
       message: 'Feed imported successfully.',
     })
   } catch (error) {
+    await payload.create({
+      collection: 'import-logs',
+      data: {
+        agencyName: agency.name,
+        status: 'failed',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      },
+      overrideAccess: true,
+    })
+
     return NextResponse.json({
       ok: false,
       agency: agency.name,

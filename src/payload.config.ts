@@ -20,6 +20,7 @@ import { Properties } from './collections/Properties'
 import { Agencies } from './collections/Agencies'
 import { Enquiries } from './collections/Enquiries'
 import { Buyers } from './collections/Buyers'
+import { ImportLogs } from './collections/ImportLogs'
 
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -94,6 +95,7 @@ export default buildConfig({
     Properties,
     Enquiries,
     Buyers,
+    ImportLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

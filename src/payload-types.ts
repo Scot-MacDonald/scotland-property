@@ -82,6 +82,7 @@ export interface Config {
     properties: Property;
     enquiries: Enquiry;
     buyers: Buyer;
+    'import-logs': ImportLog;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-kv': PayloadKv;
@@ -112,6 +113,7 @@ export interface Config {
     properties: PropertiesSelect<false> | PropertiesSelect<true>;
     enquiries: EnquiriesSelect<false> | EnquiriesSelect<true>;
     buyers: BuyersSelect<false> | BuyersSelect<true>;
+    'import-logs': ImportLogsSelect<false> | ImportLogsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1020,6 +1022,26 @@ export interface Buyer {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "import-logs".
+ */
+export interface ImportLog {
+  id: string;
+  agencyName: string;
+  status: 'success' | 'failed';
+  found?: number | null;
+  created?: number | null;
+  updated?: number | null;
+  skipped?: number | null;
+  imagesUploaded?: number | null;
+  imagesReused?: number | null;
+  agentsMatched?: number | null;
+  amenitiesMatched?: number | null;
+  errorMessage?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
@@ -1210,6 +1232,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'buyers';
         value: string | Buyer;
+      } | null)
+    | ({
+        relationTo: 'import-logs';
+        value: string | ImportLog;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1745,6 +1771,25 @@ export interface BuyersSelect<T extends boolean = true> {
         id?: T;
       };
   alertsEnabled?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "import-logs_select".
+ */
+export interface ImportLogsSelect<T extends boolean = true> {
+  agencyName?: T;
+  status?: T;
+  found?: T;
+  created?: T;
+  updated?: T;
+  skipped?: T;
+  imagesUploaded?: T;
+  imagesReused?: T;
+  agentsMatched?: T;
+  amenitiesMatched?: T;
+  errorMessage?: T;
   updatedAt?: T;
   createdAt?: T;
 }
