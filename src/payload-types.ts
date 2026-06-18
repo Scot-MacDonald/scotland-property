@@ -293,6 +293,7 @@ export interface Post {
 export interface Media {
   id: string;
   alt?: string | null;
+  crmImageUrl?: string | null;
   caption?: {
     root: {
       type: string;
@@ -1436,6 +1437,7 @@ export interface PostsSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  crmImageUrl?: T;
   caption?: T;
   folder?: T;
   updatedAt?: T;

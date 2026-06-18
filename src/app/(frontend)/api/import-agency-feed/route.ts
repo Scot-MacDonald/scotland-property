@@ -10,6 +10,75 @@ function createSlug(value: string) {
     .replace(/(^-|-$)/g, '')
 }
 
+async function uploadImageFromUrl(payload: any, imageUrl: string, alt: string) {
+  const existingImage = await payload.find({
+    collection: 'media',
+    limit: 1,
+    where: {
+      crmImageUrl: {
+        equals: imageUrl,
+      },
+    },
+    overrideAccess: true,
+  })
+
+  if (existingImage.docs[0]) {
+    return {
+      media: existingImage.docs[0],
+      reused: true,
+    }
+  }
+
+  const res = await fetch(imageUrl)
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch image: ${imageUrl}`)
+  }
+
+  const arrayBuffer = await res.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+
+  const contentType = res.headers.get('content-type') || 'image/jpeg'
+
+  const rawFilename = imageUrl.split('/').pop()?.split('?')[0]
+  const filename =
+    rawFilename && rawFilename.includes('.') ? rawFilename : `${createSlug(alt)}-${Date.now()}.jpg`
+
+  const media = await payload.create({
+    collection: 'media',
+    data: {
+      alt,
+      crmImageUrl: imageUrl,
+    },
+    file: {
+      data: buffer,
+      mimetype: contentType,
+      name: filename,
+      size: buffer.length,
+    },
+    overrideAccess: true,
+  })
+
+  return {
+    media,
+    reused: false,
+  }
+}
+
+function getImageUrls(feedProperty: any) {
+  const rawImages = feedProperty.images?.image
+
+  if (!rawImages) {
+    return []
+  }
+
+  if (Array.isArray(rawImages)) {
+    return rawImages.map((image) => String(image).trim()).filter(Boolean)
+  }
+
+  return [String(rawImages).trim()].filter(Boolean)
+}
+
 export async function GET() {
   const payload = await getPayload({ config: configPromise })
 
@@ -80,6 +149,8 @@ export async function GET() {
     let created = 0
     let updated = 0
     let skipped = 0
+    let imagesUploaded = 0
+    let imagesReused = 0
 
     for (const feedProperty of feedProperties) {
       const reference = String(feedProperty.reference || '').trim()
@@ -129,6 +200,21 @@ export async function GET() {
         continue
       }
 
+      const imageUrls = getImageUrls(feedProperty)
+      const uploadedImages = []
+
+      for (const imageUrl of imageUrls) {
+        const result = await uploadImageFromUrl(payload, imageUrl, title)
+
+        uploadedImages.push(result.media)
+
+        if (result.reused) {
+          imagesReused++
+        } else {
+          imagesUploaded++
+        }
+      }
+
       const existing = await payload.find({
         collection: 'properties',
         limit: 1,
@@ -140,7 +226,7 @@ export async function GET() {
         overrideAccess: true,
       })
 
-      const propertyData = {
+      const propertyData: any = {
         title,
         slug,
         reference,
@@ -153,6 +239,11 @@ export async function GET() {
         agency: agency.id,
         region: region.id,
         town: town.id,
+      }
+
+      if (uploadedImages.length > 0) {
+        propertyData.featuredImage = uploadedImages[0].id
+        propertyData.gallery = uploadedImages.map((image) => image.id)
       }
 
       if (existing.docs[0]) {
@@ -183,6 +274,8 @@ export async function GET() {
       created,
       updated,
       skipped,
+      imagesUploaded,
+      imagesReused,
       message: 'Feed imported successfully.',
     })
   } catch (error) {

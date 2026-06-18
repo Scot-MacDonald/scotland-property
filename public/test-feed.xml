@@ -10,6 +10,11 @@
     <longitude>-4.2247</longitude>
     <region>Highlands</region>
 <town>Inverness</town>
+<images>
+  <image>https://picsum.photos/seed/property-1/1200/800</image>
+  <image>https://picsum.photos/seed/property-2/1200/800</image>
+  <image>https://picsum.photos/seed/property-3/1200/800</image>
+</images>
     <description>A test imported property from an XML feed.</description>
   </property>
 </properties>

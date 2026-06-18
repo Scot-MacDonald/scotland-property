@@ -30,6 +30,13 @@ export const Media: CollectionConfig = {
       //required: true,
     },
     {
+      name: 'crmImageUrl',
+      type: 'text',
+      admin: {
+        hidden: true,
+      },
+    },
+    {
       name: 'caption',
       type: 'richText',
       editor: lexicalEditor({
