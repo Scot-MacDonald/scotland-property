@@ -18,5 +18,10 @@
   <image>https://picsum.photos/seed/property-3/1200/800</image>
 </images>
     <description>A test imported property from an XML feed.</description>
+    <agent>
+  <name>Sarah MacDonald</name>
+  <email>sarah@rettie.co.uk</email>
+  <phone>0131 555 1234</phone>
+</agent>
   </property>
 </properties>

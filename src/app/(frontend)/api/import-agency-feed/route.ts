@@ -116,6 +116,85 @@ async function findPropertyType(payload: any, propertyTypeName: string) {
   return result.docs[0] || null
 }
 
+async function findOrCreateAgent(payload: any, feedAgent: any, agencyId: string) {
+  const agentName = String(feedAgent?.name || '').trim()
+  const agentEmail = String(feedAgent?.email || '').trim()
+  const agentPhone = String(feedAgent?.phone || '').trim()
+
+  if (!agentName && !agentEmail) {
+    return null
+  }
+
+  if (agentEmail) {
+    const existingByEmail = await payload.find({
+      collection: 'agents',
+      limit: 1,
+      where: {
+        and: [
+          {
+            email: {
+              equals: agentEmail,
+            },
+          },
+          {
+            agency: {
+              equals: agencyId,
+            },
+          },
+        ],
+      },
+      overrideAccess: true,
+    })
+
+    if (existingByEmail.docs[0]) {
+      return existingByEmail.docs[0]
+    }
+  }
+
+  if (agentName) {
+    const existingByName = await payload.find({
+      collection: 'agents',
+      limit: 1,
+      where: {
+        and: [
+          {
+            name: {
+              equals: agentName,
+            },
+          },
+          {
+            agency: {
+              equals: agencyId,
+            },
+          },
+        ],
+      },
+      overrideAccess: true,
+    })
+
+    if (existingByName.docs[0]) {
+      return existingByName.docs[0]
+    }
+  }
+
+  const slugBase = createSlug(agentName || agentEmail)
+  const slug = `${slugBase}-${agencyId}`
+
+  const agent = await payload.create({
+    collection: 'agents',
+    data: {
+      name: agentName || agentEmail,
+      slug,
+      email: agentEmail || undefined,
+      phone: agentPhone || undefined,
+      agency: agencyId,
+    },
+    overrideAccess: true,
+  })
+
+  return agent
+}
+
 export async function GET() {
   const payload = await getPayload({ config: configPromise })
 
@@ -188,6 +267,7 @@ export async function GET() {
     let skipped = 0
     let imagesUploaded = 0
     let imagesReused = 0
+    let agentsCreatedOrMatched = 0
 
     for (const feedProperty of feedProperties) {
       const reference = String(feedProperty.reference || '').trim()
@@ -234,10 +314,15 @@ export async function GET() {
       const region = regionResult?.docs[0]
       const town = townResult?.docs[0]
       const propertyType = await findPropertyType(payload, propertyTypeName)
+      const agent = await findOrCreateAgent(payload, feedProperty.agent, agency.id)
 
       if (!region || !town) {
         skipped++
         continue
+      }
+
+      if (agent) {
+        agentsCreatedOrMatched++
       }
 
       const imageUrls = getImageUrls(feedProperty)
@@ -286,6 +371,10 @@ export async function GET() {
         propertyData.propertyType = propertyType.id
       }
 
+      if (agent) {
+        propertyData.agent = agent.id
+      }
+
       if (uploadedImages.length > 0) {
         propertyData.featuredImage = uploadedImages[0].id
         propertyData.gallery = uploadedImages.map((image) => image.id)
@@ -321,6 +410,7 @@ export async function GET() {
       skipped,
       imagesUploaded,
       imagesReused,
+      agentsCreatedOrMatched,
       message: 'Feed imported successfully.',
     })
   } catch (error) {
