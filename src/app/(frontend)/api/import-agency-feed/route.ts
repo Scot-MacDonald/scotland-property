@@ -10,6 +10,24 @@ function createSlug(value: string) {
     .replace(/(^-|-$)/g, '')
 }
 
+function mapPropertyStatus(status: string) {
+  const cleanStatus = status.toLowerCase().trim()
+
+  if (cleanStatus === 'sold') {
+    return 'sold'
+  }
+
+  if (
+    cleanStatus === 'reserved' ||
+    cleanStatus === 'under offer' ||
+    cleanStatus === 'under-offer'
+  ) {
+    return 'reserved'
+  }
+
+  return 'for-sale'
+}
+
 async function uploadImageFromUrl(payload: any, imageUrl: string, alt: string) {
   const existingImage = await payload.find({
     collection: 'media',
@@ -185,6 +203,7 @@ export async function GET() {
       const regionName = String(feedProperty.region || '').trim()
       const townName = String(feedProperty.town || '').trim()
       const propertyTypeName = String(feedProperty.propertyType || '').trim()
+      const status = mapPropertyStatus(String(feedProperty.status || 'For Sale'))
 
       const regionResult = regionName
         ? await payload.find({
@@ -251,6 +270,7 @@ export async function GET() {
         title,
         slug,
         reference,
+        status,
         price: Number(feedProperty.price || 0),
         bedrooms: Number(feedProperty.bedrooms || 0),
         bathrooms: Number(feedProperty.bathrooms || 0),
