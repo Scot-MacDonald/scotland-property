@@ -2,13 +2,29 @@ import type { CollectionConfig } from 'payload'
 
 const isSuperAdmin = ({ req }: any) => req.user?.role === 'super-admin'
 
+const isSelfOrSuperAdmin = ({ req }: any) => {
+  if (req.user?.role === 'super-admin') return true
+
+  if (req.user?.collection === 'buyers') {
+    return {
+      id: {
+        equals: req.user.id,
+      },
+    }
+  }
+
+  return false
+}
+
 export const Buyers: CollectionConfig = {
   slug: 'buyers',
 
+  auth: true,
+
   access: {
-    read: isSuperAdmin,
+    read: isSelfOrSuperAdmin,
     create: () => true,
-    update: isSuperAdmin,
+    update: isSelfOrSuperAdmin,
     delete: isSuperAdmin,
   },
 
@@ -22,12 +38,6 @@ export const Buyers: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
-    },
-    {
-      name: 'email',
-      type: 'email',
-      required: true,
-      unique: true,
     },
     {
       name: 'savedProperties',

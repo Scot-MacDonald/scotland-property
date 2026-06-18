@@ -6,63 +6,76 @@ import Link from 'next/link'
 const STORAGE_KEY = 'savedSearches'
 
 type SavedSearch = {
+  id?: string
   label: string
   queryString: string
   createdAt: string
 }
 
-function formatSearchLabel(queryString: string) {
-  const params = new URLSearchParams(queryString)
-  const parts: string[] = []
-
-  const minPrice = params.get('minPrice')
-  const maxPrice = params.get('maxPrice')
-  const bedrooms = params.get('bedrooms')
-
-  if (minPrice === '500000' && maxPrice === '1000000') {
-    parts.push('£500k – £1m')
-  } else if (minPrice === '1000000' && maxPrice === '2500000') {
-    parts.push('£1m – £2.5m')
-  } else if (minPrice === '2500000') {
-    parts.push('£2.5m+')
-  }
-
-  if (bedrooms) {
-    parts.push(`${bedrooms}+ Beds`)
-  }
-
-  if (params.get('region')) {
-    parts.unshift('Selected region')
-  }
-
-  if (params.get('town')) {
-    parts.unshift('Selected town')
-  }
-
-  if (params.get('type')) {
-    parts.push('Selected type')
-  }
-
-  if (params.get('amenities')) {
-    parts.push('Selected amenity')
-  }
-
-  return parts.length > 0 ? parts.join(' · ') : 'All properties'
-}
-
 export function SavedSearchesList() {
   const [searches, setSearches] = useState<SavedSearch[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const savedSearches = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
-    setSearches(savedSearches)
+    async function loadSearches() {
+      try {
+        const res = await fetch('/api/saved-searches', {
+          method: 'GET',
+          credentials: 'include',
+        })
+
+        const data = await res.json()
+
+        if (data.ok && Array.isArray(data.savedSearches)) {
+          setSearches(data.savedSearches)
+          setLoading(false)
+          return
+        }
+      } catch (error) {
+        console.error(error)
+      }
+
+      const localSavedSearches = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+      setSearches(localSavedSearches)
+      setLoading(false)
+    }
+
+    loadSearches()
   }, [])
 
-  function removeSearch(queryString: string) {
+  async function removeSearch(queryString: string) {
+    try {
+      const res = await fetch('/api/saved-searches', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          queryString,
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+
+        if (data.ok && Array.isArray(data.savedSearches)) {
+          setSearches(data.savedSearches)
+          return
+        }
+      }
+    } catch (error) {
+      console.error(error)
+    }
+
     const nextSearches = searches.filter((search) => search.queryString !== queryString)
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSearches))
     setSearches(nextSearches)
+  }
+
+  if (loading) {
+    return <div className="border p-8">Loading saved searches...</div>
   }
 
   if (searches.length === 0) {
@@ -89,7 +102,7 @@ export function SavedSearchesList() {
           className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between"
         >
           <div>
-            <p className="text-lg font-medium"> {search.label}</p>
+            <p className="text-lg font-medium">{search.label}</p>
 
             <p className="mt-1 text-sm text-muted-foreground">
               Saved {new Date(search.createdAt).toLocaleDateString('en-GB')}

@@ -10,20 +10,70 @@ const STORAGE_KEY = 'savedProperties'
 
 export function SavePropertyButton({ propertyId }: Props) {
   const [saved, setSaved] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    const savedProperties = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
-    setSaved(savedProperties.includes(propertyId))
+    async function checkSaved() {
+      try {
+        const res = await fetch('/api/saved-properties', {
+          method: 'GET',
+          credentials: 'include',
+        })
+
+        const data = await res.json()
+
+        if (data.ok && Array.isArray(data.savedProperties)) {
+          const accountSavedIds = data.savedProperties.map((property: any) =>
+            typeof property === 'object' ? property.id : property,
+          )
+
+          setSaved(accountSavedIds.includes(propertyId))
+          return
+        }
+      } catch (error) {
+        console.error(error)
+      }
+
+      const localSavedProperties = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+      setSaved(localSavedProperties.includes(propertyId))
+    }
+
+    checkSaved()
   }, [propertyId])
 
-  function toggleSaved(event: React.MouseEvent<HTMLButtonElement>) {
+  async function toggleSaved(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault()
 
-    const savedProperties: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+    setLoading(true)
 
-    const nextSavedProperties = savedProperties.includes(propertyId)
-      ? savedProperties.filter((id) => id !== propertyId)
-      : [...savedProperties, propertyId]
+    try {
+      const res = await fetch('/api/saved-properties', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          propertyId,
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setSaved(data.saved)
+        return
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+
+    const localSavedProperties: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+
+    const nextSavedProperties = localSavedProperties.includes(propertyId)
+      ? localSavedProperties.filter((id) => id !== propertyId)
+      : [...localSavedProperties, propertyId]
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSavedProperties))
     setSaved(nextSavedProperties.includes(propertyId))
@@ -33,10 +83,11 @@ export function SavePropertyButton({ propertyId }: Props) {
     <button
       type="button"
       onClick={toggleSaved}
-      className="absolute right-3 top-3 z-10 bg-white/95 px-3 py-2 text-sm shadow-sm"
+      disabled={loading}
+      className="absolute right-3 top-3 z-10 bg-white/95 px-3 py-2 text-sm shadow-sm disabled:opacity-50"
       aria-label={saved ? 'Remove saved property' : 'Save property'}
     >
-      {saved ? '♥ Saved' : '♡ Save'}
+      {loading ? 'Saving...' : saved ? '♥ Saved' : '♡ Save'}
     </button>
   )
 }
