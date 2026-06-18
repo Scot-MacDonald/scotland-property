@@ -79,6 +79,25 @@ function getImageUrls(feedProperty: any) {
   return [String(rawImages).trim()].filter(Boolean)
 }
 
+async function findPropertyType(payload: any, propertyTypeName: string) {
+  if (!propertyTypeName) {
+    return null
+  }
+
+  const result = await payload.find({
+    collection: 'property-types',
+    limit: 1,
+    where: {
+      name: {
+        equals: propertyTypeName,
+      },
+    },
+    overrideAccess: true,
+  })
+
+  return result.docs[0] || null
+}
+
 export async function GET() {
   const payload = await getPayload({ config: configPromise })
 
@@ -165,6 +184,7 @@ export async function GET() {
 
       const regionName = String(feedProperty.region || '').trim()
       const townName = String(feedProperty.town || '').trim()
+      const propertyTypeName = String(feedProperty.propertyType || '').trim()
 
       const regionResult = regionName
         ? await payload.find({
@@ -194,6 +214,7 @@ export async function GET() {
 
       const region = regionResult?.docs[0]
       const town = townResult?.docs[0]
+      const propertyType = await findPropertyType(payload, propertyTypeName)
 
       if (!region || !town) {
         skipped++
@@ -239,6 +260,10 @@ export async function GET() {
         agency: agency.id,
         region: region.id,
         town: town.id,
+      }
+
+      if (propertyType) {
+        propertyData.propertyType = propertyType.id
       }
 
       if (uploadedImages.length > 0) {

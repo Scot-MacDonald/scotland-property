@@ -4,6 +4,7 @@
     <reference>TEST-001</reference>
     <title>Imported Highland House</title>
     <price>1250000</price>
+    <propertyType>Estate</propertyType>
     <bedrooms>4</bedrooms>
     <bathrooms>3</bathrooms>
     <latitude>57.4778</latitude>
