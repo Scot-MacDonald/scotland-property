@@ -226,17 +226,23 @@ async function findOrCreateAgent(payload: any, feedAgent: any, agencyId: string)
   return agent
 }
 
-export async function importAgencyFeed() {
+export async function importAgencyFeed(agencyId?: string) {
   const payload = await getPayload({ config: configPromise })
 
   const agencies = await payload.find({
     collection: 'agencies',
     limit: 1,
-    where: {
-      'crm.enabled': {
-        equals: true,
-      },
-    },
+    where: agencyId
+      ? {
+          id: {
+            equals: agencyId,
+          },
+        }
+      : {
+          'crm.enabled': {
+            equals: true,
+          },
+        },
     overrideAccess: true,
   })
 
@@ -499,5 +505,38 @@ export async function importAgencyFeed() {
       message: 'Feed import failed.',
       error: error instanceof Error ? error.message : 'Unknown error',
     }
+  }
+}
+
+export async function importAllAgencyFeeds() {
+  const payload = await getPayload({ config: configPromise })
+
+  const agencies = await payload.find({
+    collection: 'agencies',
+    limit: 100,
+    where: {
+      'crm.enabled': {
+        equals: true,
+      },
+    },
+    overrideAccess: true,
+  })
+
+  const results = []
+
+  for (const agency of agencies.docs) {
+    const result = await importAgencyFeed(agency.id)
+    results.push(result)
+  }
+
+  const successful = results.filter((result: any) => result.ok).length
+  const failed = results.filter((result: any) => !result.ok).length
+
+  return {
+    ok: failed === 0,
+    agenciesFound: agencies.docs.length,
+    successful,
+    failed,
+    results,
   }
 }

@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server'
-import { importAgencyFeed } from '@/lib/importAgencyFeed'
+import { importAllAgencyFeeds } from '@/lib/importAgencyFeed'
 
 export async function GET() {
-  const result = await importAgencyFeed()
-
-  return NextResponse.json({
-    ok: true,
-    type: 'scheduled-import',
-    result,
-  })
+  return NextResponse.json(await importAllAgencyFeeds())
 }
