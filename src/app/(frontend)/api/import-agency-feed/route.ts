@@ -97,6 +97,20 @@ function getImageUrls(feedProperty: any) {
   return [String(rawImages).trim()].filter(Boolean)
 }
 
+function getAmenityNames(feedProperty: any) {
+  const rawAmenities = feedProperty.amenities?.amenity
+
+  if (!rawAmenities) {
+    return []
+  }
+
+  if (Array.isArray(rawAmenities)) {
+    return rawAmenities.map((amenity) => String(amenity).trim()).filter(Boolean)
+  }
+
+  return [String(rawAmenities).trim()].filter(Boolean)
+}
+
 async function findPropertyType(payload: any, propertyTypeName: string) {
   if (!propertyTypeName) {
     return null
@@ -114,6 +128,34 @@ async function findPropertyType(payload: any, propertyTypeName: string) {
   })
 
   return result.docs[0] || null
+}
+
+async function findAmenities(payload: any, amenityNames: string[]) {
+  const allAmenities = await payload.find({
+    collection: 'amenities',
+    limit: 100,
+    overrideAccess: true,
+  })
+
+  const amenityIds = []
+
+  for (const amenityName of amenityNames) {
+    const cleanFeedName = amenityName.toLowerCase().trim()
+
+    const match = allAmenities.docs.find((amenity: any) => {
+      return (
+        String(amenity.name || '')
+          .toLowerCase()
+          .trim() === cleanFeedName
+      )
+    })
+
+    if (match) {
+      amenityIds.push(match.id)
+    }
+  }
+
+  return amenityIds
 }
 
 async function findOrCreateAgent(payload: any, feedAgent: any, agencyId: string) {
@@ -268,6 +310,7 @@ export async function GET() {
     let imagesUploaded = 0
     let imagesReused = 0
     let agentsCreatedOrMatched = 0
+    let amenitiesMatched = 0
 
     for (const feedProperty of feedProperties) {
       const reference = String(feedProperty.reference || '').trim()
@@ -284,6 +327,7 @@ export async function GET() {
       const townName = String(feedProperty.town || '').trim()
       const propertyTypeName = String(feedProperty.propertyType || '').trim()
       const status = mapPropertyStatus(String(feedProperty.status || 'For Sale'))
+      const amenityNames = getAmenityNames(feedProperty)
 
       const regionResult = regionName
         ? await payload.find({
@@ -314,6 +358,7 @@ export async function GET() {
       const region = regionResult?.docs[0]
       const town = townResult?.docs[0]
       const propertyType = await findPropertyType(payload, propertyTypeName)
+      const amenityIds = await findAmenities(payload, amenityNames)
       const agent = await findOrCreateAgent(payload, feedProperty.agent, agency.id)
 
       if (!region || !town) {
@@ -324,6 +369,8 @@ export async function GET() {
       if (agent) {
         agentsCreatedOrMatched++
       }
+
+      amenitiesMatched += amenityIds.length
 
       const imageUrls = getImageUrls(feedProperty)
       const uploadedImages = []
@@ -371,6 +418,10 @@ export async function GET() {
         propertyData.propertyType = propertyType.id
       }
 
+      if (amenityIds.length > 0) {
+        propertyData.amenities = amenityIds
+      }
+
       if (agent) {
         propertyData.agent = agent.id
       }
@@ -411,6 +462,7 @@ export async function GET() {
       imagesUploaded,
       imagesReused,
       agentsCreatedOrMatched,
+      amenitiesMatched,
       message: 'Feed imported successfully.',
     })
   } catch (error) {
