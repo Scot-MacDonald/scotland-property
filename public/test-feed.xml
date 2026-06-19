@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <properties>
   <property>
-    <reference>TEST-001</reference>
+    <reference>TEST-002</reference>
     <title>Imported Highland House</title>
     <price>1250000</price>
     <propertyType>Estate</propertyType>

@@ -21,6 +21,7 @@ import { Agencies } from './collections/Agencies'
 import { Enquiries } from './collections/Enquiries'
 import { Buyers } from './collections/Buyers'
 import { ImportLogs } from './collections/ImportLogs'
+import { AlertLogs } from './collections/AlertLogs'
 
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -96,6 +97,7 @@ export default buildConfig({
     Enquiries,
     Buyers,
     ImportLogs,
+    AlertLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

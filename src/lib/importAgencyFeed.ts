@@ -1,6 +1,7 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { XMLParser } from 'fast-xml-parser'
+import { sendPropertyAlerts } from './sendPropertyAlerts'
 
 function createSlug(value: string) {
   return value
@@ -446,13 +447,27 @@ export async function importAgencyFeed(agencyId?: string) {
 
         updated++
       } else {
-        await payload.create({
+        const createdProperty = await payload.create({
           collection: 'properties',
           data: propertyData,
           overrideAccess: true,
         })
 
         created++
+
+        try {
+          const alertResult = await sendPropertyAlerts(createdProperty.id)
+
+          payload.logger.info(
+            `Property alerts: ${alertResult.emailsSent} sent, ${alertResult.emailsSkipped} skipped`,
+          )
+        } catch (error) {
+          payload.logger.error(
+            `Property alert failure for ${createdProperty.id}: ${
+              error instanceof Error ? error.message : 'Unknown error'
+            }`,
+          )
+        }
       }
     }
 
