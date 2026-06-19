@@ -84,6 +84,7 @@ export interface Config {
     enquiries: Enquiry;
     buyers: Buyer;
     'import-logs': ImportLog;
+    'alert-logs': AlertLog;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-kv': PayloadKv;
@@ -115,6 +116,7 @@ export interface Config {
     enquiries: EnquiriesSelect<false> | EnquiriesSelect<true>;
     buyers: BuyersSelect<false> | BuyersSelect<true>;
     'import-logs': ImportLogsSelect<false> | ImportLogsSelect<true>;
+    'alert-logs': AlertLogsSelect<false> | AlertLogsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1076,6 +1078,22 @@ export interface ImportLog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "alert-logs".
+ */
+export interface AlertLog {
+  id: string;
+  buyer: string | Buyer;
+  buyerEmail: string;
+  property: string | Property;
+  propertyTitle: string;
+  savedSearchLabel: string;
+  savedSearchQuery: string;
+  sentAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
@@ -1270,6 +1288,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'import-logs';
         value: string | ImportLog;
+      } | null)
+    | ({
+        relationTo: 'alert-logs';
+        value: string | AlertLog;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1847,6 +1869,21 @@ export interface ImportLogsSelect<T extends boolean = true> {
   agentsMatched?: T;
   amenitiesMatched?: T;
   errorMessage?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "alert-logs_select".
+ */
+export interface AlertLogsSelect<T extends boolean = true> {
+  buyer?: T;
+  buyerEmail?: T;
+  property?: T;
+  propertyTitle?: T;
+  savedSearchLabel?: T;
+  savedSearchQuery?: T;
+  sentAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

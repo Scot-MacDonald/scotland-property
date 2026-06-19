@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { RunImportButton } from '@/components/RunImportButton'
 
 export default async function DashboardPage() {
   const payload = await getPayload({ config: configPromise })
@@ -14,11 +15,17 @@ export default async function DashboardPage() {
     redirect('/admin/login')
   }
 
-  const isSuperAdmin = user.role === 'super-admin'
+  if (user.collection !== 'users') {
+    redirect('/login')
+  }
 
-  const agencyId = typeof user.agency === 'object' ? user.agency?.id : user.agency
+  const userAsAny = user as any
 
-  const agencyFilter =
+  const isSuperAdmin = userAsAny.role === 'super-admin'
+
+  const agencyId = typeof userAsAny.agency === 'object' ? userAsAny.agency?.id : userAsAny.agency
+
+  const agencyFilter: any =
     !isSuperAdmin && agencyId
       ? {
           agency: {
@@ -78,6 +85,37 @@ export default async function DashboardPage() {
     overrideAccess: true,
   })
 
+  const agencies = await payload.find({
+    collection: 'agencies',
+    depth: 1,
+    limit: 100,
+    overrideAccess: true,
+    where:
+      !isSuperAdmin && agencyId
+        ? {
+            id: {
+              equals: agencyId,
+            },
+          }
+        : undefined,
+  })
+
+  const importLogs = await payload.find({
+    collection: 'import-logs',
+    sort: '-createdAt',
+    limit: 50,
+    overrideAccess: true,
+  })
+
+  const agencyImportData = agencies.docs.map((agency: any) => {
+    const latestLog = importLogs.docs.find((log: any) => log.agencyName === agency.name)
+
+    return {
+      agency,
+      latestLog,
+    }
+  })
+
   return (
     <main className="mx-auto w-full max-w-[1680px] px-4 py-16 md:px-8">
       <div className="mb-10">
@@ -88,7 +126,7 @@ export default async function DashboardPage() {
         <h1 className="mt-2 text-5xl font-medium tracking-tight">Welcome back</h1>
 
         <p className="mt-4 max-w-2xl text-muted-foreground">
-          Manage your properties, agents and enquiries from one place.
+          Manage your properties, agents, enquiries and CRM feed activity from one place.
         </p>
       </div>
 
@@ -113,6 +151,97 @@ export default async function DashboardPage() {
           href="/admin/collections/enquiries?where[status][equals]=new"
         />
       </div>
+
+      <section className="mt-16">
+        <div className="mb-6 flex items-end justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.25em] text-muted-foreground">CRM</p>
+
+            <h2 className="mt-2 text-3xl font-medium">Import Status</h2>
+          </div>
+
+          <Link href="/admin/collections/import-logs" className="border px-4 py-2 text-sm">
+            View Import Logs
+          </Link>
+        </div>
+
+        <div className="grid gap-4">
+          {agencyImportData.map(({ agency, latestLog }: any) => (
+            <section key={agency.id} className="border p-6">
+              <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+                <div>
+                  <h3 className="text-2xl font-medium">{agency.name}</h3>
+
+                  <div className="mt-4 space-y-1 text-sm">
+                    <p>
+                      <span className="text-muted-foreground">CRM enabled:</span>{' '}
+                      {agency.crm?.enabled ? 'Yes' : 'No'}
+                    </p>
+
+                    <p>
+                      <span className="text-muted-foreground">CRM type:</span>{' '}
+                      {agency.crm?.type || 'Not set'}
+                    </p>
+
+                    <p className="break-all">
+                      <span className="text-muted-foreground">Feed URL:</span>{' '}
+                      {agency.crm?.feedUrl || 'Not set'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border p-4 text-sm">
+                  <p className="font-medium">Latest Import</p>
+
+                  {latestLog ? (
+                    <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
+                      <p className="text-muted-foreground">Status</p>
+                      <p className="capitalize">{latestLog.status}</p>
+
+                      <p className="text-muted-foreground">Found</p>
+                      <p>{latestLog.found ?? 0}</p>
+
+                      <p className="text-muted-foreground">Created</p>
+                      <p>{latestLog.created ?? 0}</p>
+
+                      <p className="text-muted-foreground">Updated</p>
+                      <p>{latestLog.updated ?? 0}</p>
+
+                      <p className="text-muted-foreground">Skipped</p>
+                      <p>{latestLog.skipped ?? 0}</p>
+
+                      <p className="text-muted-foreground">Images</p>
+                      <p>
+                        {latestLog.imagesUploaded ?? 0} uploaded / {latestLog.imagesReused ?? 0}{' '}
+                        reused
+                      </p>
+
+                      <p className="text-muted-foreground">Date</p>
+                      <p>{new Date(latestLog.createdAt).toLocaleString('en-GB')}</p>
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-muted-foreground">No imports yet.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6 flex flex-wrap items-start gap-3">
+                <Link href={`/agency/${agency.slug}`} className="border px-4 py-2 text-sm">
+                  View Agency Page
+                </Link>
+
+                <Link
+                  href={`/admin/collections/agencies/${agency.id}`}
+                  className="border px-4 py-2 text-sm"
+                >
+                  Edit Agency
+                </Link>
+                {agency.crm?.enabled ? <RunImportButton agencyId={agency.id} /> : null}
+              </div>
+            </section>
+          ))}
+        </div>
+      </section>
 
       <section className="mt-16">
         <div className="mb-6 flex items-end justify-between">
