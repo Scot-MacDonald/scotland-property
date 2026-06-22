@@ -1112,6 +1112,11 @@ export interface ValuationLead {
   message?: string | null;
   status?: ('new' | 'contacted' | 'valuation-booked' | 'instruction-won' | 'lost') | null;
   /**
+   * Internal notes about calls, valuations and follow-ups.
+   */
+  notes?: string | null;
+  source?: ('website' | 'google-ads' | 'facebook' | 'agency-referral') | null;
+  /**
    * Optional agency assigned to this valuation lead.
    */
   assignedAgency?: (string | null) | Agency;
@@ -1930,6 +1935,8 @@ export interface ValuationLeadsSelect<T extends boolean = true> {
   estimatedValue?: T;
   message?: T;
   status?: T;
+  notes?: T;
+  source?: T;
   assignedAgency?: T;
   updatedAt?: T;
   createdAt?: T;

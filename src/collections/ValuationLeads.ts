@@ -22,7 +22,7 @@ export const ValuationLeads: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     group: 'Leads',
-    defaultColumns: ['name', 'email', 'postcode', 'propertyType', 'status', 'createdAt'],
+    defaultColumns: ['name', 'postcode', 'estimatedValue', 'status', 'assignedAgency', 'createdAt'],
   },
 
   access: {
@@ -85,6 +85,24 @@ export const ValuationLeads: CollectionConfig = {
         { label: 'Valuation Booked', value: 'valuation-booked' },
         { label: 'Instruction Won', value: 'instruction-won' },
         { label: 'Lost', value: 'lost' },
+      ],
+    },
+    {
+      name: 'notes',
+      type: 'textarea',
+      admin: {
+        description: 'Internal notes about calls, valuations and follow-ups.',
+      },
+    },
+    {
+      name: 'source',
+      type: 'select',
+      defaultValue: 'website',
+      options: [
+        { label: 'Website', value: 'website' },
+        { label: 'Google Ads', value: 'google-ads' },
+        { label: 'Facebook', value: 'facebook' },
+        { label: 'Agency Referral', value: 'agency-referral' },
       ],
     },
     {
