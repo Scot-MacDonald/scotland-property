@@ -22,6 +22,7 @@ import { Enquiries } from './collections/Enquiries'
 import { Buyers } from './collections/Buyers'
 import { ImportLogs } from './collections/ImportLogs'
 import { AlertLogs } from './collections/AlertLogs'
+import { ValuationLeads } from './collections/ValuationLeads'
 
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -98,6 +99,7 @@ export default buildConfig({
     Buyers,
     ImportLogs,
     AlertLogs,
+    ValuationLeads,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

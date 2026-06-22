@@ -85,6 +85,7 @@ export interface Config {
     buyers: Buyer;
     'import-logs': ImportLog;
     'alert-logs': AlertLog;
+    'valuation-leads': ValuationLead;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-kv': PayloadKv;
@@ -117,6 +118,7 @@ export interface Config {
     buyers: BuyersSelect<false> | BuyersSelect<true>;
     'import-logs': ImportLogsSelect<false> | ImportLogsSelect<true>;
     'alert-logs': AlertLogsSelect<false> | AlertLogsSelect<true>;
+    'valuation-leads': ValuationLeadsSelect<false> | ValuationLeadsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1094,6 +1096,30 @@ export interface AlertLog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "valuation-leads".
+ */
+export interface ValuationLead {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  postcode: string;
+  propertyType?: ('house' | 'flat' | 'estate' | 'land' | 'commercial' | 'other') | null;
+  /**
+   * Optional estimated value entered by the owner.
+   */
+  estimatedValue?: number | null;
+  message?: string | null;
+  status?: ('new' | 'contacted' | 'valuation-booked' | 'instruction-won' | 'lost') | null;
+  /**
+   * Optional agency assigned to this valuation lead.
+   */
+  assignedAgency?: (string | null) | Agency;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
@@ -1292,6 +1318,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'alert-logs';
         value: string | AlertLog;
+      } | null)
+    | ({
+        relationTo: 'valuation-leads';
+        value: string | ValuationLead;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1884,6 +1914,23 @@ export interface AlertLogsSelect<T extends boolean = true> {
   savedSearchLabel?: T;
   savedSearchQuery?: T;
   sentAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "valuation-leads_select".
+ */
+export interface ValuationLeadsSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  phone?: T;
+  postcode?: T;
+  propertyType?: T;
+  estimatedValue?: T;
+  message?: T;
+  status?: T;
+  assignedAgency?: T;
   updatedAt?: T;
   createdAt?: T;
 }
