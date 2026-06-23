@@ -504,6 +504,15 @@ export interface Agency {
   };
   featured?: boolean | null;
   /**
+   * Postcode areas this agency covers. Example: EH1, EH2, G1, AB10
+   */
+  coveragePostcodes?:
+    | {
+        postcode: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * Optional CRM/feed settings for automatic property imports.
    */
   crm?: {
@@ -1769,6 +1778,12 @@ export interface AgenciesSelect<T extends boolean = true> {
         country?: T;
       };
   featured?: T;
+  coveragePostcodes?:
+    | T
+    | {
+        postcode?: T;
+        id?: T;
+      };
   crm?:
     | T
     | {

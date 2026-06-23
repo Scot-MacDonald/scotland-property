@@ -16,6 +16,26 @@ const agencyOnly = ({ req }: any) => {
   return false
 }
 
+function getPostcodeArea(postcode?: string) {
+  if (!postcode) return null
+
+  const clean = postcode.toUpperCase().trim()
+
+  const match = clean.match(/^([A-Z]{1,2}\d{1,2}[A-Z]?)/)
+
+  return match?.[1] || null
+}
+
+function formatMoney(value?: number) {
+  if (!value) return 'Not provided'
+
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
 export const ValuationLeads: CollectionConfig = {
   slug: 'valuation-leads',
 
@@ -30,6 +50,81 @@ export const ValuationLeads: CollectionConfig = {
     create: () => true,
     update: agencyOnly,
     delete: isSuperAdmin,
+  },
+
+  hooks: {
+    beforeChange: [
+      async ({ data, req, operation }) => {
+        if (operation !== 'create') return data
+        if (data.assignedAgency) return data
+
+        const postcodeArea = getPostcodeArea(data.postcode)
+
+        if (!postcodeArea) return data
+
+        const agencies = await req.payload.find({
+          collection: 'agencies',
+          limit: 100,
+          overrideAccess: true,
+        })
+
+        const matchingAgency = agencies.docs.find((agency: any) => {
+          const coveragePostcodes = agency.coveragePostcodes || []
+
+          return coveragePostcodes.some((item: any) => {
+            return item?.postcode?.toUpperCase().trim() === postcodeArea
+          })
+        })
+
+        if (matchingAgency) {
+          return {
+            ...data,
+            assignedAgency: matchingAgency.id,
+          }
+        }
+
+        return data
+      },
+    ],
+
+    afterChange: [
+      async ({ doc, req, operation }) => {
+        if (operation !== 'create') return
+        if (!doc.assignedAgency) return
+
+        const agencyId =
+          typeof doc.assignedAgency === 'object' ? doc.assignedAgency.id : doc.assignedAgency
+
+        const agency = await req.payload.findByID({
+          collection: 'agencies',
+          id: agencyId,
+          overrideAccess: true,
+        })
+
+        if (!agency?.email) return
+
+        await req.payload.sendEmail({
+          to: agency.email,
+          subject: `New valuation lead: ${doc.postcode}`,
+          html: `
+          <h2>New valuation lead</h2>
+
+          <p><strong>Name:</strong> ${doc.name}</p>
+          <p><strong>Email:</strong> ${doc.email}</p>
+          <p><strong>Phone:</strong> ${doc.phone || 'Not provided'}</p>
+          <p><strong>Postcode:</strong> ${doc.postcode}</p>
+          <p><strong>Property type:</strong> ${doc.propertyType || 'Not provided'}</p>
+          <p><strong>Estimated value:</strong> ${formatMoney(doc.estimatedValue)}</p>
+
+          ${doc.message ? `<p><strong>Message:</strong><br />${doc.message}</p>` : ''}
+
+          <p>
+            Please log in to the admin dashboard to manage this lead.
+          </p>
+        `,
+        })
+      },
+    ],
   },
 
   fields: [

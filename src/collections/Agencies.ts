@@ -103,6 +103,21 @@ export const Agencies: CollectionConfig = {
       defaultValue: false,
     },
     {
+      name: 'coveragePostcodes',
+      type: 'array',
+      label: 'Coverage Postcodes',
+      admin: {
+        description: 'Postcode areas this agency covers. Example: EH1, EH2, G1, AB10',
+      },
+      fields: [
+        {
+          name: 'postcode',
+          type: 'text',
+          required: true,
+        },
+      ],
+    },
+    {
       name: 'crm',
       type: 'group',
       admin: {
