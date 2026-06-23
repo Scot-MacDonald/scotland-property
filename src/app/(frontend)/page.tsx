@@ -1,12 +1,13 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import Link from 'next/link'
-import { PropertyMap } from '@/components/PropertyMap'
+
 import { HomeSearch } from '@/components/HomeSearch'
 import { PropertyCardSlider } from '@/components/PropertyCardSlider'
 import { SavePropertyButton } from '@/components/SavePropertyButton'
 import { SavedHeaderLinks } from '@/components/SavedHeaderLinks'
 
+import { PropertyMapClient } from '@/components/PropertyMapClient'
 export default async function HomePage() {
   const payload = await getPayload({ config: configPromise })
 
@@ -179,7 +180,7 @@ export default async function HomePage() {
             <PropertyCard key={property.id} property={property} />
           ))}
           <div className="min-h-[520px] overflow-hidden border lg:row-span-2">
-            <PropertyMap properties={mapProperties} />
+            <PropertyMapClient properties={mapProperties} />
           </div>
           {properties.docs.slice(2, 4).map((property) => (
             <PropertyCard key={property.id} property={property} />

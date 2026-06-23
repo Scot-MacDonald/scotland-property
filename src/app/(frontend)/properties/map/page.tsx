@@ -1,7 +1,7 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import Link from 'next/link'
-import { PropertyMap } from '@/components/PropertyMap'
+import { PropertyMapClient } from '@/components/PropertyMapClient'
 
 export default async function PropertiesMapPage() {
   const payload = await getPayload({ config: configPromise })
@@ -83,7 +83,7 @@ export default async function PropertiesMapPage() {
         </aside>
 
         <section className="h-screen">
-          <PropertyMap properties={mapProperties} />
+          <PropertyMapClient properties={mapProperties} />
         </section>
       </div>
     </main>
