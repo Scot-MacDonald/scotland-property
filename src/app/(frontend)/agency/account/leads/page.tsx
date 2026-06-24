@@ -56,6 +56,55 @@ export default async function AgencyLeadsPage({
     ...(where ? { where } : {}),
   })
 
+  const allLeadsCount = await payload.count({
+    collection: 'valuation-leads',
+  })
+
+  const newLeadsCount = await payload.count({
+    collection: 'valuation-leads',
+    where: {
+      status: {
+        equals: 'new',
+      },
+    },
+  })
+
+  const contactedLeadsCount = await payload.count({
+    collection: 'valuation-leads',
+    where: {
+      status: {
+        equals: 'contacted',
+      },
+    },
+  })
+
+  const bookedLeadsCount = await payload.count({
+    collection: 'valuation-leads',
+    where: {
+      status: {
+        equals: 'valuation-booked',
+      },
+    },
+  })
+
+  const wonLeadsCount = await payload.count({
+    collection: 'valuation-leads',
+    where: {
+      status: {
+        equals: 'instruction-won',
+      },
+    },
+  })
+
+  const lostLeadsCount = await payload.count({
+    collection: 'valuation-leads',
+    where: {
+      status: {
+        equals: 'lost',
+      },
+    },
+  })
+
   return (
     <main className="mx-auto w-full max-w-[1400px] px-4 py-16 md:px-8">
       <div className="mb-10 flex items-end justify-between gap-6">
@@ -73,25 +122,38 @@ export default async function AgencyLeadsPage({
       </div>
 
       <div className="mb-8 flex flex-wrap gap-2">
-        <FilterLink label="All" href="/agency/account/leads" active={!status} />
-        <FilterLink label="New" href="/agency/account/leads?status=new" active={status === 'new'} />
         <FilterLink
-          label="Contacted"
+          label={`All (${allLeadsCount.totalDocs})`}
+          href="/agency/account/leads"
+          active={!status}
+        />
+
+        <FilterLink
+          label={`New (${newLeadsCount.totalDocs})`}
+          href="/agency/account/leads?status=new"
+          active={status === 'new'}
+        />
+
+        <FilterLink
+          label={`Contacted (${contactedLeadsCount.totalDocs})`}
           href="/agency/account/leads?status=contacted"
           active={status === 'contacted'}
         />
+
         <FilterLink
-          label="Valuation Booked"
+          label={`Valuation Booked (${bookedLeadsCount.totalDocs})`}
           href="/agency/account/leads?status=valuation-booked"
           active={status === 'valuation-booked'}
         />
+
         <FilterLink
-          label="Instruction Won"
+          label={`Instruction Won (${wonLeadsCount.totalDocs})`}
           href="/agency/account/leads?status=instruction-won"
           active={status === 'instruction-won'}
         />
+
         <FilterLink
-          label="Lost"
+          label={`Lost (${lostLeadsCount.totalDocs})`}
           href="/agency/account/leads?status=lost"
           active={status === 'lost'}
         />
