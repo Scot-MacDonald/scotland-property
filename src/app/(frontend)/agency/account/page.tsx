@@ -1,3 +1,6 @@
+import configPromise from '@payload-config'
+import { getPayload } from 'payload'
+import { headers } from 'next/headers'
 import Link from 'next/link'
 
 async function getAgencyStats() {
@@ -10,7 +13,33 @@ async function getAgencyStats() {
   return res.json()
 }
 
+function isAgencyUser(user: any) {
+  return user?.role === 'agency-admin' || user?.role === 'agent' || user?.role === 'super-admin'
+}
+
 export default async function AgencyAccountPage() {
+  const payload = await getPayload({ config: configPromise })
+
+  const { user } = await payload.auth({
+    headers: await headers(),
+  })
+
+  if (!isAgencyUser(user)) {
+    return (
+      <main className="mx-auto max-w-[800px] px-4 py-16">
+        <h1 className="text-3xl font-medium">Please log in</h1>
+
+        <p className="mt-4 text-muted-foreground">
+          Sign in with your agency account to view your dashboard.
+        </p>
+
+        <Link href="/agency/login" className="mt-6 inline-block bg-black px-6 py-3 text-white">
+          Agency Login
+        </Link>
+      </main>
+    )
+  }
+
   const stats = await getAgencyStats()
 
   return (
@@ -38,6 +67,10 @@ export default async function AgencyAccountPage() {
       <div className="mt-10 flex flex-wrap gap-3">
         <Link href="/agency/account/leads" className="bg-black px-6 py-3 text-white">
           View valuation leads
+        </Link>
+
+        <Link href="/agency/account/properties" className="border px-6 py-3">
+          View my properties
         </Link>
 
         <Link href="/admin/collections/properties" className="border px-6 py-3">

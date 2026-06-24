@@ -2,6 +2,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import Link from 'next/link'
+import { LeadStatusManager } from '@/components/LeadStatusManager'
 
 function formatMoney(value?: number | null) {
   if (!value) return '-'
@@ -13,7 +14,12 @@ function formatMoney(value?: number | null) {
   }).format(value)
 }
 
-export default async function AgencyLeadsPage() {
+export default async function AgencyLeadsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>
+}) {
+  const { status } = await searchParams
   const payload = await getPayload({ config: configPromise })
 
   const { user } = await payload.auth({
@@ -25,17 +31,29 @@ export default async function AgencyLeadsPage() {
       <main className="mx-auto max-w-[800px] px-4 py-16">
         <h1 className="text-3xl font-medium">Please log in</h1>
 
-        <Link href="/login" className="mt-6 inline-block bg-black px-6 py-3 text-white">
-          Login
+        <Link href="/agency/login" className="mt-6 inline-block bg-black px-6 py-3 text-white">
+          Agency Login
         </Link>
       </main>
     )
   }
 
+  const validStatuses = ['new', 'contacted', 'valuation-booked', 'instruction-won', 'lost']
+
+  const where =
+    status && validStatuses.includes(status)
+      ? {
+          status: {
+            equals: status,
+          },
+        }
+      : undefined
+
   const leads = await payload.find({
     collection: 'valuation-leads',
     sort: '-createdAt',
     limit: 50,
+    ...(where ? { where } : {}),
   })
 
   return (
@@ -52,6 +70,31 @@ export default async function AgencyLeadsPage() {
         <Link href="/agency/account" className="border px-5 py-3">
           Back to dashboard
         </Link>
+      </div>
+
+      <div className="mb-8 flex flex-wrap gap-2">
+        <FilterLink label="All" href="/agency/account/leads" active={!status} />
+        <FilterLink label="New" href="/agency/account/leads?status=new" active={status === 'new'} />
+        <FilterLink
+          label="Contacted"
+          href="/agency/account/leads?status=contacted"
+          active={status === 'contacted'}
+        />
+        <FilterLink
+          label="Valuation Booked"
+          href="/agency/account/leads?status=valuation-booked"
+          active={status === 'valuation-booked'}
+        />
+        <FilterLink
+          label="Instruction Won"
+          href="/agency/account/leads?status=instruction-won"
+          active={status === 'instruction-won'}
+        />
+        <FilterLink
+          label="Lost"
+          href="/agency/account/leads?status=lost"
+          active={status === 'lost'}
+        />
       </div>
 
       <div className="space-y-4">
@@ -106,12 +149,11 @@ export default async function AgencyLeadsPage() {
               </div>
             )}
 
-            {lead.notes && (
-              <div className="mt-6 border-t pt-6">
-                <p className="font-medium">Internal notes</p>
-                <p className="mt-2 text-muted-foreground">{lead.notes}</p>
-              </div>
-            )}
+            <LeadStatusManager
+              leadId={String(lead.id)}
+              currentStatus={lead.status || 'new'}
+              currentNotes={lead.notes}
+            />
           </div>
         ))}
 
@@ -122,5 +164,15 @@ export default async function AgencyLeadsPage() {
         )}
       </div>
     </main>
+  )
+}
+function FilterLink({ label, href, active }: { label: string; href: string; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={active ? 'bg-black px-4 py-2 text-sm text-white' : 'border px-4 py-2 text-sm'}
+    >
+      {label}
+    </Link>
   )
 }
