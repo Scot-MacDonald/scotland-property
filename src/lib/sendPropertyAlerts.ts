@@ -141,9 +141,9 @@ export async function sendPropertyAlerts(propertyId: string) {
         <p>Price: £${Number(property.price || 0).toLocaleString('en-GB')}</p>
 
         <p>
-          <a href="http://localhost:3000/property/${property.slug}">
-            View Property
-          </a>
+          <a href="${process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'}/property/${property.slug}">
+  View Property
+</a>
         </p>
       `,
     })
