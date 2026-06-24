@@ -102,6 +102,83 @@ export const Agencies: CollectionConfig = {
       type: 'checkbox',
       defaultValue: false,
     },
+
+    {
+      name: 'subscriptionPlan',
+      type: 'select',
+      defaultValue: 'starter',
+      options: [
+        {
+          label: 'Starter',
+          value: 'starter',
+        },
+        {
+          label: 'Professional',
+          value: 'professional',
+        },
+        {
+          label: 'Premium',
+          value: 'premium',
+        },
+      ],
+      admin: {
+        description: 'Controls agency listing limits and platform features.',
+      },
+    },
+
+    {
+      name: 'subscriptionStatus',
+      type: 'select',
+      defaultValue: 'trial',
+      options: [
+        {
+          label: 'Trial',
+          value: 'trial',
+        },
+        {
+          label: 'Active',
+          value: 'active',
+        },
+        {
+          label: 'Past Due',
+          value: 'past-due',
+        },
+        {
+          label: 'Cancelled',
+          value: 'cancelled',
+        },
+      ],
+      admin: {
+        description: 'Current billing/subscription status for this agency.',
+      },
+    },
+
+    {
+      name: 'trialEndsAt',
+      type: 'date',
+      admin: {
+        description: 'Optional date when the agency trial ends.',
+      },
+    },
+
+    {
+      name: 'stripeCustomerId',
+      type: 'text',
+      admin: {
+        description: 'Stripe customer ID. Used later when billing is connected.',
+        readOnly: true,
+      },
+    },
+
+    {
+      name: 'stripeSubscriptionId',
+      type: 'text',
+      admin: {
+        description: 'Stripe subscription ID. Used later when billing is connected.',
+        readOnly: true,
+      },
+    },
+
     {
       name: 'coveragePostcodes',
       type: 'array',
@@ -117,6 +194,7 @@ export const Agencies: CollectionConfig = {
         },
       ],
     },
+
     {
       name: 'crm',
       type: 'group',

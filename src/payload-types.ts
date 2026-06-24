@@ -504,6 +504,26 @@ export interface Agency {
   };
   featured?: boolean | null;
   /**
+   * Controls agency listing limits and platform features.
+   */
+  subscriptionPlan?: ('starter' | 'professional' | 'premium') | null;
+  /**
+   * Current billing/subscription status for this agency.
+   */
+  subscriptionStatus?: ('trial' | 'active' | 'past-due' | 'cancelled') | null;
+  /**
+   * Optional date when the agency trial ends.
+   */
+  trialEndsAt?: string | null;
+  /**
+   * Stripe customer ID. Used later when billing is connected.
+   */
+  stripeCustomerId?: string | null;
+  /**
+   * Stripe subscription ID. Used later when billing is connected.
+   */
+  stripeSubscriptionId?: string | null;
+  /**
    * Postcode areas this agency covers. Example: EH1, EH2, G1, AB10
    */
   coveragePostcodes?:
@@ -1778,6 +1798,11 @@ export interface AgenciesSelect<T extends boolean = true> {
         country?: T;
       };
   featured?: T;
+  subscriptionPlan?: T;
+  subscriptionStatus?: T;
+  trialEndsAt?: T;
+  stripeCustomerId?: T;
+  stripeSubscriptionId?: T;
   coveragePostcodes?:
     | T
     | {
