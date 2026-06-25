@@ -5,6 +5,8 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { RunImportButton } from '@/components/RunImportButton'
 import { ValuationLeadStatusSelect } from '@/components/ValuationLeadStatusSelect'
+import { ValuationLeadNotesButton } from '@/components/ValuationLeadNotesButton'
+import { ClickableLeadRow } from '@/components/ClickableLeadRow'
 
 export default async function DashboardPage() {
   const payload = await getPayload({ config: configPromise })
@@ -444,11 +446,7 @@ export default async function DashboardPage() {
 
         <div className="divide-y border">
           {recentValuationLeads.docs.map((lead: any) => (
-            <Link
-              key={lead.id}
-              href="/admin/collections/valuation-leads"
-              className="grid gap-4 p-5 hover:bg-gray-50 md:grid-cols-[1.5fr_1fr_1fr_1fr]"
-            >
+            <ClickableLeadRow key={lead.id} href={`/admin/collections/valuation-leads/${lead.id}`}>
               <div>
                 <p className="font-medium">{lead.name}</p>
                 <p className="text-sm text-muted-foreground">{lead.email}</p>
@@ -473,8 +471,12 @@ export default async function DashboardPage() {
                 <div className="mt-1">
                   <ValuationLeadStatusSelect leadId={lead.id} currentStatus={lead.status} />
                 </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Notes</p>
+                  <ValuationLeadNotesButton leadId={lead.id} currentNotes={lead.notes} />
+                </div>
               </div>
-            </Link>
+            </ClickableLeadRow>
           ))}
 
           {recentValuationLeads.docs.length === 0 && (
