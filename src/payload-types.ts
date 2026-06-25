@@ -1144,6 +1144,15 @@ export interface ValuationLead {
    * Internal notes about calls, valuations and follow-ups.
    */
   notes?: string | null;
+  /**
+   * Next date/time this lead should be followed up.
+   */
+  nextFollowUpAt?: string | null;
+  /**
+   * Example: Call client, send valuation pack, chase instruction.
+   */
+  nextFollowUpTask?: string | null;
+  followUpCompleted?: boolean | null;
   source?: ('website' | 'google-ads' | 'facebook' | 'agency-referral') | null;
   /**
    * Optional agency assigned to this valuation lead.
@@ -1976,6 +1985,9 @@ export interface ValuationLeadsSelect<T extends boolean = true> {
   message?: T;
   status?: T;
   notes?: T;
+  nextFollowUpAt?: T;
+  nextFollowUpTask?: T;
+  followUpCompleted?: T;
   source?: T;
   assignedAgency?: T;
   updatedAt?: T;

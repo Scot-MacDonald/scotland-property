@@ -190,6 +190,25 @@ export const ValuationLeads: CollectionConfig = {
       },
     },
     {
+      name: 'nextFollowUpAt',
+      type: 'date',
+      admin: {
+        description: 'Next date/time this lead should be followed up.',
+      },
+    },
+    {
+      name: 'nextFollowUpTask',
+      type: 'text',
+      admin: {
+        description: 'Example: Call client, send valuation pack, chase instruction.',
+      },
+    },
+    {
+      name: 'followUpCompleted',
+      type: 'checkbox',
+      defaultValue: false,
+    },
+    {
       name: 'source',
       type: 'select',
       defaultValue: 'website',
