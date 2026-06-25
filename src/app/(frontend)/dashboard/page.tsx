@@ -34,6 +34,15 @@ export default async function DashboardPage() {
         }
       : {}
 
+  const valuationLeadFilter: any =
+    !isSuperAdmin && agencyId
+      ? {
+          assignedAgency: {
+            equals: agencyId,
+          },
+        }
+      : {}
+
   const properties = await payload.count({
     collection: 'properties',
     where: agencyFilter,
@@ -49,6 +58,57 @@ export default async function DashboardPage() {
   const enquiries = await payload.count({
     collection: 'enquiries',
     where: agencyFilter,
+    overrideAccess: true,
+  })
+
+  const valuationLeads = await payload.count({
+    collection: 'valuation-leads',
+    where: valuationLeadFilter,
+    overrideAccess: true,
+  })
+
+  const newValuationLeads = await payload.count({
+    collection: 'valuation-leads',
+    where: {
+      and: [
+        valuationLeadFilter,
+        {
+          status: {
+            equals: 'new',
+          },
+        },
+      ],
+    },
+    overrideAccess: true,
+  })
+
+  const valuationsBooked = await payload.count({
+    collection: 'valuation-leads',
+    where: {
+      and: [
+        valuationLeadFilter,
+        {
+          status: {
+            equals: 'valuation-booked',
+          },
+        },
+      ],
+    },
+    overrideAccess: true,
+  })
+
+  const instructionsWon = await payload.count({
+    collection: 'valuation-leads',
+    where: {
+      and: [
+        valuationLeadFilter,
+        {
+          status: {
+            equals: 'instruction-won',
+          },
+        },
+      ],
+    },
     overrideAccess: true,
   })
 
@@ -73,6 +133,15 @@ export default async function DashboardPage() {
     limit: 5,
     sort: '-createdAt',
     where: agencyFilter,
+    overrideAccess: true,
+  })
+
+  const recentValuationLeads = await payload.find({
+    collection: 'valuation-leads',
+    depth: 1,
+    limit: 5,
+    sort: '-createdAt',
+    where: valuationLeadFilter,
     overrideAccess: true,
   })
 
@@ -146,12 +215,77 @@ export default async function DashboardPage() {
         />
 
         <DashboardCard
-          title="New Leads"
+          title="New Enquiries"
           value={newEnquiries.totalDocs}
           href="/admin/collections/enquiries?where[status][equals]=new"
         />
       </div>
 
+      <section className="mt-16">
+        <div className="mb-6">
+          <p className="text-sm uppercase tracking-[0.25em] text-muted-foreground">
+            Valuation Leads
+          </p>
+
+          <h2 className="mt-2 text-3xl font-medium">Seller Lead Performance</h2>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+          <DashboardCard
+            title="Valuation Leads"
+            value={valuationLeads.totalDocs}
+            href="/admin/collections/valuation-leads"
+          />
+
+          <DashboardCard
+            title="New Valuations"
+            value={newValuationLeads.totalDocs}
+            href="/admin/collections/valuation-leads"
+          />
+
+          <DashboardCard
+            title="Booked"
+            value={valuationsBooked.totalDocs}
+            href="/admin/collections/valuation-leads"
+          />
+
+          <DashboardCard
+            title="Won"
+            value={instructionsWon.totalDocs}
+            href="/admin/collections/valuation-leads"
+          />
+        </div>
+      </section>
+      <section className="mt-8 border p-8">
+        <h3 className="text-2xl font-medium">Seller Conversion Funnel</h3>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-4">
+          <div className="border p-5">
+            <p className="text-sm text-muted-foreground">Leads</p>
+            <p className="mt-2 text-4xl font-medium">{valuationLeads.totalDocs}</p>
+          </div>
+
+          <div className="border p-5">
+            <p className="text-sm text-muted-foreground">Booked</p>
+            <p className="mt-2 text-4xl font-medium">{valuationsBooked.totalDocs}</p>
+          </div>
+
+          <div className="border p-5">
+            <p className="text-sm text-muted-foreground">Instructions Won</p>
+            <p className="mt-2 text-4xl font-medium">{instructionsWon.totalDocs}</p>
+          </div>
+
+          <div className="border p-5">
+            <p className="text-sm text-muted-foreground">Conversion Rate</p>
+            <p className="mt-2 text-4xl font-medium">
+              {valuationLeads.totalDocs > 0
+                ? Math.round((instructionsWon.totalDocs / valuationLeads.totalDocs) * 100)
+                : 0}
+              %
+            </p>
+          </div>
+        </div>
+      </section>
       <section className="mt-16">
         <div className="mb-6 flex items-end justify-between">
           <div>
@@ -288,6 +422,60 @@ export default async function DashboardPage() {
 
           {recentEnquiries.docs.length === 0 && (
             <div className="p-6 text-muted-foreground">No enquiries yet.</div>
+          )}
+        </div>
+      </section>
+
+      <section className="mt-16">
+        <div className="mb-6 flex items-end justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.25em] text-muted-foreground">
+              Seller Leads
+            </p>
+
+            <h2 className="mt-2 text-3xl font-medium">Recent Valuation Leads</h2>
+          </div>
+
+          <Link href="/admin/collections/valuation-leads" className="border px-4 py-2 text-sm">
+            View all
+          </Link>
+        </div>
+
+        <div className="divide-y border">
+          {recentValuationLeads.docs.map((lead: any) => (
+            <Link
+              key={lead.id}
+              href="/admin/collections/valuation-leads"
+              className="grid gap-4 p-5 hover:bg-gray-50 md:grid-cols-[1.5fr_1fr_1fr_1fr]"
+            >
+              <div>
+                <p className="font-medium">{lead.name}</p>
+                <p className="text-sm text-muted-foreground">{lead.email}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-muted-foreground">Postcode</p>
+                <p className="font-medium">{lead.postcode}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-muted-foreground">Estimated Value</p>
+                <p className="font-medium">
+                  {lead.estimatedValue
+                    ? `£${lead.estimatedValue.toLocaleString('en-GB')}`
+                    : 'Not provided'}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm text-muted-foreground">Status</p>
+                <p className="font-medium capitalize">{lead.status?.replaceAll('-', ' ')}</p>
+              </div>
+            </Link>
+          ))}
+
+          {recentValuationLeads.docs.length === 0 && (
+            <div className="p-6 text-muted-foreground">No valuation leads yet.</div>
           )}
         </div>
       </section>
