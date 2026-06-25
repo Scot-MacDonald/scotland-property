@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { RunImportButton } from '@/components/RunImportButton'
+import { ValuationLeadStatusSelect } from '@/components/ValuationLeadStatusSelect'
 
 export default async function DashboardPage() {
   const payload = await getPayload({ config: configPromise })
@@ -469,7 +470,9 @@ export default async function DashboardPage() {
 
               <div>
                 <p className="text-sm text-muted-foreground">Status</p>
-                <p className="font-medium capitalize">{lead.status?.replaceAll('-', ' ')}</p>
+                <div className="mt-1">
+                  <ValuationLeadStatusSelect leadId={lead.id} currentStatus={lead.status} />
+                </div>
               </div>
             </Link>
           ))}
