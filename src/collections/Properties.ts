@@ -1,12 +1,14 @@
 import type { CollectionConfig } from 'payload'
+import { APIError } from 'payload'
 import { authenticated } from '../access/authenticated'
 
-const isSuperAdmin = ({ req }: any) => req.user?.role === 'super-admin'
+const isSuperAdmin = ({ req }: any) =>
+  req.user?.collection === 'users' && req.user?.role === 'super-admin'
 
 const agencyOnly = ({ req }: any) => {
-  if (req.user?.role === 'super-admin') return true
+  if (req.user?.collection === 'users' && req.user?.role === 'super-admin') return true
 
-  if (req.user?.agency) {
+  if (req.user?.collection === 'users' && req.user?.agency) {
     return {
       agency: {
         equals: typeof req.user.agency === 'object' ? req.user.agency.id : req.user.agency,
@@ -17,6 +19,76 @@ const agencyOnly = ({ req }: any) => {
   return false
 }
 
+function getAgencyId(value: any) {
+  if (!value) return null
+  return typeof value === 'object' ? value.id : value
+}
+
+function getListingLimit(agency: any) {
+  if (agency.subscriptionStatus === 'trial') return 5
+
+  if (agency.subscriptionPlan === 'starter') return 25
+  if (agency.subscriptionPlan === 'professional') return null
+  if (agency.subscriptionPlan === 'premium') return null
+
+  return 5
+}
+
+async function enforceListingLimit({ data, req, operation }: any) {
+  if (operation !== 'create') return data
+  if (req.user?.collection === 'users' && req.user.role === 'super-admin') return data
+
+  const agencyId =
+    req.user?.collection === 'users'
+      ? getAgencyId(data.agency || req.user.agency)
+      : getAgencyId(data.agency)
+
+  if (!agencyId) {
+    throw new APIError('A property must be assigned to an agency.', 400)
+  }
+
+  const agency = await req.payload.findByID({
+    collection: 'agencies',
+    id: agencyId,
+    overrideAccess: true,
+  })
+
+  const listingLimit = getListingLimit(agency.subscriptionPlan)
+
+  if (listingLimit === null) return data
+
+  const currentListings = await req.payload.count({
+    collection: 'properties',
+    where: {
+      and: [
+        {
+          agency: {
+            equals: agencyId,
+          },
+        },
+        {
+          status: {
+            not_equals: 'sold',
+          },
+        },
+      ],
+    },
+    overrideAccess: true,
+  })
+
+  if (currentListings.totalDocs >= listingLimit) {
+    const planName =
+      agency.subscriptionStatus === 'trial' ? 'trial' : agency.subscriptionPlan || 'starter'
+
+    throw new APIError(
+      `Listing limit reached. Your ${planName} plan allows ${listingLimit} active listings.`,
+      403,
+    )
+  }
+
+  return data
+}
+
 export const Properties: CollectionConfig = {
   slug: 'properties',
 
@@ -25,6 +97,10 @@ export const Properties: CollectionConfig = {
     create: authenticated,
     update: agencyOnly,
     delete: isSuperAdmin,
+  },
+
+  hooks: {
+    beforeChange: [enforceListingLimit],
   },
 
   admin: {
@@ -211,13 +287,14 @@ export const Properties: CollectionConfig = {
       relationTo: 'agencies',
       required: true,
       defaultValue: ({ user }) => {
-        if (user?.role === 'super-admin') return undefined
-        if (!user?.agency) return undefined
+        if (user?.collection !== 'users') return undefined
+        if (user.role === 'super-admin') return undefined
+        if (!user.agency) return undefined
 
         return typeof user.agency === 'object' ? user.agency.id : user.agency
       },
       admin: {
-        condition: (_, __, { user }) => user?.role === 'super-admin',
+        condition: (_, __, { user }) => user?.collection === 'users' && user.role === 'super-admin',
       },
     },
     {
