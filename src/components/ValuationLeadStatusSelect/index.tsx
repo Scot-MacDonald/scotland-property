@@ -21,6 +21,13 @@ export function ValuationLeadStatusSelect({
   const router = useRouter()
   const [status, setStatus] = useState(currentStatus)
   const [loading, setLoading] = useState(false)
+  const statusClasses: Record<string, string> = {
+    new: 'border-yellow-300 bg-yellow-50',
+    contacted: 'border-blue-300 bg-blue-50',
+    'valuation-booked': 'border-orange-300 bg-orange-50',
+    'instruction-won': 'border-green-300 bg-green-50',
+    lost: 'border-red-300 bg-red-50',
+  }
 
   async function updateStatus(nextStatus: string) {
     setStatus(nextStatus)
@@ -58,7 +65,7 @@ export function ValuationLeadStatusSelect({
         event.stopPropagation()
         updateStatus(event.target.value)
       }}
-      className="w-full border bg-white px-3 py-2 text-sm"
+      className={`w-full border px-3 py-2 text-sm ${statusClasses[status]}`}
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
