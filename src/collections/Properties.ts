@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { APIError } from 'payload'
 import { authenticated } from '../access/authenticated'
+import { canAgencyUsePlatform, getAgencySubscriptionBlockReason } from '../lib/canAgencyUsePlatform'
 
 const isSuperAdmin = ({ req }: any) =>
   req.user?.collection === 'users' && req.user?.role === 'super-admin'
@@ -53,8 +54,11 @@ async function enforceListingLimit({ data, req, operation }: any) {
     overrideAccess: true,
   })
 
-  const listingLimit = getListingLimit(agency.subscriptionPlan)
+  if (!canAgencyUsePlatform(agency)) {
+    throw new APIError(getAgencySubscriptionBlockReason(agency), 403)
+  }
 
+  const listingLimit = getListingLimit(agency)
   if (listingLimit === null) return data
 
   const currentListings = await req.payload.count({
