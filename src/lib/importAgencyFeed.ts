@@ -3,6 +3,8 @@ import { getPayload } from 'payload'
 import { XMLParser } from 'fast-xml-parser'
 import { sendPropertyAlerts } from './sendPropertyAlerts'
 
+import { canAgencyUsePlatform, getAgencySubscriptionBlockReason } from './canAgencyUsePlatform'
+
 function createSlug(value: string) {
   return value
     .toLowerCase()
@@ -253,6 +255,14 @@ export async function importAgencyFeed(agencyId?: string) {
     return {
       ok: false,
       message: 'No agency with CRM enabled found.',
+    }
+  }
+
+  if (!canAgencyUsePlatform(agency)) {
+    return {
+      ok: false,
+      agency: agency.name,
+      message: getAgencySubscriptionBlockReason(agency),
     }
   }
 
