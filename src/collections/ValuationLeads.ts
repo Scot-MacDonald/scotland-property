@@ -194,6 +194,10 @@ export const ValuationLeads: CollectionConfig = {
       type: 'date',
       admin: {
         description: 'Next date/time this lead should be followed up.',
+        date: {
+          pickerAppearance: 'dayAndTime',
+          displayFormat: 'd MMM yyyy HH:mm',
+        },
       },
     },
     {

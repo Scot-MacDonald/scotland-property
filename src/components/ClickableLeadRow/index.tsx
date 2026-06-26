@@ -8,7 +8,7 @@ export function ClickableLeadRow({ href, children }: { href: string; children: R
   return (
     <div
       onClick={() => router.push(href)}
-      className="grid cursor-pointer gap-4 p-5 transition-colors hover:bg-gray-50 md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr]"
+      className="grid cursor-pointer gap-4 p-5 transition-colors hover:bg-gray-50 md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto]"
     >
       {children}
 

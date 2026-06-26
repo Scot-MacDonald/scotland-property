@@ -23,9 +23,7 @@ export default async function DashboardPage() {
   }
 
   const userAsAny = user as any
-
   const isSuperAdmin = userAsAny.role === 'super-admin'
-
   const agencyId = typeof userAsAny.agency === 'object' ? userAsAny.agency?.id : userAsAny.agency
 
   const agencyFilter: any =
@@ -148,6 +146,29 @@ export default async function DashboardPage() {
     overrideAccess: true,
   })
 
+  const upcomingFollowUps = await payload.find({
+    collection: 'valuation-leads',
+    depth: 1,
+    limit: 10,
+    sort: 'nextFollowUpAt',
+    where: {
+      and: [
+        valuationLeadFilter,
+        {
+          nextFollowUpAt: {
+            exists: true,
+          },
+        },
+        {
+          followUpCompleted: {
+            not_equals: true,
+          },
+        },
+      ],
+    },
+    overrideAccess: true,
+  })
+
   const recentProperties = await payload.find({
     collection: 'properties',
     depth: 1,
@@ -259,6 +280,7 @@ export default async function DashboardPage() {
           />
         </div>
       </section>
+
       <section className="mt-8 border p-8">
         <h3 className="text-2xl font-medium">Seller Conversion Funnel</h3>
 
@@ -289,6 +311,43 @@ export default async function DashboardPage() {
           </div>
         </div>
       </section>
+
+      <section className="mt-12">
+        <div className="mb-6">
+          <p className="text-sm uppercase tracking-[0.25em] text-muted-foreground">Tasks</p>
+
+          <h2 className="mt-2 text-3xl font-medium">Upcoming Follow Ups</h2>
+        </div>
+
+        <div className="divide-y border">
+          {upcomingFollowUps.docs.map((lead: any) => (
+            <Link
+              key={lead.id}
+              href={`/admin/collections/valuation-leads/${lead.id}`}
+              className="flex items-center justify-between gap-6 p-5 hover:bg-gray-50"
+            >
+              <div>
+                <p className="font-medium">{lead.nextFollowUpTask || 'Follow up required'}</p>
+
+                <p className="text-sm text-muted-foreground">
+                  {lead.name} • {lead.postcode}
+                </p>
+              </div>
+
+              <div className="text-right">
+                <p className="font-medium">
+                  {new Date(lead.nextFollowUpAt).toLocaleString('en-GB')}
+                </p>
+              </div>
+            </Link>
+          ))}
+
+          {upcomingFollowUps.docs.length === 0 && (
+            <div className="p-6 text-muted-foreground">No upcoming follow ups.</div>
+          )}
+        </div>
+      </section>
+
       <section className="mt-16">
         <div className="mb-6 flex items-end justify-between">
           <div>
@@ -373,6 +432,7 @@ export default async function DashboardPage() {
                 >
                   Edit Agency
                 </Link>
+
                 {agency.crm?.enabled ? <RunImportButton agencyId={agency.id} /> : null}
               </div>
             </section>
@@ -471,10 +531,30 @@ export default async function DashboardPage() {
                 <div className="mt-1">
                   <ValuationLeadStatusSelect leadId={lead.id} currentStatus={lead.status} />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Notes</p>
-                  <ValuationLeadNotesButton leadId={lead.id} currentNotes={lead.notes} />
-                </div>
+              </div>
+
+              <div>
+                <p className="text-sm text-muted-foreground">Follow-up</p>
+
+                {lead.nextFollowUpAt ? (
+                  <>
+                    <p className="font-medium">
+                      {new Date(lead.nextFollowUpAt).toLocaleDateString('en-GB')}
+                    </p>
+
+                    <p className="text-sm text-muted-foreground">
+                      {lead.nextFollowUpTask || 'No task'}
+                    </p>
+                  </>
+                ) : (
+                  <p className="font-medium text-muted-foreground">None set</p>
+                )}
+              </div>
+
+              <div>
+                <p className="text-sm text-muted-foreground">Notes</p>
+
+                <ValuationLeadNotesButton leadId={lead.id} currentNotes={lead.notes} />
               </div>
             </ClickableLeadRow>
           ))}
