@@ -8,6 +8,36 @@ import { ValuationLeadStatusSelect } from '@/components/ValuationLeadStatusSelec
 import { ValuationLeadNotesButton } from '@/components/ValuationLeadNotesButton'
 import { ClickableLeadRow } from '@/components/ClickableLeadRow'
 
+function getFollowUpStatus(dateValue?: string | null) {
+  if (!dateValue) return 'upcoming'
+
+  const now = new Date()
+  const followUpDate = new Date(dateValue)
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+
+  if (followUpDate < now) return 'overdue'
+  if (followUpDate >= today && followUpDate < tomorrow) return 'today'
+
+  return 'upcoming'
+}
+
+function getFollowUpLabel(status: string) {
+  if (status === 'overdue') return 'Overdue'
+  if (status === 'today') return 'Due today'
+  return 'Upcoming'
+}
+
+function getFollowUpClass(status: string) {
+  if (status === 'overdue') return 'bg-red-50'
+  if (status === 'today') return 'bg-yellow-50'
+  return ''
+}
+
 export default async function DashboardPage() {
   const payload = await getPayload({ config: configPromise })
   const requestHeaders = await headers()
@@ -324,10 +354,14 @@ export default async function DashboardPage() {
             <Link
               key={lead.id}
               href={`/admin/collections/valuation-leads/${lead.id}`}
-              className="flex items-center justify-between gap-6 p-5 hover:bg-gray-50"
+              className={`flex items-center justify-between gap-6 p-5 hover:bg-gray-50 ${getFollowUpClass(
+                getFollowUpStatus(lead.nextFollowUpAt),
+              )}`}
             >
               <div>
-                <p className="font-medium">{lead.nextFollowUpTask || 'Follow up required'}</p>
+                <p className="mb-1 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  {getFollowUpLabel(getFollowUpStatus(lead.nextFollowUpAt))}
+                </p>
 
                 <p className="text-sm text-muted-foreground">
                   {lead.name} • {lead.postcode}
