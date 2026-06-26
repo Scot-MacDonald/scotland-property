@@ -127,8 +127,16 @@ export const Enquiries: CollectionConfig = {
           value: 'offer-made',
         },
         {
-          label: 'Closed',
-          value: 'closed',
+          label: 'Sale Agreed',
+          value: 'sale-agreed',
+        },
+        {
+          label: 'Completed',
+          value: 'completed',
+        },
+        {
+          label: 'Lost',
+          value: 'lost',
         },
       ],
     },

@@ -1043,7 +1043,7 @@ export interface Enquiry {
   message: string;
   property: string | Property;
   agency: string | Agency;
-  status?: ('new' | 'contacted' | 'viewing-booked' | 'offer-made' | 'closed') | null;
+  status?: ('new' | 'contacted' | 'viewing-booked' | 'offer-made' | 'sale-agreed' | 'completed' | 'lost') | null;
   /**
    * Internal agency notes. Not visible to the public.
    */
