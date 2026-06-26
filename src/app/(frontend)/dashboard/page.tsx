@@ -637,7 +637,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="mt-16 grid gap-3 lg:grid-cols-3">
+      <section className="mt-16 grid gap-3 lg:grid-cols-4">
         <Link href="/admin/collections/properties" className="border p-8">
           <h2 className="text-2xl font-medium">Manage Properties</h2>
           <p className="mt-3 text-sm text-muted-foreground">
@@ -656,6 +656,13 @@ export default async function DashboardPage() {
           <h2 className="text-2xl font-medium">View Enquiries</h2>
           <p className="mt-3 text-sm text-muted-foreground">
             Track new leads, update statuses and add internal notes.
+          </p>
+        </Link>
+        <Link href="/dashboard/pipeline" className="border p-8">
+          <h2 className="text-2xl font-medium">Lead Pipeline</h2>
+
+          <p className="mt-3 text-sm text-muted-foreground">
+            Manage seller leads using the drag and drop CRM pipeline.
           </p>
         </Link>
       </section>
