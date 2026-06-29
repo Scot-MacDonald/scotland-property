@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { emailTemplate } from '@/lib/emailTemplates'
 
 const isSuperAdmin = ({ req }: any) => req.user?.role === 'super-admin'
 
@@ -106,22 +107,28 @@ export const ValuationLeads: CollectionConfig = {
         await req.payload.sendEmail({
           to: agency.email,
           subject: `New valuation lead: ${doc.postcode}`,
-          html: `
-          <h2>New valuation lead</h2>
+          html: emailTemplate({
+            title: 'New Valuation Lead',
+            content: `
+      <p><strong>Name:</strong> ${doc.name}</p>
 
-          <p><strong>Name:</strong> ${doc.name}</p>
-          <p><strong>Email:</strong> ${doc.email}</p>
-          <p><strong>Phone:</strong> ${doc.phone || 'Not provided'}</p>
-          <p><strong>Postcode:</strong> ${doc.postcode}</p>
-          <p><strong>Property type:</strong> ${doc.propertyType || 'Not provided'}</p>
-          <p><strong>Estimated value:</strong> ${formatMoney(doc.estimatedValue)}</p>
+      <p><strong>Email:</strong> ${doc.email}</p>
 
-          ${doc.message ? `<p><strong>Message:</strong><br />${doc.message}</p>` : ''}
+      <p><strong>Phone:</strong> ${doc.phone || 'Not provided'}</p>
 
-          <p>
-            Please log in to the admin dashboard to manage this lead.
-          </p>
-        `,
+      <p><strong>Postcode:</strong> ${doc.postcode}</p>
+
+      <p><strong>Property type:</strong> ${doc.propertyType || 'Not provided'}</p>
+
+      <p><strong>Estimated value:</strong> ${formatMoney(doc.estimatedValue)}</p>
+
+      ${doc.message ? `<p><strong>Message:</strong><br />${doc.message}</p>` : ''}
+
+      <p style="margin-top:40px;">
+        Please log in to the dashboard to manage this lead.
+      </p>
+    `,
+          }),
         })
       },
     ],
