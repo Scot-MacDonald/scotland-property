@@ -1,6 +1,7 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { NextResponse } from 'next/server'
+import { emailTemplate } from '@/lib/emailTemplates'
 
 function buildPropertyWhereFromQueryString(queryString: string, sinceIso: string) {
   const params = new URLSearchParams(queryString)
@@ -162,25 +163,26 @@ export async function GET(req: Request) {
         subject: `${properties.docs.length} new propert${
           properties.docs.length === 1 ? 'y' : 'ies'
         } matching your saved search`,
-        html: `
-          <h2>New properties matching your saved search</h2>
+        html: emailTemplate({
+          title: 'New Properties Matching Your Search',
+          content: `
+    <p>
+      We found ${properties.docs.length} new propert${
+        properties.docs.length === 1 ? 'y' : 'ies'
+      } matching:
+    </p>
 
-          <p>
-            We found ${properties.docs.length} new propert${
-              properties.docs.length === 1 ? 'y' : 'ies'
-            } matching:
-          </p>
+    <p><strong>${savedSearch.label || 'Saved search'}</strong></p>
 
-          <p><strong>${savedSearch.label || 'Saved search'}</strong></p>
+    <ul>
+      ${propertyItems}
+    </ul>
 
-          <ul>
-            ${propertyItems}
-          </ul>
-
-          <p>
-            You are receiving this because you enabled property alerts.
-          </p>
-        `,
+    <p style="margin-top:40px;">
+      You are receiving this because you enabled property alerts.
+    </p>
+  `,
+        }),
       })
 
       emailsSent++
