@@ -29,7 +29,7 @@ import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
-// import { resendAdapter } from '@payloadcms/email-resend'
+import { resendAdapter } from '@payloadcms/email-resend'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -76,11 +76,13 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),
-  // email: resendAdapter({
-  //   defaultFromAddress: 'hello@yourdomain.com',
-  //   defaultFromName: 'Scotland Property Portal',
-  //   apiKey: process.env.RESEND_API_KEY || '',
-  // }),
+
+  email: resendAdapter({
+    defaultFromAddress: process.env.FROM_EMAIL || 'onboarding@resend.dev',
+    defaultFromName: process.env.FROM_NAME || 'Scotland Luxury Estates',
+    apiKey: process.env.RESEND_API_KEY || '',
+  }),
+
   collections: [
     Pages,
     Posts,
