@@ -55,8 +55,47 @@ export const Enquiries: CollectionConfig = {
     afterChange: [
       async ({ doc, req, operation }) => {
         if (operation !== 'create') return
+        if (!doc.agency) return
 
-        console.log('New enquiry created:', doc.name)
+        const agencyId = typeof doc.agency === 'object' ? doc.agency.id : doc.agency
+
+        const agency = await req.payload.findByID({
+          collection: 'agencies',
+          id: agencyId,
+          overrideAccess: true,
+        })
+
+        if (!agency?.email) return
+
+        const propertyId = typeof doc.property === 'object' ? doc.property.id : doc.property
+
+        const property = propertyId
+          ? await req.payload.findByID({
+              collection: 'properties',
+              id: propertyId,
+              overrideAccess: true,
+            })
+          : null
+
+        await req.payload.sendEmail({
+          to: agency.email,
+          subject: `New enquiry${property?.title ? `: ${property.title}` : ''}`,
+          html: `
+        <h2>New property enquiry</h2>
+
+        <p><strong>Name:</strong> ${doc.name}</p>
+        <p><strong>Email:</strong> ${doc.email}</p>
+        <p><strong>Phone:</strong> ${doc.phone || 'Not provided'}</p>
+
+        ${property?.title ? `<p><strong>Property:</strong> ${property.title}</p>` : ''}
+
+        <p><strong>Message:</strong><br />${doc.message}</p>
+
+        <p>
+          Please log in to the dashboard to manage this enquiry.
+        </p>
+      `,
+        })
       },
     ],
   },
