@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { authenticated } from '../access/authenticated'
+import { emailTemplate } from '@/lib/emailTemplates'
 
 const isSuperAdmin = ({ req }: any) => req.user?.role === 'super-admin'
 
@@ -80,21 +81,24 @@ export const Enquiries: CollectionConfig = {
         await req.payload.sendEmail({
           to: agency.email,
           subject: `New enquiry${property?.title ? `: ${property.title}` : ''}`,
-          html: `
-        <h2>New property enquiry</h2>
+          html: emailTemplate({
+            title: 'New Property Enquiry',
+            content: `
+              <p><strong>Name:</strong> ${doc.name}</p>
 
-        <p><strong>Name:</strong> ${doc.name}</p>
-        <p><strong>Email:</strong> ${doc.email}</p>
-        <p><strong>Phone:</strong> ${doc.phone || 'Not provided'}</p>
+              <p><strong>Email:</strong> ${doc.email}</p>
 
-        ${property?.title ? `<p><strong>Property:</strong> ${property.title}</p>` : ''}
+              <p><strong>Phone:</strong> ${doc.phone || 'Not provided'}</p>
 
-        <p><strong>Message:</strong><br />${doc.message}</p>
+              ${property?.title ? `<p><strong>Property:</strong> ${property.title}</p>` : ''}
 
-        <p>
-          Please log in to the dashboard to manage this enquiry.
-        </p>
-      `,
+              <p><strong>Message:</strong><br />${doc.message}</p>
+
+              <p style="margin-top:40px;">
+                Please log in to the dashboard to manage this enquiry.
+              </p>
+            `,
+          }),
         })
       },
     ],
