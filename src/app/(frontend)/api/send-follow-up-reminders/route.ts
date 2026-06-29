@@ -1,6 +1,7 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { NextResponse } from 'next/server'
+import { emailTemplate } from '@/lib/emailTemplates'
 
 function formatDate(value: string) {
   return new Date(value).toLocaleString('en-GB', {
@@ -91,23 +92,24 @@ export async function GET(req: Request) {
       subject: `Follow-up reminder: ${agencyLeads.length} task${
         agencyLeads.length === 1 ? '' : 's'
       } due`,
-      html: `
-        <h2>Follow-up reminders</h2>
+      html: emailTemplate({
+        title: 'Follow-up Reminders',
+        content: `
+    <p>
+      You have ${agencyLeads.length} valuation follow-up task${
+        agencyLeads.length === 1 ? '' : 's'
+      } due.
+    </p>
 
-        <p>
-          You have ${agencyLeads.length} valuation follow-up task${
-            agencyLeads.length === 1 ? '' : 's'
-          } due.
-        </p>
+    <ul>
+      ${itemsHtml}
+    </ul>
 
-        <ul>
-          ${itemsHtml}
-        </ul>
-
-        <p>
-          Please log in to the dashboard to update your leads.
-        </p>
-      `,
+    <p style="margin-top:40px;">
+      Please log in to the dashboard to update your leads.
+    </p>
+  `,
+      }),
     })
 
     emailsSent++
