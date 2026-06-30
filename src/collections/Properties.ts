@@ -117,7 +117,6 @@ export const Properties: CollectionConfig = {
       type: 'text',
       required: true,
     },
-
     {
       name: 'slug',
       type: 'text',
@@ -129,7 +128,6 @@ export const Properties: CollectionConfig = {
       type: 'text',
       unique: true,
     },
-
     {
       name: 'price',
       type: 'number',
@@ -142,7 +140,6 @@ export const Properties: CollectionConfig = {
         description: 'Short summary shown on listing cards.',
       },
     },
-
     {
       name: 'status',
       type: 'select',
@@ -162,13 +159,11 @@ export const Properties: CollectionConfig = {
         },
       ],
     },
-
     {
       name: 'featured',
       type: 'checkbox',
       defaultValue: false,
     },
-
     {
       name: 'internalArea',
       type: 'number',
@@ -176,7 +171,6 @@ export const Properties: CollectionConfig = {
         description: 'Interior size in square metres.',
       },
     },
-
     {
       name: 'landArea',
       type: 'number',
@@ -184,78 +178,64 @@ export const Properties: CollectionConfig = {
         description: 'Land size in acres or square metres.',
       },
     },
-
     {
       name: 'yearBuilt',
       type: 'number',
     },
-
     {
       name: 'energyRating',
       type: 'text',
     },
-
     {
       name: 'latitude',
       type: 'number',
     },
-
     {
       name: 'longitude',
       type: 'number',
     },
-
     {
       name: 'virtualTour',
       type: 'text',
     },
-
     {
       name: 'youtubeVideo',
       type: 'text',
     },
-
     {
       name: 'region',
       type: 'relationship',
       relationTo: 'regions',
       required: true,
     },
-
     {
       name: 'town',
       type: 'relationship',
       relationTo: 'towns',
       required: true,
     },
-
     {
       name: 'propertyType',
       type: 'relationship',
       relationTo: 'property-types',
     },
-
     {
       name: 'bedrooms',
       type: 'number',
     },
-
     {
       name: 'bathrooms',
       type: 'number',
     },
-
     {
       name: 'description',
       type: 'richText',
     },
-
     {
       name: 'featuredImage',
       type: 'upload',
       relationTo: 'media',
     },
-
     {
       name: 'gallery',
       type: 'upload',
@@ -268,7 +248,6 @@ export const Properties: CollectionConfig = {
       relationTo: 'media',
       hasMany: true,
     },
-
     {
       name: 'amenities',
       type: 'relationship',

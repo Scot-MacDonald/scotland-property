@@ -8,6 +8,7 @@ import { ValuationLeadStatusSelect } from '@/components/ValuationLeadStatusSelec
 import { ValuationLeadNotesButton } from '@/components/ValuationLeadNotesButton'
 import { ClickableLeadRow } from '@/components/ClickableLeadRow'
 import { TrialStatusCard } from '@/components/TrialStatusCard'
+import { canAgencyUsePlatform, getAgencySubscriptionBlockReason } from '@/lib/canAgencyUsePlatform'
 
 function getFollowUpStatus(dateValue?: string | null) {
   if (!dateValue) return 'upcoming'
@@ -226,6 +227,8 @@ export default async function DashboardPage() {
 
   const currentAgency = agencies.docs[0] as any
 
+  const platformAccessAllowed = currentAgency ? canAgencyUsePlatform(currentAgency) : true
+
   const importLogs = await payload.find({
     collection: 'import-logs',
     sort: '-createdAt',
@@ -261,6 +264,20 @@ export default async function DashboardPage() {
           trialEndsAt={currentAgency.trialEndsAt}
         />
       ) : null}
+
+      {currentAgency && !platformAccessAllowed && (
+        <div className="mb-10 border border-red-200 bg-red-50 p-6">
+          <h2 className="text-2xl font-medium">Subscription Required</h2>
+
+          <p className="mt-3 text-muted-foreground">
+            {getAgencySubscriptionBlockReason(currentAgency)}
+          </p>
+
+          <Link href="/dashboard/billing" className="mt-5 inline-block border bg-white px-4 py-2">
+            Upgrade Now
+          </Link>
+        </div>
+      )}
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <DashboardCard
           title="Properties"
