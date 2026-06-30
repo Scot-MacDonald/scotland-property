@@ -7,6 +7,7 @@ import { RunImportButton } from '@/components/RunImportButton'
 import { ValuationLeadStatusSelect } from '@/components/ValuationLeadStatusSelect'
 import { ValuationLeadNotesButton } from '@/components/ValuationLeadNotesButton'
 import { ClickableLeadRow } from '@/components/ClickableLeadRow'
+import { TrialStatusCard } from '@/components/TrialStatusCard'
 
 function getFollowUpStatus(dateValue?: string | null) {
   if (!dateValue) return 'upcoming'
@@ -223,6 +224,8 @@ export default async function DashboardPage() {
         : undefined,
   })
 
+  const currentAgency = agencies.docs[0] as any
+
   const importLogs = await payload.find({
     collection: 'import-logs',
     sort: '-createdAt',
@@ -252,7 +255,12 @@ export default async function DashboardPage() {
           Manage your properties, agents, enquiries and CRM feed activity from one place.
         </p>
       </div>
-
+      {currentAgency ? (
+        <TrialStatusCard
+          subscriptionStatus={currentAgency.subscriptionStatus}
+          trialEndsAt={currentAgency.trialEndsAt}
+        />
+      ) : null}
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <DashboardCard
           title="Properties"
