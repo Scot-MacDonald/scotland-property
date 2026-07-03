@@ -335,6 +335,11 @@ export default async function DashboardPage() {
 
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           <DashboardActionCard
+            title="Settings"
+            description="Manage agency profile, contact details and CRM settings."
+            href="/dashboard/settings"
+          />
+          <DashboardActionCard
             title="Properties"
             description="Manage your property portfolio, add listings and update availability."
             href="/dashboard/properties"
@@ -379,7 +384,7 @@ export default async function DashboardPage() {
           <DashboardActionCard
             title="Agents"
             description="Manage your agency team and public agent profiles."
-            href="/admin/collections/agents"
+            href="/dashboard/agents"
           />
 
           <DashboardActionCard
