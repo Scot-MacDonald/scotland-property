@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import DeleteAgentButton from '@/components/DeleteAgentButton'
 
 export default async function DashboardAgentsPage() {
   const payload = await getPayload({ config: configPromise })
@@ -68,10 +69,7 @@ export default async function DashboardAgentsPage() {
               Back
             </Link>
 
-            <Link
-              href="/admin/collections/agents/create"
-              className="bg-black px-4 py-2 text-sm text-white"
-            >
+            <Link href="/dashboard/agents/new" className="bg-black px-4 py-2 text-sm text-white">
               Add Agent
             </Link>
           </div>
@@ -132,11 +130,13 @@ export default async function DashboardAgentsPage() {
                     </Link>
 
                     <Link
-                      href={`/admin/collections/agents/${agent.id}`}
+                      href={`/dashboard/agents/${agent.id}/edit`}
                       className="border px-3 py-2 text-sm"
                     >
                       Edit
                     </Link>
+
+                    <DeleteAgentButton agentId={agent.id} />
                   </div>
                 </div>
               )

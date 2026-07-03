@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import DeletePropertyButton from '@/components/DeletePropertyButton'
 
 function formatPrice(value?: number | null) {
   if (!value) return 'Price on request'
@@ -67,7 +68,7 @@ export default async function DashboardPropertiesPage() {
             </Link>
 
             <Link
-              href="/admin/collections/properties/create"
+              href="/dashboard/properties/new"
               className="bg-black px-4 py-2 text-sm text-white"
             >
               Add Property
@@ -146,11 +147,13 @@ export default async function DashboardPropertiesPage() {
                     </Link>
 
                     <Link
-                      href={`/admin/collections/properties/${property.id}`}
+                      href={`/dashboard/properties/${property.id}/edit`}
                       className="border px-3 py-2 text-sm"
                     >
                       Edit
                     </Link>
+
+                    <DeletePropertyButton propertyId={property.id} />
                   </div>
                 </div>
               )

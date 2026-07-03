@@ -57,10 +57,7 @@ export default async function DashboardSettingsPage() {
               Back
             </Link>
 
-            <Link
-              href={`/admin/collections/agencies/${agency.id}`}
-              className="bg-black px-4 py-2 text-sm text-white"
-            >
+            <Link href="/dashboard/settings/edit" className="bg-black px-4 py-2 text-sm text-white">
               Edit Settings
             </Link>
           </div>
