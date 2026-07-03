@@ -385,7 +385,7 @@ export default async function DashboardPage() {
           <DashboardActionCard
             title="CRM Imports"
             description="Review feed imports and CRM activity."
-            href="/admin/collections/import-logs"
+            href="/dashboard/imports"
           />
         </div>
       </section>
