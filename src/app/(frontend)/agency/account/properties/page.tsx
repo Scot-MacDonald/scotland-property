@@ -130,7 +130,7 @@ export default async function AgencyPropertiesPage() {
                 </Link>
 
                 <Link
-                  href={`/admin/collections/properties/${property.id}`}
+                  href={`/dashboard/properties/${property.id}/edit`}
                   className="bg-black px-4 py-2 text-sm text-white"
                 >
                   Edit in admin

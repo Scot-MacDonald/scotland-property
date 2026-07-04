@@ -73,11 +73,11 @@ export default async function AgencyAccountPage() {
           View my properties
         </Link>
 
-        <Link href="/admin/collections/properties" className="border px-6 py-3">
+        <Link href="/dashboard/properties" className="border px-6 py-3">
           Manage properties
         </Link>
 
-        <Link href="/admin/collections/agencies" className="border px-6 py-3">
+        <Link href="/dashboard/settings" className="border px-6 py-3">
           Agency settings
         </Link>
       </div>

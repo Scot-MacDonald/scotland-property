@@ -456,7 +456,7 @@ export default async function AnalyticsPage() {
           </p>
         </Link>
 
-        <Link href="/admin/collections/properties" className="border p-8">
+        <Link href="/dashboard/properties" className="border p-8">
           <h2 className="text-2xl font-medium">Manage Listings</h2>
           <p className="mt-3 text-sm text-muted-foreground">
             Review live, featured and sold properties.

@@ -121,10 +121,10 @@ export default async function DashboardEnquiriesPage() {
 
                 <div className="flex justify-end gap-2">
                   <Link
-                    href={`/admin/collections/enquiries/${enquiry.id}`}
+                    href={`/dashboard/enquiries/${enquiry.id}`}
                     className="border px-3 py-2 text-sm"
                   >
-                    Edit
+                    open
                   </Link>
                 </div>
               </div>

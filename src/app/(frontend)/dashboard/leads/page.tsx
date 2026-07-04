@@ -126,10 +126,7 @@ export default async function DashboardLeadsPage() {
                 </div>
 
                 <div className="flex justify-end gap-2">
-                  <Link
-                    href={`/admin/collections/valuation-leads/${lead.id}`}
-                    className="border px-3 py-2 text-sm"
-                  >
+                  <Link href={`/dashboard/leads/${lead.id}`} className="border px-3 py-2 text-sm">
                     Edit
                   </Link>
                 </div>

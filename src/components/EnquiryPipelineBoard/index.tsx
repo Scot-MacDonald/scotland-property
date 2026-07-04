@@ -199,7 +199,7 @@ function PipelineCard({ enquiry }: { enquiry: Enquiry }) {
       className="cursor-grab border bg-white p-4 shadow-sm transition-colors hover:bg-gray-50 active:cursor-grabbing"
     >
       <Link
-        href={`/admin/collections/enquiries/${enquiry.id}`}
+        href={`/dashboard/enquiries/${enquiry.id}`}
         onClick={(event) => {
           if (isDragging) event.preventDefault()
         }}

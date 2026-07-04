@@ -199,7 +199,7 @@ function PipelineCard({ lead }: { lead: Lead }) {
       className="cursor-grab border bg-white p-4 shadow-sm transition-colors hover:bg-gray-50 active:cursor-grabbing"
     >
       <Link
-        href={`/admin/collections/valuation-leads/${lead.id}`}
+        href={`/dashboard/leads/${lead.id}`}
         onClick={(event) => {
           if (isDragging) event.preventDefault()
         }}

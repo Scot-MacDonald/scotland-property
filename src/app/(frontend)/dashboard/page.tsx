@@ -239,7 +239,7 @@ export default async function DashboardPage() {
           href="/dashboard/properties"
         />
 
-        <DashboardCard title="Agents" value={agents.totalDocs} href="/admin/collections/agents" />
+        <DashboardCard title="Agents" value={agents.totalDocs} href="/dashboard/agents" />
 
         <DashboardCard title="Enquiries" value={enquiries.totalDocs} href="/dashboard/enquiries" />
 
@@ -297,7 +297,7 @@ export default async function DashboardPage() {
           {upcomingFollowUps.docs.map((lead: any) => (
             <Link
               key={lead.id}
-              href={`/admin/collections/valuation-leads/${lead.id}`}
+              href={`/dashboard/leads/${lead.id}`}
               className={`flex items-center justify-between gap-6 p-5 hover:bg-gray-50 ${getFollowUpClass(
                 getFollowUpStatus(lead.nextFollowUpAt),
               )}`}
