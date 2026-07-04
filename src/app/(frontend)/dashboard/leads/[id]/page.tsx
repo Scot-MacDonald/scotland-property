@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import LeadStatusForm from '@/components/LeadStatusForm'
+import { ValuationLeadStatusSelect } from '@/components/ValuationLeadStatusSelect'
 
 type Props = {
   params: Promise<{
@@ -64,7 +65,9 @@ export default async function DashboardLeadDetailPage({ params }: Props) {
             </p>
           </div>
 
-          <LeadStatusForm leadId={lead.id} currentStatus={lead.status} />
+          <div className="w-56">
+            <ValuationLeadStatusSelect leadId={lead.id} currentStatus={lead.status || 'new'} />
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
