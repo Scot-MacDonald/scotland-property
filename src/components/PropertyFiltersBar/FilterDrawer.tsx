@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { PriceSlider } from '@/components/Search/PriceSlider'
 
 type Option = {
   id: string
@@ -57,8 +58,8 @@ function Chip({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border-b py-6">
-      <h3 className="mb-4 text-sm uppercase tracking-[0.2em] text-muted-foreground">{title}</h3>
+    <section className="border-b py-8">
+      <h3 className="mb-5 text-sm uppercase tracking-[0.2em] text-muted-foreground">{title}</h3>
 
       <div className="flex flex-wrap gap-3">{children}</div>
     </section>
@@ -109,9 +110,7 @@ export function FilterDrawer({
     if (!open) return
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        onClose()
-      }
+      if (event.key === 'Escape') onClose()
     }
 
     document.addEventListener('keydown', handleKeyDown)
@@ -181,12 +180,12 @@ export function FilterDrawer({
       />
 
       <div className="absolute bottom-0 left-0 right-0 max-h-[92vh] overflow-y-auto border-t bg-[#f7f6f2]">
-        {' '}
         <div className="sticky top-0 z-10 border-b bg-[#f7f6f2] px-5 py-4">
           <div className="mx-auto mb-4 h-px w-24 bg-neutral-300" />
+
           <div className="mx-auto flex max-w-5xl items-center justify-between">
             <div>
-              <h2 className="text-xl font-medium">filters</h2>
+              <h2 className="text-sm uppercase tracking-[0.25em]">Filters</h2>
 
               <p className="mt-1 text-sm text-muted-foreground">
                 {activeCount ? `${activeCount} selected` : 'Refine your property search'}
@@ -198,6 +197,7 @@ export function FilterDrawer({
             </button>
           </div>
         </div>
+
         <div className="mx-auto max-w-5xl px-5 pb-32">
           <Section title="Property type">
             <Chip active={!draft.type} onClick={() => updateDraft('type', undefined)}>
@@ -216,20 +216,15 @@ export function FilterDrawer({
           </Section>
 
           <Section title="Price">
-            {[
-              { label: 'Any price', minPrice: undefined, maxPrice: undefined },
-              { label: '£500k – £1m', minPrice: '500000', maxPrice: '1000000' },
-              { label: '£1m – £2.5m', minPrice: '1000000', maxPrice: '2500000' },
-              { label: '£2.5m+', minPrice: '2500000', maxPrice: undefined },
-            ].map((option) => (
-              <Chip
-                key={option.label}
-                active={draft.minPrice === option.minPrice && draft.maxPrice === option.maxPrice}
-                onClick={() => updatePrice(option.minPrice, option.maxPrice)}
-              >
-                {option.label}
-              </Chip>
-            ))}
+            <div className="w-full">
+              <PriceSlider
+                minPrice={draft.minPrice}
+                maxPrice={draft.maxPrice}
+                onChange={({ minPrice, maxPrice }) => {
+                  updatePrice(minPrice, maxPrice)
+                }}
+              />
+            </div>
           </Section>
 
           <Section title="Bedrooms">
@@ -299,6 +294,7 @@ export function FilterDrawer({
             ))}
           </Section>
         </div>
+
         <div className="fixed bottom-0 left-0 right-0 border-t bg-white px-5 py-4">
           <div className="mx-auto flex max-w-5xl justify-between gap-3">
             <button type="button" onClick={clearDraft} className="border px-6 py-3 text-sm">
@@ -310,7 +306,7 @@ export function FilterDrawer({
               onClick={applyFilters}
               className="bg-black px-6 py-3 text-sm text-white"
             >
-              Show properties
+              Show Properties
             </button>
           </div>
         </div>

@@ -1,8 +1,7 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import Link from 'next/link'
-
-import { HomeSearch } from '@/components/HomeSearch'
+import { Search } from '@/components/Search'
 import { PropertyCardSlider } from '@/components/PropertyCardSlider'
 import { SavePropertyButton } from '@/components/SavePropertyButton'
 import { SavedHeaderLinks } from '@/components/SavedHeaderLinks'
@@ -142,7 +141,7 @@ export default async function HomePage() {
               Discover estates, castles, country houses and exceptional homes across Scotland.
             </p>
 
-            <HomeSearch suggestions={searchSuggestions} />
+            <Search suggestions={searchSuggestions} placeholder="⌕ Search Scotland..." />
 
             <div className="mt-10 grid max-w-3xl grid-cols-3 border-t border-b py-6">
               <div>

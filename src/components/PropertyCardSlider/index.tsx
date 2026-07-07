@@ -20,59 +20,64 @@ export function PropertyCardSlider({ images, title }: Props) {
 
   if (!currentImage) {
     return (
-      <div className="flex h-[320px] items-center justify-center bg-muted text-muted-foreground">
+      <div className="flex h-[340px] items-center justify-center border-b bg-[#f7f6f2] text-sm uppercase tracking-[0.2em] text-neutral-400">
         No image
       </div>
     )
   }
 
   return (
-    <div className="relative h-[320px] overflow-hidden">
+    <div className="relative h-[340px] overflow-hidden bg-[#f7f6f2]">
       <img
         src={currentImage.url}
         alt={currentImage.alt || title}
-        className="h-full w-full object-cover"
+        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
       />
 
-      {hasMultipleImages && (
+      <div className="absolute inset-0 bg-black/0 transition group-hover:bg-black/5" />
+
+      {hasMultipleImages ? (
         <>
           <button
             type="button"
+            aria-label="Previous image"
             onClick={(event) => {
               event.preventDefault()
               setIndex((current) => (current === 0 ? images.length - 1 : current - 1))
             }}
-            className="absolute left-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center bg-white/90 text-sm opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+            className="absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-white/80 bg-black/20 text-2xl leading-none text-white opacity-0 transition hover:bg-black group-hover:opacity-100"
           >
             ‹
           </button>
 
           <button
             type="button"
+            aria-label="Next image"
             onClick={(event) => {
               event.preventDefault()
               setIndex((current) => (current === images.length - 1 ? 0 : current + 1))
             }}
-            className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center bg-white/90 text-sm opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+            className="absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-white/80 bg-black/20 text-2xl leading-none text-white opacity-0 transition hover:bg-black group-hover:opacity-100"
           >
             ›
           </button>
 
-          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1">
+          <div className="absolute bottom-4 left-4 flex gap-1.5">
             {images.map((_, dotIndex) => (
               <span
                 key={dotIndex}
-                className={`h-1.5 w-1.5 rounded-full ${
-                  dotIndex === index ? 'bg-white' : 'bg-white/50'
+                className={`block h-px transition-all ${
+                  dotIndex === index ? 'w-8 bg-white' : 'w-4 bg-white/50'
                 }`}
               />
             ))}
           </div>
-          <div className="absolute bottom-3 right-3 bg-black/70 px-2 py-1 text-xs text-white">
+
+          <div className="absolute bottom-4 right-4 border border-white/70 bg-black/40 px-3 py-1 text-xs uppercase tracking-[0.15em] text-white">
             {index + 1} / {images.length}
           </div>
         </>
-      )}
+      ) : null}
     </div>
   )
 }
