@@ -10,6 +10,7 @@ type Option = {
 }
 
 type Props = {
+  priceHistogram?: number[]
   currentRegion?: string
   currentTown?: string
   currentBedrooms?: string
@@ -28,6 +29,7 @@ function activeCount(values: (string | undefined)[]) {
 }
 
 export function SearchToolbar({
+  priceHistogram,
   currentRegion,
   currentTown,
   currentBedrooms,
@@ -95,6 +97,7 @@ export function SearchToolbar({
       <FilterDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
+        priceHistogram={priceHistogram}
         currentRegion={currentRegion}
         currentTown={currentTown}
         currentBedrooms={currentBedrooms}

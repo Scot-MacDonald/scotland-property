@@ -11,6 +11,7 @@ type Option = {
 type Props = {
   open: boolean
   onClose: () => void
+  priceHistogram?: number[]
   currentRegion?: string
   currentTown?: string
   currentBedrooms?: string
@@ -69,6 +70,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export function FilterDrawer({
   open,
   onClose,
+  priceHistogram,
   currentRegion,
   currentTown,
   currentBedrooms,
@@ -220,6 +222,7 @@ export function FilterDrawer({
               <PriceSlider
                 minPrice={draft.minPrice}
                 maxPrice={draft.maxPrice}
+                histogram={priceHistogram}
                 onChange={({ minPrice, maxPrice }) => {
                   updatePrice(minPrice, maxPrice)
                 }}

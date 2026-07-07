@@ -164,6 +164,31 @@ export default async function PropertiesPage({ searchParams }: Props) {
     where,
   })
 
+  const allPrices = await payload.find({
+    collection: 'properties',
+    depth: 0,
+    limit: 1000,
+    overrideAccess: true,
+    where: {},
+    select: {
+      price: true,
+    },
+  })
+
+  const priceBuckets = Array(12).fill(0)
+  const maxHistogramPrice = 10000000
+
+  allPrices.docs.forEach((property: any) => {
+    if (!property.price) return
+
+    const bucketIndex = Math.min(
+      11,
+      Math.floor((property.price / maxHistogramPrice) * priceBuckets.length),
+    )
+
+    priceBuckets[bucketIndex] += 1
+  })
+
   const selectedRegion = regions.docs.find((region) => String(region.id) === params.region)
   const selectedTown = towns.docs.find((town) => String(town.id) === params.town)
   const selectedType = propertyTypes.docs.find((type) => String(type.id) === params.type)
@@ -200,6 +225,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
         <Search currentQuery={params.q} suggestions={searchSuggestions} />
 
         <SearchToolbar
+          priceHistogram={priceBuckets}
           currentRegion={params.region}
           currentTown={params.town}
           currentBedrooms={params.bedrooms}
