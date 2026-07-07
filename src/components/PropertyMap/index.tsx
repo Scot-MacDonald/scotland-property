@@ -87,8 +87,8 @@ export function PropertyMap({ properties }: Props) {
       className="h-full min-h-[600px] w-full"
     >
       <TileLayer
-        attribution="&copy; OpenStreetMap contributors"
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution="&copy; OpenStreetMap contributors &copy; CARTO"
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
 
       <FitBounds properties={propertiesWithCoords} />

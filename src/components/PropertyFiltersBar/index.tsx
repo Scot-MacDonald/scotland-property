@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { FilterDrawer } from './FilterDrawer'
 
 type Props = {
   currentRegion?: string
@@ -59,6 +60,7 @@ export function PropertyFiltersBar({
   towns,
 }: Props) {
   const [openFilter, setOpenFilter] = useState<string | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -373,6 +375,13 @@ export function PropertyFiltersBar({
           </div>
         )}
       </div>
+      <button
+        type="button"
+        onClick={() => setDrawerOpen(true)}
+        className="bg-black px-6 py-3 text-sm text-white"
+      >
+        All Filters
+      </button>
 
       <button
         type="button"
@@ -383,6 +392,21 @@ export function PropertyFiltersBar({
       >
         Clear
       </button>
+      <FilterDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        currentRegion={currentRegion}
+        currentTown={currentTown}
+        currentBedrooms={currentBedrooms}
+        currentMinPrice={currentMinPrice}
+        currentMaxPrice={currentMaxPrice}
+        currentType={currentType}
+        currentAmenities={currentAmenities}
+        regions={regions}
+        towns={towns}
+        propertyTypes={propertyTypes}
+        amenities={amenities}
+      />
     </div>
   )
 }
