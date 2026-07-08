@@ -1,0 +1,5 @@
+export { PropertyCard } from './PropertyCard'
+export { PropertyPrice } from './PropertyPrice'
+export { PropertyMeta } from './PropertyMeta'
+export { PropertyLocation } from './PropertyLocation'
+export { PropertyAgency } from './PropertyAgency'

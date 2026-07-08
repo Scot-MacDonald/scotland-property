@@ -2,14 +2,16 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import Link from 'next/link'
 import { Search } from '@/components/Search'
-import { PropertyCardSlider } from '@/components/PropertyCardSlider'
-import { SavePropertyButton } from '@/components/SavePropertyButton'
 import { SavedHeaderLinks } from '@/components/SavedHeaderLinks'
-
 import { PropertyMapClient } from '@/components/PropertyMapClient'
+import { PropertyCard } from '@/components/Property/PropertyCard'
+
 export default async function HomePage() {
+  console.time('Homepage total')
+
   const payload = await getPayload({ config: configPromise })
 
+  console.time('properties')
   const properties = await payload.find({
     collection: 'properties',
     depth: 2,
@@ -17,7 +19,9 @@ export default async function HomePage() {
     sort: '-createdAt',
     overrideAccess: true,
   })
+  console.timeEnd('properties')
 
+  console.time('agencies')
   const agencies = await payload.find({
     collection: 'agencies',
     depth: 1,
@@ -29,63 +33,77 @@ export default async function HomePage() {
     },
     overrideAccess: true,
   })
+  console.timeEnd('agencies')
 
+  console.time('regions')
   const regions = await payload.find({
     collection: 'regions',
     limit: 100,
     sort: 'name',
     overrideAccess: true,
   })
+  console.timeEnd('regions')
 
+  console.time('towns')
   const towns = await payload.find({
     collection: 'towns',
     limit: 100,
     sort: 'name',
     overrideAccess: true,
   })
+  console.timeEnd('towns')
 
+  console.time('propertyTypes')
   const propertyTypes = await payload.find({
     collection: 'property-types',
     limit: 100,
     sort: 'name',
     overrideAccess: true,
   })
+  console.timeEnd('propertyTypes')
 
+  console.time('searchSuggestions')
   const searchSuggestions = [
     ...towns.docs.map((town) => ({
       label: town.name,
       href: `/properties?q=${encodeURIComponent(town.name)}`,
       type: 'Town' as const,
     })),
-
     ...regions.docs.map((region) => ({
       label: region.name,
       href: `/properties?q=${encodeURIComponent(region.name)}`,
       type: 'Region' as const,
     })),
-
     ...propertyTypes.docs.map((propertyType) => ({
       label: propertyType.name,
       href: `/properties?q=${encodeURIComponent(propertyType.name)}`,
       type: 'Property Type' as const,
     })),
   ]
+  console.timeEnd('searchSuggestions')
 
+  console.time('totalProperties')
   const totalProperties = await payload.count({
     collection: 'properties',
     overrideAccess: true,
   })
+  console.timeEnd('totalProperties')
 
+  console.time('totalAgencies')
   const totalAgencies = await payload.count({
     collection: 'agencies',
     overrideAccess: true,
   })
+  console.timeEnd('totalAgencies')
 
+  console.time('totalRegions')
   const totalRegions = await payload.count({
     collection: 'regions',
     overrideAccess: true,
   })
+  console.timeEnd('totalRegions')
 
+  console.time('agencyPropertyCounts')
   const agencyPropertyCounts = await Promise.all(
     agencies.docs.map(async (agency) => {
       const result = await payload.count({
@@ -104,11 +122,15 @@ export default async function HomePage() {
       }
     }),
   )
+  console.timeEnd('agencyPropertyCounts')
 
+  console.time('propertyCountByAgency')
   const propertyCountByAgency = Object.fromEntries(
     agencyPropertyCounts.map(({ agencyId, count }) => [agencyId, count]),
   )
+  console.timeEnd('propertyCountByAgency')
 
+  console.time('mapProperties')
   const mapProperties = properties.docs.map((property) => ({
     id: property.id,
     title: property.title,
@@ -123,6 +145,9 @@ export default async function HomePage() {
         ? property.featuredImage.url
         : null,
   }))
+  console.timeEnd('mapProperties')
+
+  console.timeEnd('Homepage total')
 
   return (
     <main>
@@ -171,16 +196,20 @@ export default async function HomePage() {
             </Link>
           </div>
         </div>
+
         <div className="my-10">
           <SavedHeaderLinks />
         </div>
+
         <div className="grid gap-3 lg:grid-cols-3">
           {properties.docs.slice(0, 2).map((property) => (
             <PropertyCard key={property.id} property={property} />
           ))}
+
           <div className="min-h-[520px] overflow-hidden border lg:row-span-2">
             <PropertyMapClient properties={mapProperties} />
           </div>
+
           {properties.docs.slice(2, 4).map((property) => (
             <PropertyCard key={property.id} property={property} />
           ))}
@@ -254,61 +283,5 @@ export default async function HomePage() {
         </section>
       </section>
     </main>
-  )
-}
-
-function PropertyCard({ property }: { property: any }) {
-  const image =
-    typeof property.featuredImage === 'object' && property.featuredImage?.url
-      ? property.featuredImage.url
-      : null
-
-  const images = [
-    ...(image
-      ? [
-          {
-            url: image,
-            alt: property.title,
-          },
-        ]
-      : []),
-
-    ...(property.gallery || [])
-      .filter((item: any) => typeof item === 'object' && item?.url && item.url !== image)
-      .map((item: any) => ({
-        url: item.url,
-        alt: property.title,
-      })),
-  ]
-
-  const region = typeof property.region === 'object' ? property.region : null
-  const town = typeof property.town === 'object' ? property.town : null
-
-  return (
-    <Link
-      href={`/property/${property.slug}`}
-      className="group relative  block border overflow-hidden"
-    >
-      <SavePropertyButton propertyId={String(property.id)} />
-      <PropertyCardSlider images={images} title={property.title} />
-
-      <div className="space-y-2  p-6">
-        <p className="text-xl font-medium">£{property.price?.toLocaleString('en-GB')}</p>
-
-        {(region || town) && (
-          <p className="text-sm text-muted-foreground">
-            {town?.name ? `${town.name}, ` : ''}
-            {region?.name || ''}
-          </p>
-        )}
-
-        <h2 className="text-lg font-medium">{property.title}</h2>
-
-        <p className="text-sm text-muted-foreground">
-          {property.bedrooms ? `${property.bedrooms} beds` : null}
-          {property.bathrooms ? ` · ${property.bathrooms} baths` : null}
-        </p>
-      </div>
-    </Link>
   )
 }

@@ -1,12 +1,10 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
-import Link from 'next/link'
-import { PropertyCardSlider } from '@/components/PropertyCardSlider'
-import { SavePropertyButton } from '@/components/SavePropertyButton'
 import { SaveSearchButton } from '@/components/SaveSearchButton'
 import { SavedHeaderLinks } from '@/components/SavedHeaderLinks'
 import { PageHeading } from '@/components/design'
 import { Search, SearchToolbar } from '@/components/Search'
+import { PropertyCard } from '@/components/Property/PropertyCard'
 
 type Props = {
   searchParams: Promise<{
@@ -271,65 +269,9 @@ export default async function PropertiesPage({ searchParams }: Props) {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {properties.docs.map((property) => {
-          const image =
-            typeof property.featuredImage === 'object' && property.featuredImage?.url
-              ? property.featuredImage.url
-              : null
-
-          const images = [
-            ...(image
-              ? [
-                  {
-                    url: image,
-                    alt: property.title,
-                  },
-                ]
-              : []),
-
-            ...(property.gallery || [])
-              .filter((item: any) => typeof item === 'object' && item?.url && item.url !== image)
-              .map((item: any) => ({
-                url: item.url,
-                alt: property.title,
-              })),
-          ]
-
-          const region = typeof property.region === 'object' ? property.region : null
-          const town = typeof property.town === 'object' ? property.town : null
-
-          return (
-            <Link
-              key={property.id}
-              href={`/property/${property.slug}`}
-              className="group relative block overflow-hidden border"
-            >
-              <SavePropertyButton propertyId={String(property.id)} />
-
-              <PropertyCardSlider images={images} title={property.title} />
-
-              <div className="space-y-2 px-1 pb-2 pt-4">
-                <p className="text-xl font-medium">
-                  {property.price ? `£${property.price.toLocaleString('en-GB')}` : 'POA'}
-                </p>
-
-                {(region || town) && (
-                  <p className="text-sm text-muted-foreground">
-                    {town?.name ? `${town.name}, ` : ''}
-                    {region?.name || ''}
-                  </p>
-                )}
-
-                <h2 className="text-lg font-medium">{property.title}</h2>
-
-                <p className="text-sm text-muted-foreground">
-                  {property.bedrooms ? `${property.bedrooms} beds` : null}
-                  {property.bathrooms ? ` · ${property.bathrooms} baths` : null}
-                </p>
-              </div>
-            </Link>
-          )
-        })}
+        {properties.docs.map((property) => (
+          <PropertyCard key={property.id} property={property} />
+        ))}
       </div>
     </main>
   )
