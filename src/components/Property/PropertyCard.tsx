@@ -7,6 +7,7 @@ import { PropertyLocation } from './PropertyLocation'
 import { PropertyAgency } from './PropertyAgency'
 type Props = {
   property: any
+  initialSaved?: boolean
 }
 
 function getBadges(property: any) {
@@ -20,7 +21,7 @@ function getBadges(property: any) {
   return badges
 }
 
-export function PropertyCard({ property }: Props) {
+export function PropertyCard({ property, initialSaved = false }: Props) {
   const image =
     typeof property.featuredImage === 'object' && property.featuredImage?.url
       ? property.featuredImage.url
@@ -51,8 +52,7 @@ export function PropertyCard({ property }: Props) {
       href={`/property/${property.slug}`}
       className="group relative block overflow-hidden border bg-white transition hover:border-black"
     >
-      <SavePropertyButton propertyId={String(property.id)} />
-
+      <SavePropertyButton propertyId={String(property.id)} initialSaved={initialSaved} />
       <div className="relative">
         <PropertyCardSlider images={images} title={property.title} />
 

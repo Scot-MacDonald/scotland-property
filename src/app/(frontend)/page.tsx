@@ -7,21 +7,16 @@ import { PropertyMapClient } from '@/components/PropertyMapClient'
 import { PropertyCard } from '@/components/Property/PropertyCard'
 
 export default async function HomePage() {
-  console.time('Homepage total')
-
   const payload = await getPayload({ config: configPromise })
 
-  console.time('properties')
   const properties = await payload.find({
     collection: 'properties',
-    depth: 2,
+    depth: 1,
     limit: 7,
     sort: '-createdAt',
     overrideAccess: true,
   })
-  console.timeEnd('properties')
 
-  console.time('agencies')
   const agencies = await payload.find({
     collection: 'agencies',
     depth: 1,
@@ -33,77 +28,63 @@ export default async function HomePage() {
     },
     overrideAccess: true,
   })
-  console.timeEnd('agencies')
 
-  console.time('regions')
   const regions = await payload.find({
     collection: 'regions',
     limit: 100,
     sort: 'name',
     overrideAccess: true,
   })
-  console.timeEnd('regions')
 
-  console.time('towns')
   const towns = await payload.find({
     collection: 'towns',
     limit: 100,
     sort: 'name',
     overrideAccess: true,
   })
-  console.timeEnd('towns')
 
-  console.time('propertyTypes')
   const propertyTypes = await payload.find({
     collection: 'property-types',
     limit: 100,
     sort: 'name',
     overrideAccess: true,
   })
-  console.timeEnd('propertyTypes')
 
-  console.time('searchSuggestions')
   const searchSuggestions = [
     ...towns.docs.map((town) => ({
       label: town.name,
       href: `/properties?q=${encodeURIComponent(town.name)}`,
       type: 'Town' as const,
     })),
+
     ...regions.docs.map((region) => ({
       label: region.name,
       href: `/properties?q=${encodeURIComponent(region.name)}`,
       type: 'Region' as const,
     })),
+
     ...propertyTypes.docs.map((propertyType) => ({
       label: propertyType.name,
       href: `/properties?q=${encodeURIComponent(propertyType.name)}`,
       type: 'Property Type' as const,
     })),
   ]
-  console.timeEnd('searchSuggestions')
 
-  console.time('totalProperties')
   const totalProperties = await payload.count({
     collection: 'properties',
     overrideAccess: true,
   })
-  console.timeEnd('totalProperties')
 
-  console.time('totalAgencies')
   const totalAgencies = await payload.count({
     collection: 'agencies',
     overrideAccess: true,
   })
-  console.timeEnd('totalAgencies')
 
-  console.time('totalRegions')
   const totalRegions = await payload.count({
     collection: 'regions',
     overrideAccess: true,
   })
-  console.timeEnd('totalRegions')
 
-  console.time('agencyPropertyCounts')
   const agencyPropertyCounts = await Promise.all(
     agencies.docs.map(async (agency) => {
       const result = await payload.count({
@@ -122,15 +103,11 @@ export default async function HomePage() {
       }
     }),
   )
-  console.timeEnd('agencyPropertyCounts')
 
-  console.time('propertyCountByAgency')
   const propertyCountByAgency = Object.fromEntries(
     agencyPropertyCounts.map(({ agencyId, count }) => [agencyId, count]),
   )
-  console.timeEnd('propertyCountByAgency')
 
-  console.time('mapProperties')
   const mapProperties = properties.docs.map((property) => ({
     id: property.id,
     title: property.title,
@@ -145,9 +122,6 @@ export default async function HomePage() {
         ? property.featuredImage.url
         : null,
   }))
-  console.timeEnd('mapProperties')
-
-  console.timeEnd('Homepage total')
 
   return (
     <main>

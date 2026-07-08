@@ -1,49 +1,19 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Heart } from 'lucide-react'
 
 type Props = {
   propertyId: string
+  initialSaved?: boolean
 }
 
 const STORAGE_KEY = 'savedProperties'
 
-export function SavePropertyButton({ propertyId }: Props) {
-  const [saved, setSaved] = useState(false)
+export function SavePropertyButton({ propertyId, initialSaved = false }: Props) {
+  const [saved, setSaved] = useState(initialSaved)
   const [loading, setLoading] = useState(false)
   const [showSavedMessage, setShowSavedMessage] = useState(false)
-
-  useEffect(() => {
-    async function checkSaved() {
-      try {
-        const res = await fetch('/api/saved-properties', {
-          method: 'GET',
-          credentials: 'include',
-        })
-
-        if (res.ok) {
-          const data = await res.json()
-
-          if (data.ok && Array.isArray(data.savedProperties)) {
-            const accountSavedIds = data.savedProperties.map((property: any) =>
-              typeof property === 'object' ? property.id : property,
-            )
-
-            setSaved(accountSavedIds.includes(propertyId))
-            return
-          }
-        }
-      } catch {
-        // Guest fallback below
-      }
-
-      const localSavedProperties = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
-      setSaved(localSavedProperties.includes(propertyId))
-    }
-
-    checkSaved()
-  }, [propertyId])
 
   function showSavedConfirmation(nextSaved: boolean) {
     if (!nextSaved) return
