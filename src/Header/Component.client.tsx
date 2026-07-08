@@ -10,15 +10,8 @@ import type { Header } from '@/payload-types'
 import { Logo } from '@/components/Logo/Logo'
 import { HeaderNav } from './Nav'
 
-type Suggestion = {
-  label: string
-  href: string
-  type: 'Town' | 'Region' | 'Property Type'
-}
-
 interface HeaderClientProps {
   data: Header
-  suggestions: Suggestion[]
 }
 
 export const HeaderClient: React.FC<HeaderClientProps> = ({ data, suggestions }) => {
@@ -92,44 +85,6 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, suggestions })
         </Link>
 
         <div className="flex flex-1 items-center justify-end gap-6">
-          <div className="relative hidden w-full max-w-[360px] md:block">
-            <form onSubmit={handleSearch}>
-              <input
-                type="search"
-                value={searchValue}
-                onChange={(event) => setSearchValue(event.target.value)}
-                placeholder="Search Scotland properties"
-                className="w-full border bg-background px-4 py-2 text-sm outline-none focus:border-black"
-              />
-            </form>
-
-            {searchValue && (
-              <div className="absolute left-0 right-0 top-full z-50 mt-2 border bg-white shadow-lg">
-                {suggestions
-                  .filter((suggestion) =>
-                    suggestion.label.toLowerCase().includes(searchValue.toLowerCase()),
-                  )
-                  .slice(0, 8)
-                  .map((suggestion) => (
-                    <button
-                      key={`${suggestion.type}-${suggestion.label}`}
-                      type="button"
-                      onClick={() => {
-                        router.push(suggestion.href)
-                        setSearchValue('')
-                      }}
-                      className="flex w-full items-center justify-between px-4 py-3 text-left text-sm hover:bg-gray-50"
-                    >
-                      <span>{suggestion.label}</span>
-                      <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                        {suggestion.type}
-                      </span>
-                    </button>
-                  ))}
-              </div>
-            )}
-          </div>
-
           <HeaderNav data={data} />
 
           {!loadingAuth && (
