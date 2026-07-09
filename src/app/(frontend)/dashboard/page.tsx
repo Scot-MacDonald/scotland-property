@@ -5,6 +5,9 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { TrialStatusCard } from '@/components/TrialStatusCard'
 import { canAgencyUsePlatform, getAgencySubscriptionBlockReason } from '@/lib/canAgencyUsePlatform'
+import { DashboardCard } from '@/components/Dashboard/DashboardCard'
+import { DashboardActionCard } from '@/components/Dashboard/DashboardActionCard'
+import { DashboardSectionHeader } from '@/components/Dashboard/DashboardSectionHeader'
 
 function getFollowUpStatus(dateValue?: string | null) {
   if (!dateValue) return 'upcoming'
@@ -238,11 +241,8 @@ export default async function DashboardPage() {
           value={properties.totalDocs}
           href="/dashboard/properties"
         />
-
         <DashboardCard title="Agents" value={agents.totalDocs} href="/dashboard/agents" />
-
         <DashboardCard title="Enquiries" value={enquiries.totalDocs} href="/dashboard/enquiries" />
-
         <DashboardCard
           title="New Enquiries"
           value={newEnquiries.totalDocs}
@@ -251,13 +251,7 @@ export default async function DashboardPage() {
       </section>
 
       <section className="mt-16">
-        <div className="mb-6">
-          <p className="text-sm uppercase tracking-[0.25em] text-muted-foreground">
-            Sales Overview
-          </p>
-
-          <h2 className="mt-2 text-3xl font-medium">Key Performance Indicators</h2>
-        </div>
+        <DashboardSectionHeader eyebrow="Sales Overview" title="Key Performance Indicators" />
 
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           <DashboardCard
@@ -265,19 +259,16 @@ export default async function DashboardPage() {
             value={valuationLeads.totalDocs}
             href="/dashboard/leads"
           />
-
           <DashboardCard
             title="New Valuations"
             value={newValuationLeads.totalDocs}
             href="/dashboard/leads"
           />
-
           <DashboardCard
             title="Booked"
             value={valuationsBooked.totalDocs}
             href="/dashboard/pipeline"
           />
-
           <DashboardCard
             title="Won"
             value={instructionsWon.totalDocs}
@@ -287,11 +278,7 @@ export default async function DashboardPage() {
       </section>
 
       <section className="mt-12">
-        <div className="mb-6">
-          <p className="text-sm uppercase tracking-[0.25em] text-muted-foreground">Tasks</p>
-
-          <h2 className="mt-2 text-3xl font-medium">Upcoming Follow Ups</h2>
-        </div>
+        <DashboardSectionHeader eyebrow="Tasks" title="Upcoming Follow Ups" />
 
         <div className="divide-y border bg-white">
           {upcomingFollowUps.docs.map((lead: any) => (
@@ -327,11 +314,7 @@ export default async function DashboardPage() {
       </section>
 
       <section className="mt-16">
-        <div className="mb-6">
-          <p className="text-sm uppercase tracking-[0.25em] text-muted-foreground">Quick Actions</p>
-
-          <h2 className="mt-2 text-3xl font-medium">Manage Your Agency</h2>
-        </div>
+        <DashboardSectionHeader eyebrow="Quick Actions" title="Manage Your Agency" />
 
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           <DashboardActionCard
@@ -339,6 +322,7 @@ export default async function DashboardPage() {
             description="Manage agency profile, contact details and CRM settings."
             href="/dashboard/settings"
           />
+
           <DashboardActionCard
             title="Properties"
             description="Manage your property portfolio, add listings and update availability."
@@ -395,33 +379,5 @@ export default async function DashboardPage() {
         </div>
       </section>
     </main>
-  )
-}
-
-function DashboardCard({ title, value, href }: { title: string; value: number; href: string }) {
-  return (
-    <Link href={href} className="border bg-white p-6">
-      <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">{title}</p>
-
-      <p className="mt-4 text-5xl font-medium">{value}</p>
-    </Link>
-  )
-}
-
-function DashboardActionCard({
-  title,
-  description,
-  href,
-}: {
-  title: string
-  description: string
-  href: string
-}) {
-  return (
-    <Link href={href} className="border bg-white p-8 transition hover:bg-neutral-50">
-      <h3 className="text-2xl font-medium">{title}</h3>
-
-      <p className="mt-4 text-sm text-muted-foreground">{description}</p>
-    </Link>
   )
 }
