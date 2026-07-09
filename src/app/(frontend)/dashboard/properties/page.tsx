@@ -3,21 +3,24 @@ import { getPayload } from 'payload'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import DeletePropertyButton from '@/components/DeletePropertyButton'
+import { DashboardStatCard } from '@/components/Dashboard/DashboardStatCard'
+import { DashboardTable, DashboardTableBody } from '@/components/Dashboard/DashboardTable'
+import { DashboardEmptyState } from '@/components/Dashboard/DashboardEmptyState'
+import { DashboardPageHeader } from '@/components/Dashboard/DashboardPageHeader'
+import { DashboardToolbar } from '@/components/Dashboard/DashboardToolbar'
+import { PropertyRow } from '@/components/Dashboard/PropertyRow'
 
-function formatPrice(value?: number | null) {
-  if (!value) return 'Price on request'
-
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    maximumFractionDigits: 0,
-  }).format(value)
-}
-
-export default async function DashboardPropertiesPage() {
+export default async function DashboardPropertiesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string
+    status?: string
+  }>
+}) {
   const payload = await getPayload({ config: configPromise })
   const requestHeaders = await headers()
+  const { q = '', status = '' } = await searchParams
 
   const { user } = await payload.auth({ headers: requestHeaders })
 
@@ -28,14 +31,45 @@ export default async function DashboardPropertiesPage() {
   const isSuperAdmin = userAsAny.role === 'super-admin'
   const agencyId = typeof userAsAny.agency === 'object' ? userAsAny.agency?.id : userAsAny.agency
 
-  const propertyFilter =
-    !isSuperAdmin && agencyId
-      ? {
-          agency: {
-            equals: agencyId,
-          },
-        }
-      : {}
+  const propertyFilter: any = {
+    and: [
+      !isSuperAdmin && agencyId
+        ? {
+            agency: {
+              equals: agencyId,
+            },
+          }
+        : {},
+      status
+        ? {
+            status: {
+              equals: status,
+            },
+          }
+        : {},
+      q
+        ? {
+            or: [
+              {
+                title: {
+                  like: q,
+                },
+              },
+              {
+                reference: {
+                  like: q,
+                },
+              },
+              {
+                slug: {
+                  like: q,
+                },
+              },
+            ],
+          }
+        : {},
+    ],
+  }
 
   const properties = await payload.find({
     collection: 'properties',
@@ -49,132 +83,82 @@ export default async function DashboardPropertiesPage() {
   return (
     <main className="min-h-screen bg-[#f7f6f2]">
       <div className="mx-auto w-full max-w-[1680px] px-4 py-16 md:px-8">
-        <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-sm uppercase tracking-[0.25em] text-muted-foreground">
-              Agency Listings
-            </p>
-
-            <h1 className="mt-2 text-5xl font-medium tracking-tight">Properties</h1>
-
-            <p className="mt-4 max-w-2xl text-muted-foreground">
-              Manage your live, reserved and sold listings from your agency dashboard.
-            </p>
-          </div>
-
-          <div className="flex gap-3">
-            <Link href="/dashboard" className="border px-4 py-2 text-sm">
-              Back
-            </Link>
-
-            <Link
-              href="/dashboard/properties/new"
-              className="bg-black px-4 py-2 text-sm text-white"
-            >
-              Add Property
-            </Link>
-          </div>
-        </div>
+        <DashboardPageHeader
+          eyebrow="Agency Listings"
+          title="Properties"
+          description="Manage your live, reserved and sold listings from your agency dashboard."
+          actions={[
+            {
+              label: 'Back',
+              href: '/dashboard',
+              variant: 'secondary',
+            },
+            {
+              label: 'Add Property',
+              href: '/dashboard/properties/new',
+              variant: 'primary',
+            },
+          ]}
+        />
 
         <section className="grid gap-4 md:grid-cols-3">
-          <StatCard title="Total Properties" value={properties.totalDocs} />
+          <DashboardStatCard title="Total Properties" value={properties.totalDocs} />
 
-          <StatCard
+          <DashboardStatCard
             title="For Sale"
             value={properties.docs.filter((property: any) => property.status === 'for-sale').length}
           />
 
-          <StatCard
+          <DashboardStatCard
             title="Sold"
             value={properties.docs.filter((property: any) => property.status === 'sold').length}
           />
         </section>
+        <div className="mt-8">
+          <DashboardToolbar
+            searchPlaceholder="Search properties..."
+            searchValue={q}
+            filters={[
+              {
+                label: 'Status',
+                name: 'status',
+                value: status,
+                options: [
+                  { label: 'For Sale', value: 'for-sale' },
+                  { label: 'Reserved', value: 'reserved' },
+                  { label: 'Sold', value: 'sold' },
+                ],
+              },
+            ]}
+            action={{
+              label: 'Add Property',
+              href: '/dashboard/properties/new',
+            }}
+          />
+        </div>
+        <section>
+          <DashboardTable>
+            <DashboardTableBody>
+              {properties.docs.map((property: any) => (
+                <PropertyRow key={property.id} property={property} />
+              ))}
 
-        <section className="mt-12 overflow-hidden border bg-white">
-          <div className="grid gap-4 border-b bg-neutral-50 p-5 text-sm uppercase tracking-[0.2em] text-muted-foreground md:grid-cols-[1.5fr_1fr_1fr_1fr_auto]">
-            <p>Property</p>
-            <p>Price</p>
-            <p>Status</p>
-            <p>Reference</p>
-            <p className="text-right">Actions</p>
-          </div>
-
-          <div className="divide-y">
-            {properties.docs.map((property: any) => {
-              const image =
-                typeof property.featuredImage === 'object' && property.featuredImage?.url
-                  ? property.featuredImage.url
-                  : null
-
-              return (
-                <div
-                  key={property.id}
-                  className="grid gap-4 p-5 hover:bg-neutral-50 md:grid-cols-[1.5fr_1fr_1fr_1fr_auto] md:items-center"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="h-20 w-28 overflow-hidden  bg-neutral-100">
-                      {image ? (
-                        <img
-                          src={image}
-                          alt={property.title}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : null}
-                    </div>
-
-                    <div>
-                      <p className="font-medium">{property.title}</p>
-
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {property.town && typeof property.town === 'object'
-                          ? property.town.name
-                          : 'No town'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <p className="font-medium">{formatPrice(property.price)}</p>
-
-                  <p className="capitalize">{property.status?.replaceAll('-', ' ')}</p>
-
-                  <p className="text-sm text-muted-foreground">
-                    {property.reference || property.slug}
-                  </p>
-
-                  <div className="flex justify-end gap-2">
-                    <Link href={`/property/${property.slug}`} className="border px-3 py-2 text-sm">
-                      View
-                    </Link>
-
-                    <Link
-                      href={`/dashboard/properties/${property.id}/edit`}
-                      className="border px-3 py-2 text-sm"
-                    >
-                      Edit
-                    </Link>
-
-                    <DeletePropertyButton propertyId={property.id} />
-                  </div>
-                </div>
-              )
-            })}
-
-            {properties.docs.length === 0 && (
-              <div className="p-10 text-center text-muted-foreground">No properties yet.</div>
-            )}
-          </div>
+              {properties.docs.length === 0 && (
+                <DashboardEmptyState
+                  title="No properties found"
+                  description={
+                    q || status
+                      ? 'Try changing your search or filters.'
+                      : 'Add your first listing to start building your agency portfolio on Scotland Luxury Estates.'
+                  }
+                  href={!q && !status ? '/dashboard/properties/new' : undefined}
+                  actionLabel={!q && !status ? 'Add Property' : undefined}
+                />
+              )}
+            </DashboardTableBody>
+          </DashboardTable>
         </section>
       </div>
     </main>
-  )
-}
-
-function StatCard({ title, value }: { title: string; value: number }) {
-  return (
-    <div className="border bg-white p-6">
-      <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">{title}</p>
-
-      <p className="mt-4 text-5xl font-medium">{value}</p>
-    </div>
   )
 }
