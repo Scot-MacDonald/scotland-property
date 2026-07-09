@@ -2,15 +2,14 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import RichText from '@/components/RichText'
 import { PropertyGallery } from '@/components/PropertyGallery'
-import { PropertyEnquiryForm } from '@/components/PropertyEnquiryForm'
 import { TrackRecentlyViewed } from '@/components/TrackRecentlyViewed'
 import { PropertyDetails } from '@/components/Property/PropertyDetails'
 import { PropertySidebar } from '@/components/Property/PropertySidebar'
 import { PropertyFeatures } from '@/components/Property/PropertyFeatures'
 import { PropertyAmenities } from '@/components/Property/PropertyAmenities'
 import { PropertyDescription } from '@/components/Property/PropertyDescription'
+import { SimilarProperties } from '@/components/Property/SimilarProperties'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -33,9 +32,43 @@ export default async function PropertyPage({ params }: Props) {
 
   const region = typeof property.region === 'object' ? property.region : null
   const town = typeof property.town === 'object' ? property.town : null
-  const agency = typeof property.agency === 'object' ? property.agency : null
-  const agent = typeof property.agent === 'object' ? property.agent : null
+  const propertyType = typeof property.propertyType === 'object' ? property.propertyType : null
 
+  const similarProperties = await payload.find({
+    collection: 'properties',
+    depth: 1,
+    limit: 2,
+    overrideAccess: true,
+    where: {
+      and: [
+        {
+          id: {
+            not_equals: property.id,
+          },
+        },
+
+        ...(region
+          ? [
+              {
+                region: {
+                  equals: region.id,
+                },
+              },
+            ]
+          : []),
+
+        ...(propertyType
+          ? [
+              {
+                propertyType: {
+                  equals: propertyType.id,
+                },
+              },
+            ]
+          : []),
+      ],
+    },
+  })
   const featuredImage =
     typeof property.featuredImage === 'object' && property.featuredImage?.url
       ? property.featuredImage
@@ -136,6 +169,7 @@ export default async function PropertyPage({ params }: Props) {
             <PropertyFeatures property={property} />
 
             <PropertyAmenities property={property} />
+            <SimilarProperties properties={similarProperties.docs} regionName={region?.name} />
           </article>
 
           <PropertySidebar property={property} />

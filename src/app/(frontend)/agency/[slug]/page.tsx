@@ -2,6 +2,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { PropertyCard } from '@/components/Property/PropertyCard'
 
 type Props = {
   params: Promise<{
@@ -74,7 +75,7 @@ export default async function AgencyPage({ params }: Props) {
           ← Back to properties
         </Link>
 
-        <section className="relative min-h-[460px] overflow-hidden border">
+        <section className="relative min-h-[560px] overflow-hidden border">
           {heroImage ? (
             <img
               src={heroImage}
@@ -85,30 +86,41 @@ export default async function AgencyPage({ params }: Props) {
             <div className="absolute inset-0 bg-muted" />
           )}
 
-          <div className="absolute inset-0 bg-black/45" />
+          <div className="absolute inset-0 bg-black/50" />
 
-          <div className="relative z-10 flex min-h-[460px] items-end p-6 md:p-10">
-            <div className="max-w-4xl text-white">
-              <p className="text-sm uppercase tracking-[0.25em] text-white/75">Agency</p>
+          <div className="relative z-10 flex min-h-[560px] items-center justify-center p-6 text-center md:p-10">
+            <div className="max-w-5xl text-white">
+              {logo ? (
+                <div className="mx-auto mb-8 flex h-32 w-56 items-center justify-center border border-white/70 bg-white/95 p-6">
+                  <img
+                    src={logo}
+                    alt={agency.name}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
+              ) : null}
 
-              <h1 className="mt-4 text-5xl font-medium tracking-tight md:text-7xl">
+              <p className="text-sm uppercase tracking-[0.35em] text-white/75">
+                Luxury Property Agency
+              </p>
+
+              <h1 className="mt-5 text-5xl font-medium tracking-tight md:text-7xl">
                 {agency.name}
               </h1>
 
               {agency.description ? (
-                <p className="mt-6 max-w-3xl text-lg leading-relaxed text-white/85">
+                <p className="mx-auto mt-6 max-w-3xl text-lg leading-relaxed text-white/85">
                   {agency.description}
                 </p>
               ) : null}
 
-              <div className="mt-8 flex flex-wrap gap-3 text-sm">
-                <span className="bg-white px-4 py-2 text-black">
-                  {properties.docs.length}{' '}
-                  {properties.docs.length === 1 ? 'property' : 'properties'}
+              <div className="mt-10 flex flex-wrap justify-center gap-3 text-sm">
+                <span className="border border-white/80 bg-black/50 px-4 py-2 uppercase tracking-[0.2em] text-white">
+                  {properties.docs.length} {properties.docs.length === 1 ? 'Listing' : 'Listings'}
                 </span>
 
-                <span className="bg-white px-4 py-2 text-black">
-                  {agents.docs.length} {agents.docs.length === 1 ? 'agent' : 'agents'}
+                <span className="border border-white/80 bg-black/50 px-4 py-2 uppercase tracking-[0.2em] text-white">
+                  {agents.docs.length} {agents.docs.length === 1 ? 'Agent' : 'Agents'}
                 </span>
               </div>
             </div>
@@ -144,8 +156,8 @@ export default async function AgencyPage({ params }: Props) {
             )}
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
-              <Stat label="Listings" value={properties.docs.length} />
-              <Stat label="Agents" value={agents.docs.length} />
+              <Stat label="Exclusive Listings" value={properties.docs.length} />
+              <Stat label="Property Experts" value={agents.docs.length} />
               <Stat label="Location" value={agency.address?.city || 'Scotland'} />
             </div>
           </div>
@@ -245,8 +257,10 @@ export default async function AgencyPage({ params }: Props) {
         <section className="border-x border-b p-6 md:p-8">
           <div className="mb-8 flex items-end justify-between gap-4">
             <div>
-              <p className="text-sm uppercase tracking-[0.25em] text-muted-foreground">Listings</p>
-              <h2 className="mt-2 text-4xl font-medium">Properties by {agency.name}</h2>
+              <p className="text-sm uppercase tracking-[0.25em] text-muted-foreground">
+                Featured Properties
+              </p>
+              <h2 className="mt-2 text-4xl font-medium">Properties represented by {agency.name}</h2>
             </div>
 
             <p className="text-sm text-muted-foreground">{properties.docs.length} properties</p>
@@ -256,55 +270,9 @@ export default async function AgencyPage({ params }: Props) {
             <p className="text-muted-foreground">No properties listed by this agency yet.</p>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {properties.docs.map((property) => {
-                const image =
-                  typeof property.featuredImage === 'object' && property.featuredImage?.url
-                    ? property.featuredImage.url
-                    : null
-
-                const region = typeof property.region === 'object' ? property.region : null
-                const town = typeof property.town === 'object' ? property.town : null
-
-                return (
-                  <Link
-                    key={property.id}
-                    href={`/property/${property.slug}`}
-                    className="group block border bg-card"
-                  >
-                    {image ? (
-                      <img
-                        src={image}
-                        alt={property.title}
-                        className="aspect-[4/3] w-full object-cover transition group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex aspect-[4/3] items-center justify-center bg-muted text-muted-foreground">
-                        No image
-                      </div>
-                    )}
-
-                    <div className="space-y-2 p-5">
-                      <p className="text-xl font-medium">
-                        £{property.price?.toLocaleString('en-GB')}
-                      </p>
-
-                      {(region || town) && (
-                        <p className="text-sm text-muted-foreground">
-                          {town?.name ? `${town.name}, ` : ''}
-                          {region?.name || ''}
-                        </p>
-                      )}
-
-                      <h3 className="text-lg font-medium">{property.title}</h3>
-
-                      <p className="text-sm text-muted-foreground">
-                        {property.bedrooms ? `${property.bedrooms} beds` : null}
-                        {property.bathrooms ? ` · ${property.bathrooms} baths` : null}
-                      </p>
-                    </div>
-                  </Link>
-                )
-              })}
+              {properties.docs.map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
             </div>
           )}
         </section>
@@ -313,11 +281,11 @@ export default async function AgencyPage({ params }: Props) {
   )
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
+function Stat({ label, value }: { label: string | number; value: string | number }) {
   return (
-    <div className="border p-4">
+    <div className="border p-5">
       <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-medium">{value}</p>
+      <p className="mt-3 text-3xl font-medium">{value}</p>
     </div>
   )
 }
