@@ -1,5 +1,7 @@
 import Link from 'next/link'
 
+import { DashboardLogoutButton } from './DashboardLogoutButton'
+
 type DashboardTopbarProps = {
   agencyName?: string
 }
@@ -19,6 +21,8 @@ export function DashboardTopbar({ agencyName = 'Agency' }: DashboardTopbarProps)
         <Link href="/" className="text-sm underline underline-offset-4">
           View Website
         </Link>
+
+        <DashboardLogoutButton />
 
         <div
           className="flex h-9 w-9 items-center justify-center bg-black text-sm font-medium text-white"

@@ -21,7 +21,7 @@ export default async function DashboardV2LeadsPage() {
     headers: requestHeaders,
   })
 
-  if (!user) redirect('/admin/login')
+  if (!user) redirect('/login')
 
   if (user.collection !== 'users') redirect('/login')
 

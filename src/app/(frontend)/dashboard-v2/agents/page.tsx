@@ -22,7 +22,7 @@ export default async function DashboardV2AgentsPage() {
   })
 
   if (!user) {
-    redirect('/admin/login')
+    redirect('/login')
   }
 
   if (user.collection !== 'users') {

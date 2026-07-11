@@ -55,7 +55,7 @@ export default async function DashboardV2Page() {
   })
 
   if (!user) {
-    redirect('/admin/login')
+    redirect('/login')
   }
 
   if (user.collection !== 'users') {

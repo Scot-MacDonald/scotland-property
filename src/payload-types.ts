@@ -461,8 +461,8 @@ export interface Category {
  */
 export interface User {
   id: string;
-  name?: string | null;
-  role: 'super-admin' | 'agency-admin' | 'agent';
+  name: string;
+  role: 'super-admin' | 'agency-owner' | 'agency-staff';
   agency?: (string | null) | Agency;
   updatedAt: string;
   createdAt: string;

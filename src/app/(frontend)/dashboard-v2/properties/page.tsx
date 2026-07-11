@@ -53,7 +53,7 @@ export default async function DashboardV2PropertiesPage({
   })
 
   if (!user) {
-    redirect('/admin/login')
+    redirect('/login')
   }
 
   if (user.collection !== 'users') {
