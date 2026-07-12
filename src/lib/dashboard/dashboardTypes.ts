@@ -1,8 +1,13 @@
-// src/lib/dashboard/dashboardTypes.ts
-
 export type DashboardUser = {
+  id: string
+
   collection?: string
-  role?: string | null
+
   name?: string | null
-  agency?: string | { id?: string | null } | null
+
+  email?: string | null
+
+  role?: string | null
+
+  agency?: string | { id?: string | null; name?: string | null } | null
 }

@@ -86,6 +86,7 @@ export interface Config {
     'import-logs': ImportLog;
     'alert-logs': AlertLog;
     'valuation-leads': ValuationLead;
+    'user-invitations': UserInvitation;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-kv': PayloadKv;
@@ -119,6 +120,7 @@ export interface Config {
     'import-logs': ImportLogsSelect<false> | ImportLogsSelect<true>;
     'alert-logs': AlertLogsSelect<false> | AlertLogsSelect<true>;
     'valuation-leads': ValuationLeadsSelect<false> | ValuationLeadsSelect<true>;
+    'user-invitations': UserInvitationsSelect<false> | UserInvitationsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1163,6 +1165,25 @@ export interface ValuationLead {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-invitations".
+ */
+export interface UserInvitation {
+  id: string;
+  name: string;
+  email: string;
+  agency: string | Agency;
+  role: 'agency-owner' | 'agency-staff';
+  status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+  token: string;
+  expiresAt: string;
+  acceptedAt?: string | null;
+  acceptedBy?: (string | null) | User;
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
@@ -1365,6 +1386,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'valuation-leads';
         value: string | ValuationLead;
+      } | null)
+    | ({
+        relationTo: 'user-invitations';
+        value: string | UserInvitation;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1990,6 +2015,24 @@ export interface ValuationLeadsSelect<T extends boolean = true> {
   followUpCompleted?: T;
   source?: T;
   assignedAgency?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-invitations_select".
+ */
+export interface UserInvitationsSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  agency?: T;
+  role?: T;
+  status?: T;
+  token?: T;
+  expiresAt?: T;
+  acceptedAt?: T;
+  acceptedBy?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }

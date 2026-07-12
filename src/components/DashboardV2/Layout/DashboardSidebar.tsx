@@ -48,6 +48,10 @@ export function DashboardSidebar({ counts = {} }: DashboardSidebarProps) {
       href: '/dashboard-v2/billing',
     },
     {
+      label: 'Team',
+      href: '/dashboard-v2/settings/team',
+    },
+    {
       label: 'Settings',
       href: '/dashboard-v2/settings',
     },

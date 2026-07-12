@@ -8,7 +8,8 @@ import { DashboardCollection } from '@/components/DashboardV2/Collection/Dashboa
 import { DashboardHeader } from '@/components/DashboardV2/Layout/DashboardHeader'
 import { DashboardLayout } from '@/components/DashboardV2/Layout/DashboardLayout'
 import { DashboardWorkspace } from '@/components/DashboardV2/Layout/DashboardWorkspace'
-import { getDashboardAgents, getDashboardStats } from '@/lib/dashboard'
+import { getDashboardAgents } from '@/lib/dashboard/getDashboardAgents'
+import { getDashboardContext } from '@/lib/dashboard/getDashboardContext'
 
 export default async function DashboardV2AgentsPage() {
   const payload = await getPayload({
@@ -21,36 +22,32 @@ export default async function DashboardV2AgentsPage() {
     headers: requestHeaders,
   })
 
-  if (!user) {
+  if (!user || user.collection !== 'users') {
     redirect('/login')
   }
 
-  if (user.collection !== 'users') {
-    redirect('/login')
-  }
+  const dashboardUser = user as any
 
-  const [agents, stats] = await Promise.all([
-    getDashboardAgents({
+  const [dashboard, agents] = await Promise.all([
+    getDashboardContext({
       payload,
-      user: user as any,
-      limit: 100,
+      user: dashboardUser,
     }),
 
-    getDashboardStats({
+    getDashboardAgents({
       payload,
-      user: user as any,
+      user: dashboardUser,
+      limit: 100,
     }),
   ])
 
+  const agencyName =
+    dashboard.agency?.name ||
+    (typeof dashboardUser.name === 'string' ? dashboardUser.name : null) ||
+    'Your Agency'
+
   return (
-    <DashboardLayout
-      navigationCounts={{
-        properties: stats.totalProperties,
-        agents: stats.totalAgents,
-        leads: stats.newLeads,
-        enquiries: stats.newEnquiries,
-      }}
-    >
+    <DashboardLayout agencyName={agencyName} navigationCounts={dashboard.navigationCounts}>
       <DashboardHeader
         eyebrow="Agency Team"
         title="Agents"
@@ -86,7 +83,7 @@ export default async function DashboardV2AgentsPage() {
                 role={agent.jobTitle || undefined}
                 email={agent.email || undefined}
                 phone={agent.phone || undefined}
-                href={`/dashboard/agents`}
+                href="/dashboard/agents"
               />
             ))}
           </div>

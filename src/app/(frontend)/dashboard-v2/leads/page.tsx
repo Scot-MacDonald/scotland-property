@@ -8,7 +8,18 @@ import { DashboardCollection } from '@/components/DashboardV2/Collection/Dashboa
 import { DashboardHeader } from '@/components/DashboardV2/Layout/DashboardHeader'
 import { DashboardLayout } from '@/components/DashboardV2/Layout/DashboardLayout'
 import { DashboardWorkspace } from '@/components/DashboardV2/Layout/DashboardWorkspace'
-import { getDashboardLeads, getDashboardStats } from '@/lib/dashboard'
+import { getDashboardContext } from '@/lib/dashboard/getDashboardContext'
+import { getDashboardLeads } from '@/lib/dashboard/getDashboardLeads'
+
+function formatPrice(value?: number | null) {
+  if (!value) return 'Not provided'
+
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
 
 export default async function DashboardV2LeadsPage() {
   const payload = await getPayload({
@@ -21,32 +32,32 @@ export default async function DashboardV2LeadsPage() {
     headers: requestHeaders,
   })
 
-  if (!user) redirect('/login')
+  if (!user || user.collection !== 'users') {
+    redirect('/login')
+  }
 
-  if (user.collection !== 'users') redirect('/login')
+  const dashboardUser = user as any
 
-  const [leads, stats] = await Promise.all([
-    getDashboardLeads({
+  const [dashboard, leads] = await Promise.all([
+    getDashboardContext({
       payload,
-      user: user as any,
-      limit: 100,
+      user: dashboardUser,
     }),
 
-    getDashboardStats({
+    getDashboardLeads({
       payload,
-      user: user as any,
+      user: dashboardUser,
+      limit: 100,
     }),
   ])
 
+  const agencyName =
+    dashboard.agency?.name ||
+    (typeof dashboardUser.name === 'string' ? dashboardUser.name : null) ||
+    'Your Agency'
+
   return (
-    <DashboardLayout
-      navigationCounts={{
-        properties: stats.totalProperties,
-        agents: stats.totalAgents,
-        leads: stats.newLeads,
-        enquiries: stats.newEnquiries,
-      }}
-    >
+    <DashboardLayout agencyName={agencyName} navigationCounts={dashboard.navigationCounts}>
       <DashboardHeader
         eyebrow="Seller Pipeline"
         title="Valuation Leads"
@@ -69,7 +80,14 @@ export default async function DashboardV2LeadsPage() {
         >
           <div className="grid gap-4">
             {leads.map((lead) => (
-              <DashboardLeadCard key={lead.id} lead={lead} />
+              <DashboardLeadCard
+                key={lead.id}
+                name={lead.name}
+                postcode={lead.postcode || undefined}
+                estimatedValue={formatPrice(lead.estimatedValue)}
+                status={lead.status}
+                href={`/dashboard/leads/${lead.id}`}
+              />
             ))}
           </div>
         </DashboardCollection>

@@ -8,7 +8,8 @@ import { DashboardCollection } from '@/components/DashboardV2/Collection/Dashboa
 import { DashboardHeader } from '@/components/DashboardV2/Layout/DashboardHeader'
 import { DashboardLayout } from '@/components/DashboardV2/Layout/DashboardLayout'
 import { DashboardWorkspace } from '@/components/DashboardV2/Layout/DashboardWorkspace'
-import { getDashboardProperties, getDashboardStats } from '@/lib/dashboard'
+import { getDashboardContext } from '@/lib/dashboard/getDashboardContext'
+import { getDashboardProperties } from '@/lib/dashboard/getDashboardProperties'
 
 function formatPrice(value?: number | null) {
   if (!value) return 'Price on request'
@@ -52,42 +53,38 @@ export default async function DashboardV2PropertiesPage({
     headers: requestHeaders,
   })
 
-  if (!user) {
+  if (!user || user.collection !== 'users') {
     redirect('/login')
   }
 
-  if (user.collection !== 'users') {
-    redirect('/login')
-  }
+  const dashboardUser = user as any
 
   const parsedPage = Number.parseInt(pageValue, 10)
   const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1
 
-  const [properties, stats] = await Promise.all([
+  const [dashboard, properties] = await Promise.all([
+    getDashboardContext({
+      payload,
+      user: dashboardUser,
+    }),
+
     getDashboardProperties({
       payload,
-      user: user as any,
+      user: dashboardUser,
       limit: 12,
       page,
       query: q.trim(),
       status,
     }),
-
-    getDashboardStats({
-      payload,
-      user: user as any,
-    }),
   ])
 
+  const agencyName =
+    dashboard.agency?.name ||
+    (typeof dashboardUser.name === 'string' ? dashboardUser.name : null) ||
+    'Your Agency'
+
   return (
-    <DashboardLayout
-      navigationCounts={{
-        properties: stats.totalProperties,
-        agents: stats.totalAgents,
-        leads: stats.newLeads,
-        enquiries: stats.newEnquiries,
-      }}
-    >
+    <DashboardLayout agencyName={agencyName} navigationCounts={dashboard.navigationCounts}>
       <DashboardHeader
         eyebrow="Agency Listings"
         title="Properties"

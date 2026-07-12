@@ -8,7 +8,8 @@ import { DashboardCollection } from '@/components/DashboardV2/Collection/Dashboa
 import { DashboardHeader } from '@/components/DashboardV2/Layout/DashboardHeader'
 import { DashboardLayout } from '@/components/DashboardV2/Layout/DashboardLayout'
 import { DashboardWorkspace } from '@/components/DashboardV2/Layout/DashboardWorkspace'
-import { getDashboardEnquiries, getDashboardStats } from '@/lib/dashboard'
+import { getDashboardContext } from '@/lib/dashboard/getDashboardContext'
+import { getDashboardEnquiries } from '@/lib/dashboard/getDashboardEnquiries'
 
 function createPageHref({ query, status, page }: { query: string; status: string; page: number }) {
   const params = new URLSearchParams()
@@ -42,42 +43,38 @@ export default async function DashboardV2EnquiriesPage({
     headers: requestHeaders,
   })
 
-  if (!user) {
+  if (!user || user.collection !== 'users') {
     redirect('/login')
   }
 
-  if (user.collection !== 'users') {
-    redirect('/login')
-  }
+  const dashboardUser = user as any
 
   const parsedPage = Number.parseInt(pageValue, 10)
   const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1
 
-  const [enquiries, stats] = await Promise.all([
+  const [dashboard, enquiries] = await Promise.all([
+    getDashboardContext({
+      payload,
+      user: dashboardUser,
+    }),
+
     getDashboardEnquiries({
       payload,
-      user: user as any,
+      user: dashboardUser,
       limit: 20,
       page,
       query: q.trim(),
       status,
     }),
-
-    getDashboardStats({
-      payload,
-      user: user as any,
-    }),
   ])
 
+  const agencyName =
+    dashboard.agency?.name ||
+    (typeof dashboardUser.name === 'string' ? dashboardUser.name : null) ||
+    'Your Agency'
+
   return (
-    <DashboardLayout
-      navigationCounts={{
-        properties: stats.totalProperties,
-        agents: stats.totalAgents,
-        leads: stats.newLeads,
-        enquiries: stats.newEnquiries,
-      }}
-    >
+    <DashboardLayout agencyName={agencyName} navigationCounts={dashboard.navigationCounts}>
       <DashboardHeader
         eyebrow="Buyer Pipeline"
         title="Enquiries"

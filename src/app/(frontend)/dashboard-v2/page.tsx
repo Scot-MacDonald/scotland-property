@@ -3,19 +3,19 @@ import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-import { DashboardCollection } from '@/components/DashboardV2/Collection/DashboardCollection'
-import { DashboardToolbar } from '@/components/DashboardV2/Collection/DashboardToolbar'
+import { DashboardActivityFeed } from '@/components/DashboardV2/Cards/DashboardActivityFeed'
 import { DashboardPriorityPanel } from '@/components/DashboardV2/Cards/DashboardPriorityPanel'
 import { DashboardPropertyCard } from '@/components/DashboardV2/Cards/DashboardPropertyCard'
 import { DashboardQuickActions } from '@/components/DashboardV2/Cards/DashboardQuickActions'
+import { DashboardCollection } from '@/components/DashboardV2/Collection/DashboardCollection'
+import { DashboardToolbar } from '@/components/DashboardV2/Collection/DashboardToolbar'
 import { DashboardHero } from '@/components/DashboardV2/Layout/DashboardHero'
 import { DashboardLayout } from '@/components/DashboardV2/Layout/DashboardLayout'
 import { DashboardWorkspace } from '@/components/DashboardV2/Layout/DashboardWorkspace'
 
-import { getDashboardProperties } from '@/lib/dashboard/getDashboardProperties'
-import { getDashboardStats } from '@/lib/dashboard/getDashboardStats'
-import { DashboardActivityFeed } from '@/components/DashboardV2/Cards/DashboardActivityFeed'
 import { getDashboardActivity } from '@/lib/dashboard/getDashboardActivity'
+import { getDashboardContext } from '@/lib/dashboard/getDashboardContext'
+import { getDashboardProperties } from '@/lib/dashboard/getDashboardProperties'
 
 function formatPrice(value?: number | null) {
   if (!value) return 'Price on request'
@@ -54,67 +54,44 @@ export default async function DashboardV2Page() {
     headers: requestHeaders,
   })
 
-  if (!user) {
+  if (!user || user.collection !== 'users') {
     redirect('/login')
   }
 
-  if (user.collection !== 'users') {
-    redirect('/login')
-  }
+  const dashboardUser = user as any
 
-  const userAsAny = user as any
-
-  const agencyId = typeof userAsAny.agency === 'object' ? userAsAny.agency?.id : userAsAny.agency
-
-  const [stats, properties, activities, agencyResult] = await Promise.all([
-    getDashboardStats({
+  const [dashboard, properties, activities] = await Promise.all([
+    getDashboardContext({
       payload,
-      user: userAsAny,
+      user: dashboardUser,
     }),
 
     getDashboardProperties({
       payload,
-      user: userAsAny,
+      user: dashboardUser,
       limit: 5,
     }),
 
     getDashboardActivity({
       payload,
-      user: userAsAny,
+      user: dashboardUser,
       limit: 6,
     }),
-
-    agencyId
-      ? payload.findByID({
-          collection: 'agencies',
-          id: agencyId,
-          depth: 0,
-          overrideAccess: true,
-        })
-      : Promise.resolve(null),
   ])
 
   const agencyName =
-    agencyResult && typeof agencyResult.name === 'string'
-      ? agencyResult.name
-      : userAsAny.name || 'Your Agency'
+    dashboard.agency?.name ||
+    (typeof dashboardUser.name === 'string' ? dashboardUser.name : null) ||
+    'Your Agency'
 
   return (
-    <DashboardLayout
-      agencyName={agencyName}
-      navigationCounts={{
-        properties: stats.totalProperties,
-        agents: stats.totalAgents,
-        leads: stats.newLeads,
-        enquiries: stats.newEnquiries,
-      }}
-    >
+    <DashboardLayout agencyName={agencyName} navigationCounts={dashboard.navigationCounts}>
       <DashboardHero
         agencyName={agencyName}
-        activeListings={stats.activeListings}
-        portfolioValue={formatPortfolioValue(stats.portfolioValue)}
-        newLeads={stats.newLeads}
-        newEnquiries={stats.newEnquiries}
+        activeListings={dashboard.stats.activeListings}
+        portfolioValue={formatPortfolioValue(dashboard.stats.portfolioValue)}
+        newLeads={dashboard.stats.newLeads}
+        newEnquiries={dashboard.stats.newEnquiries}
       />
 
       <DashboardWorkspace>
@@ -159,7 +136,9 @@ export default async function DashboardV2Page() {
 
           <aside className="space-y-6 self-start lg:sticky lg:top-8">
             <DashboardPriorityPanel />
+
             <DashboardQuickActions />
+
             <DashboardActivityFeed activities={activities} />
           </aside>
         </div>
