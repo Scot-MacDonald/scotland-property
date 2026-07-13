@@ -4,14 +4,14 @@ import type { FormEvent } from 'react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { createTeamInvitationAction } from '@/app/(frontend)/dashboard-v2/settings/team/actions'
+import { createTeamInvitationAction } from '@/app/(frontend)/dashboard/settings/team/actions'
 
 export function InviteTeamMemberForm() {
   const router = useRouter()
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState<'agency-admin' | 'agency-staff'>('agency-staff')
+  const [role, setRole] = useState<'agency-owner' | 'agency-staff'>('agency-staff')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [invitationUrl, setInvitationUrl] = useState('')
@@ -112,7 +112,7 @@ export function InviteTeamMemberForm() {
             id="invite-role"
             value={role}
             disabled={isSubmitting}
-            onChange={(event) => setRole(event.target.value as 'agency-admin' | 'agency-staff')}
+            onChange={(event) => setRole(event.target.value as 'agency-owner' | 'agency-staff')}
             className="min-h-11 w-full border border-black/10 bg-white px-4 outline-none focus:border-black disabled:opacity-60"
           >
             <option value="agency-staff">Agency Staff</option>

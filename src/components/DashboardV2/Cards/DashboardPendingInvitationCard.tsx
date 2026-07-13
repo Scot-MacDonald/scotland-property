@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { cancelTeamInvitationAction } from '@/app/(frontend)/dashboard-v2/settings/team/actions'
+import { cancelTeamInvitationAction } from '@/app/(frontend)/dashboard/settings/team/actions'
 
 function formatRole(role: string) {
   if (role === 'agency-admin') return 'Agency Admin'

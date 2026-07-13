@@ -72,7 +72,7 @@ export async function createTeamInvitationAction({
     return result
   }
 
-  revalidatePath('/dashboard-v2/settings/team')
+  revalidatePath('/dashboard/settings/team')
 
   return {
     success: true,
@@ -105,7 +105,7 @@ export async function cancelTeamInvitationAction({
     return result
   }
 
-  revalidatePath('/dashboard-v2/settings/team')
+  revalidatePath('/dashboard/settings/team')
 
   return {
     success: true,

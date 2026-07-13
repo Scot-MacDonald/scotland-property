@@ -23,7 +23,7 @@ export default async function LoginPage() {
       redirect('/admin')
     }
 
-    redirect('/dashboard-v2')
+    redirect('/dashboard')
   }
 
   return (

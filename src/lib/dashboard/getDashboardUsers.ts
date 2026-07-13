@@ -2,11 +2,7 @@ import type { Payload } from 'payload'
 
 import { getAgencyId } from './getAgencyId'
 import { getAgencyWhere } from './getAgencyWhere'
-
-type DashboardUser = {
-  role?: string | null
-  agency?: string | { id?: string | null } | null
-}
+import type { DashboardUser } from './dashboardTypes'
 
 export type DashboardTeamUser = {
   id: string

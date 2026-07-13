@@ -3,6 +3,10 @@ import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+import type { Property } from '@/payload-types'
+
+type PropertyStatus = NonNullable<Property['status']>
+
 function createSlug(value: string) {
   return value
     .toLowerCase()
@@ -12,28 +16,52 @@ function createSlug(value: string) {
 
 function optionalString(value: FormDataEntryValue | null) {
   const stringValue = String(value || '').trim()
+
   return stringValue || undefined
 }
 
 function optionalNumber(value: FormDataEntryValue | null) {
   const stringValue = String(value || '').trim()
-  if (!stringValue) return undefined
-  return Number(stringValue)
+
+  if (!stringValue) {
+    return undefined
+  }
+
+  const numberValue = Number(stringValue)
+
+  return Number.isFinite(numberValue) ? numberValue : undefined
 }
 
-async function uploadImage(payload: any, file: FormDataEntryValue | null, alt: string) {
-  if (!(file instanceof File) || file.size === 0) return undefined
+function getPropertyStatus(value: FormDataEntryValue | null): PropertyStatus {
+  const status = String(value || '').trim()
+
+  if (status === 'for-sale' || status === 'reserved' || status === 'sold') {
+    return status
+  }
+
+  return 'for-sale'
+}
+
+async function uploadImage(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  file: FormDataEntryValue | null,
+  alt: string,
+) {
+  if (!(file instanceof File) || file.size === 0) {
+    return undefined
+  }
 
   const buffer = Buffer.from(await file.arrayBuffer())
 
   const uploaded = await payload.create({
     collection: 'media',
+    overrideAccess: true,
     data: {
       alt,
     },
     file: {
       data: buffer,
-      mimetype: file.type,
+      mimetype: file.type || 'application/octet-stream',
       name: file.name,
       size: file.size,
     },
@@ -44,62 +72,150 @@ async function uploadImage(payload: any, file: FormDataEntryValue | null, alt: s
 
 export async function POST(req: Request) {
   try {
-    const payload = await getPayload({ config: configPromise })
+    const payload = await getPayload({
+      config: configPromise,
+    })
 
     const { user } = await payload.auth({
       headers: await headers(),
     })
 
     if (!user || user.collection !== 'users') {
-      return NextResponse.json({ error: 'Not authorised.' }, { status: 401 })
+      return NextResponse.json(
+        {
+          error: 'Not authorised.',
+        },
+        {
+          status: 401,
+        },
+      )
     }
 
-    const userAsAny = user as any
-    const isSuperAdmin = userAsAny.role === 'super-admin'
-    const agencyId = typeof userAsAny.agency === 'object' ? userAsAny.agency?.id : userAsAny.agency
+    const isSuperAdmin = user.role === 'super-admin'
 
-    if (!isSuperAdmin && !agencyId) {
-      return NextResponse.json({ error: 'No agency assigned to this user.' }, { status: 403 })
+    const userAgencyId = typeof user.agency === 'object' ? user.agency?.id : user.agency
+
+    if (!isSuperAdmin && !userAgencyId) {
+      return NextResponse.json(
+        {
+          error: 'No agency assigned to this user.',
+        },
+        {
+          status: 403,
+        },
+      )
     }
 
     const formData = await req.formData()
 
     const title = String(formData.get('title') || '').trim()
+    const price = optionalNumber(formData.get('price'))
+    const regionId = optionalString(formData.get('region'))
+    const townId = optionalString(formData.get('town'))
 
     if (!title) {
-      return NextResponse.json({ error: 'Property title is required.' }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Property title is required.',
+        },
+        {
+          status: 400,
+        },
+      )
     }
+
+    if (price === undefined) {
+      return NextResponse.json(
+        {
+          error: 'Property price is required.',
+        },
+        {
+          status: 400,
+        },
+      )
+    }
+
+    if (!regionId) {
+      return NextResponse.json(
+        {
+          error: 'Region is required.',
+        },
+        {
+          status: 400,
+        },
+      )
+    }
+
+    if (!townId) {
+      return NextResponse.json(
+        {
+          error: 'Town is required.',
+        },
+        {
+          status: 400,
+        },
+      )
+    }
+
+    const selectedAgencyId = isSuperAdmin
+      ? optionalString(formData.get('agency')) || userAgencyId
+      : userAgencyId
+
+    if (!selectedAgencyId) {
+      return NextResponse.json(
+        {
+          error: 'An agency must be assigned to this property.',
+        },
+        {
+          status: 400,
+        },
+      )
+    }
+
+    const uniqueSuffix = Date.now().toString().slice(-6)
+    const slug = `${createSlug(title)}-${uniqueSuffix}`
+
+    const reference = optionalString(formData.get('reference')) || `SLE-${Date.now()}`
 
     const featuredImageId = await uploadImage(payload, formData.get('featuredImage'), title)
 
     const galleryFiles = formData.getAll('gallery')
-    const galleryIds = []
+    const galleryIds: string[] = []
 
     for (const file of galleryFiles) {
       const uploadedId = await uploadImage(payload, file, title)
-      if (uploadedId) galleryIds.push(uploadedId)
+
+      if (uploadedId) {
+        galleryIds.push(uploadedId)
+      }
     }
 
     const property = await payload.create({
       collection: 'properties',
+      overrideAccess: true,
       data: {
         title,
-        slug: `${createSlug(title)}-${Date.now().toString().slice(-6)}`,
-        price: optionalNumber(formData.get('price')),
-        status: optionalString(formData.get('status')) || 'for-sale',
+        slug,
+        reference,
+        price,
+        status: getPropertyStatus(formData.get('status')),
         excerpt: optionalString(formData.get('excerpt')),
         bedrooms: optionalNumber(formData.get('bedrooms')),
         bathrooms: optionalNumber(formData.get('bathrooms')),
         internalArea: optionalNumber(formData.get('internalArea')),
-        landArea: optionalString(formData.get('landArea')),
+        landArea: optionalNumber(formData.get('landArea')),
+        yearBuilt: optionalNumber(formData.get('yearBuilt')),
+        energyRating: optionalString(formData.get('energyRating')),
         latitude: optionalNumber(formData.get('latitude')),
         longitude: optionalNumber(formData.get('longitude')),
-        region: optionalString(formData.get('region')),
-        town: optionalString(formData.get('town')),
+        virtualTour: optionalString(formData.get('virtualTour')),
+        youtubeVideo: optionalString(formData.get('youtubeVideo')),
+        region: regionId,
+        town: townId,
         propertyType: optionalString(formData.get('propertyType')),
         agent: optionalString(formData.get('agent')),
         amenities: formData.getAll('amenities').map(String).filter(Boolean),
-        agency: agencyId,
+        agency: selectedAgencyId,
         featuredImage: featuredImageId,
         gallery: galleryIds,
       },
@@ -109,14 +225,18 @@ export async function POST(req: Request) {
       ok: true,
       property,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Create property error:', error)
+
+    const message = error instanceof Error ? error.message : 'Could not create property.'
 
     return NextResponse.json(
       {
-        error: error?.message || 'Could not create property.',
+        error: message,
       },
-      { status: 500 },
+      {
+        status: 500,
+      },
     )
   }
 }

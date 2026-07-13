@@ -55,7 +55,10 @@ async function enforceListingLimit({ data, req, operation }: any) {
   })
 
   if (!canAgencyUsePlatform(agency)) {
-    throw new APIError(getAgencySubscriptionBlockReason(agency), 403)
+    throw new APIError(
+      getAgencySubscriptionBlockReason(agency) || 'Your subscription does not allow new listings.',
+      403,
+    )
   }
 
   const listingLimit = getListingLimit(agency)

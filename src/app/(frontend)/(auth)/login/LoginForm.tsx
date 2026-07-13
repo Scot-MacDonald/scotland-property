@@ -37,7 +37,7 @@ export function LoginForm() {
       if (result.role === 'super-admin') {
         router.replace('/admin')
       } else {
-        router.replace('/dashboard-v2')
+        router.replace('/dashboard')
       }
 
       router.refresh()

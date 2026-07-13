@@ -10,15 +10,21 @@ import type { Header } from '@/payload-types'
 import { Logo } from '@/components/Logo/Logo'
 import { HeaderNav } from './Nav'
 
-interface HeaderClientProps {
-  data: Header
+type HeaderSearchSuggestion = {
+  label: string
+  href: string
+  type: 'Town' | 'Region' | 'Property Type'
 }
 
-export const HeaderClient: React.FC<HeaderClientProps> = ({ data, suggestions }) => {
+interface HeaderClientProps {
+  data: Header
+  suggestions?: HeaderSearchSuggestion[]
+}
+
+export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   const [theme, setTheme] = useState<string | null>(null)
   const [isBuyerLoggedIn, setIsBuyerLoggedIn] = useState(false)
   const [loadingAuth, setLoadingAuth] = useState(true)
-  const [searchValue, setSearchValue] = useState('')
 
   const { headerTheme, setHeaderTheme } = useHeaderTheme()
   const pathname = usePathname()
@@ -29,19 +35,21 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, suggestions })
   }, [pathname, setHeaderTheme])
 
   useEffect(() => {
-    if (headerTheme && headerTheme !== theme) setTheme(headerTheme)
+    if (headerTheme && headerTheme !== theme) {
+      setTheme(headerTheme)
+    }
   }, [headerTheme, theme])
 
   useEffect(() => {
     async function checkBuyer() {
       try {
-        const res = await fetch('/api/buyers/me', {
+        const response = await fetch('/api/buyers/me', {
           credentials: 'include',
         })
 
-        const data = await res.json()
+        const authData = await response.json()
 
-        setIsBuyerLoggedIn(Boolean(data?.user && data?.collection === 'buyers'))
+        setIsBuyerLoggedIn(Boolean(authData?.user && authData?.collection === 'buyers'))
       } catch {
         setIsBuyerLoggedIn(false)
       } finally {
@@ -49,7 +57,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, suggestions })
       }
     }
 
-    checkBuyer()
+    void checkBuyer()
   }, [pathname])
 
   async function handleLogout() {
@@ -61,20 +69,6 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, suggestions })
     setIsBuyerLoggedIn(false)
     router.push('/')
     router.refresh()
-  }
-
-  function handleSearch(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    const query = searchValue.trim()
-
-    if (!query) {
-      router.push('/properties')
-      return
-    }
-
-    router.push(`/properties?q=${encodeURIComponent(query)}`)
-    setSearchValue('')
   }
 
   return (

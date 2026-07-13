@@ -23,7 +23,6 @@ import { Buyers } from './collections/Buyers'
 import { ImportLogs } from './collections/ImportLogs'
 import { AlertLogs } from './collections/AlertLogs'
 import { ValuationLeads } from './collections/ValuationLeads'
-import { UservInvitations } from './collections/UserInvitations'
 
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'

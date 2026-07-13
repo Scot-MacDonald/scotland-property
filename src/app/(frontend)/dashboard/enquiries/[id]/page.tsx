@@ -64,8 +64,7 @@ export default async function DashboardEnquiryDetailPage({ params }: Props) {
               Review the enquiry details and update its status.
             </p>
           </div>
-
-          <EnquiryStatusForm enquiryId={enquiry.id} currentStatus={enquiry.status} />
+          <EnquiryStatusForm enquiryId={enquiry.id} currentStatus={enquiry.status ?? undefined} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_340px]">

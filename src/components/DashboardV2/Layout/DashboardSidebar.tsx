@@ -15,45 +15,45 @@ export function DashboardSidebar({ counts = {} }: DashboardSidebarProps) {
   const navItems = [
     {
       label: 'Overview',
-      href: '/dashboard-v2',
+      href: '/dashboard',
     },
     {
       label: 'Properties',
-      href: '/dashboard-v2/properties',
+      href: '/dashboard/properties',
       count: counts.properties,
     },
     {
       label: 'Agents',
-      href: '/dashboard-v2/agents',
+      href: '/dashboard/agents',
       count: counts.agents,
     },
     {
       label: 'Leads',
-      href: '/dashboard-v2/leads',
+      href: '/dashboard/leads',
       count: counts.leads,
       attention: Boolean(counts.leads),
     },
     {
       label: 'Enquiries',
-      href: '/dashboard-v2/enquiries',
+      href: '/dashboard/enquiries',
       count: counts.enquiries,
       attention: Boolean(counts.enquiries),
     },
     {
       label: 'Analytics',
-      href: '/dashboard-v2/analytics',
+      href: '/dashboard/analytics',
     },
     {
       label: 'Billing',
-      href: '/dashboard-v2/billing',
+      href: '/dashboard/billing',
     },
     {
       label: 'Team',
-      href: '/dashboard-v2/settings/team',
+      href: '/dashboard/settings/team',
     },
     {
       label: 'Settings',
-      href: '/dashboard-v2/settings',
+      href: '/dashboard/settings',
     },
   ]
 
@@ -61,7 +61,7 @@ export function DashboardSidebar({ counts = {} }: DashboardSidebarProps) {
     <aside className="hidden min-h-screen border-r border-white/10 bg-[#111] text-white lg:block">
       <div className="sticky top-0">
         <div className="p-8">
-          <Link href="/dashboard-v2">
+          <Link href="/dashboard">
             <p className="text-xs uppercase tracking-[0.35em] text-white/50">Scotland</p>
 
             <h1 className="mt-2 text-2xl font-medium">Luxury Estates</h1>

@@ -1,5 +1,5 @@
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -26,14 +26,14 @@ export default async function EnquiryPipelinePage() {
 
   const agencyId = typeof userAsAny.agency === 'object' ? userAsAny.agency?.id : userAsAny.agency
 
-  const enquiryFilter =
+  const enquiryFilter: Where | undefined =
     !isSuperAdmin && agencyId
       ? {
           agency: {
             equals: agencyId,
           },
         }
-      : {}
+      : undefined
 
   const enquiries = await payload.find({
     collection: 'enquiries',

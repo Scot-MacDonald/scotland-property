@@ -2,6 +2,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import type { Media } from '@/payload-types'
 import { PropertyGallery } from '@/components/PropertyGallery'
 import { TrackRecentlyViewed } from '@/components/TrackRecentlyViewed'
 import { PropertyDetails } from '@/components/Property/PropertyDetails'
@@ -15,6 +16,17 @@ type Props = {
   params: Promise<{ slug: string }>
 }
 
+function isMediaWithUrl(
+  image: string | Media | null | undefined,
+): image is Media & { url: string } {
+  return (
+    typeof image === 'object' &&
+    image !== null &&
+    typeof image.url === 'string' &&
+    image.url.length > 0
+  )
+}
+
 export default async function PropertyPage({ params }: Props) {
   const { slug } = await params
   const payload = await getPayload({ config: configPromise })
@@ -24,15 +36,28 @@ export default async function PropertyPage({ params }: Props) {
     depth: 2,
     limit: 1,
     overrideAccess: true,
-    where: { slug: { equals: slug } },
+    where: {
+      slug: {
+        equals: slug,
+      },
+    },
   })
 
   const property = result.docs[0]
-  if (!property) notFound()
 
-  const region = typeof property.region === 'object' ? property.region : null
-  const town = typeof property.town === 'object' ? property.town : null
-  const propertyType = typeof property.propertyType === 'object' ? property.propertyType : null
+  if (!property) {
+    notFound()
+  }
+
+  const region =
+    typeof property.region === 'object' && property.region !== null ? property.region : null
+
+  const town = typeof property.town === 'object' && property.town !== null ? property.town : null
+
+  const propertyType =
+    typeof property.propertyType === 'object' && property.propertyType !== null
+      ? property.propertyType
+      : null
 
   const similarProperties = await payload.find({
     collection: 'properties',
@@ -69,28 +94,27 @@ export default async function PropertyPage({ params }: Props) {
       ],
     },
   })
-  const featuredImage =
-    typeof property.featuredImage === 'object' && property.featuredImage?.url
-      ? property.featuredImage
-      : null
 
-  const gallery = property.gallery || []
+  const imageCandidates: Array<string | Media | null | undefined> = [
+    property.featuredImage,
+    ...(property.gallery ?? []),
+  ]
 
-  const images = [featuredImage, ...gallery]
-    .filter((image) => typeof image === 'object' && image !== null && 'url' in image && image.url)
-    .map((image) => ({
-      url: image.url as string,
-      alt: 'alt' in image && image.alt ? image.alt : property.title,
-    }))
+  const images = imageCandidates.filter(isMediaWithUrl).map((image) => ({
+    url: image.url,
+    alt: image.alt || property.title,
+  }))
 
   return (
     <main className="bg-background">
       <TrackRecentlyViewed propertyId={String(property.id)} />
+
       <section className="mx-auto w-full max-w-[1680px] px-4 pt-6 md:px-8">
         <div className="mb-4 flex items-center justify-between text-sm">
           <Link href="/properties" className="text-muted-foreground hover:underline">
             ← Back to search
           </Link>
+
           <div className="flex gap-4">
             <button className="text-muted-foreground hover:text-foreground">Save</button>
             <button className="text-muted-foreground hover:text-foreground">Share</button>
@@ -137,6 +161,7 @@ export default async function PropertyPage({ params }: Props) {
               <h2 className="mb-5 text-2xl font-medium">About the Property</h2>
               <PropertyDescription property={property} />
             </section>
+
             {property.virtualTour && (
               <section className="mb-12">
                 <h2 className="mb-5 text-2xl font-medium">Virtual Tour</h2>
@@ -151,6 +176,7 @@ export default async function PropertyPage({ params }: Props) {
                 </a>
               </section>
             )}
+
             {property.youtubeVideo && (
               <section className="mb-12">
                 <h2 className="mb-5 text-2xl font-medium">Property Video</h2>
@@ -169,6 +195,7 @@ export default async function PropertyPage({ params }: Props) {
             <PropertyFeatures property={property} />
 
             <PropertyAmenities property={property} />
+
             <SimilarProperties properties={similarProperties.docs} regionName={region?.name} />
           </article>
 

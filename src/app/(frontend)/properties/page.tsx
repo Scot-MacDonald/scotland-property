@@ -1,5 +1,5 @@
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 import { SaveSearchButton } from '@/components/SaveSearchButton'
 import { SavedHeaderLinks } from '@/components/SavedHeaderLinks'
 import { PageHeading } from '@/components/design'
@@ -66,7 +66,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
     })),
   ]
 
-  const andFilters: any[] = []
+  const andFilters: Where[] = []
 
   if (params.q) {
     andFilters.push({
@@ -120,7 +120,10 @@ export default async function PropertiesPage({ searchParams }: Props) {
   }
 
   if (params.minPrice || params.maxPrice) {
-    const priceFilter: any = {}
+    const priceFilter: {
+      greater_than_equal?: number
+      less_than_equal?: number
+    } = {}
 
     if (params.minPrice) {
       priceFilter.greater_than_equal = Number(params.minPrice)
@@ -151,7 +154,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
     })
   }
 
-  const where = andFilters.length > 0 ? { and: andFilters } : {}
+  const where: Where | undefined = andFilters.length > 0 ? { and: andFilters } : undefined
 
   const properties = await payload.find({
     collection: 'properties',
@@ -167,16 +170,15 @@ export default async function PropertiesPage({ searchParams }: Props) {
     depth: 0,
     limit: 1000,
     overrideAccess: true,
-    where: {},
     select: {
       price: true,
     },
   })
 
-  const priceBuckets = Array(12).fill(0)
+  const priceBuckets = Array<number>(12).fill(0)
   const maxHistogramPrice = 10000000
 
-  allPrices.docs.forEach((property: any) => {
+  allPrices.docs.forEach((property) => {
     if (!property.price) return
 
     const bucketIndex = Math.min(

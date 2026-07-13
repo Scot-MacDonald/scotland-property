@@ -34,7 +34,7 @@ export function AcceptInvitationForm({ token }: { token: string }) {
         return
       }
 
-      router.replace('/dashboard-v2')
+      router.replace('/dashboard')
       router.refresh()
     } catch {
       setError('Unable to accept the invitation. Please try again.')
