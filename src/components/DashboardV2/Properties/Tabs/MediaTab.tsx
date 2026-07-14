@@ -19,17 +19,18 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useMemo, useRef, useState, type ChangeEvent, type DragEvent, type RefObject } from 'react'
 import { useWorkspaceForm } from '@/hooks/useWorkspaceForm'
-import { WorkspacePanel, WorkspaceStatusFooter } from '@/components/DashboardV2/Workspace'
+import {
+  WorkspacePanel,
+  WorkspaceSortableMediaCard,
+  WorkspaceStatusFooter,
+  WorkspaceUploadField,
+  type WorkspaceMediaItem,
+} from '@/components/DashboardV2/Workspace'
 import type { Media, Property } from '@/payload-types'
 
 type MediaValue = string | Media | null | undefined
 
-type MediaItem = {
-  id: string
-  filename: string
-  url: string
-  alt: string
-}
+type MediaItem = WorkspaceMediaItem
 
 type MediaTabProps = {
   property: Property
@@ -174,93 +175,6 @@ function FileDropzone({
         </button>
       </div>
     </div>
-  )
-}
-
-function SortableMediaCard({
-  item,
-  index,
-  isLast,
-  onMoveBackward,
-  onMoveForward,
-  onRemove,
-}: {
-  item: MediaItem
-  index: number
-  isLast: boolean
-  onMoveBackward: () => void
-  onMoveForward: () => void
-  onRemove: () => void
-}) {
-  const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
-    id: item.id,
-  })
-
-  return (
-    <article
-      ref={setNodeRef}
-      className={[
-        'border border-neutral-200 bg-white',
-        isDragging ? 'relative z-10 opacity-60 shadow-lg' : 'opacity-100',
-      ].join(' ')}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-      }}
-    >
-      <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100">
-        {/* Payload media can be dynamic and may not use the configured Next image domains. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img alt={item.alt} className="h-full w-full object-cover" src={item.url} />
-
-        <button
-          type="button"
-          className="absolute right-3 top-3 inline-flex h-9 w-9 touch-none cursor-grab items-center justify-center border border-white/70 bg-white/95 text-neutral-800 shadow-sm active:cursor-grabbing"
-          aria-label={`Reorder ${item.filename}`}
-          title="Drag to reorder"
-          {...attributes}
-          {...listeners}
-        >
-          <span aria-hidden="true" className="text-base leading-none">
-            ⋮⋮
-          </span>
-        </button>
-      </div>
-
-      <div className="space-y-3 border-t border-neutral-200 p-3">
-        <p className="truncate text-xs text-neutral-600" title={item.filename}>
-          {item.filename}
-        </p>
-
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="border border-neutral-300 px-2 py-1 text-xs text-neutral-700 disabled:cursor-not-allowed disabled:opacity-40"
-            disabled={index === 0}
-            onClick={onMoveBackward}
-          >
-            Previous
-          </button>
-
-          <button
-            type="button"
-            className="border border-neutral-300 px-2 py-1 text-xs text-neutral-700 disabled:cursor-not-allowed disabled:opacity-40"
-            disabled={isLast}
-            onClick={onMoveForward}
-          >
-            Next
-          </button>
-
-          <button
-            type="button"
-            className="ml-auto border border-red-200 px-2 py-1 text-xs text-red-700"
-            onClick={onRemove}
-          >
-            Remove
-          </button>
-        </div>
-      </div>
-    </article>
   )
 }
 
@@ -505,69 +419,29 @@ export function MediaTab({ property }: MediaTabProps) {
         title="Featured image"
         description="Choose the primary image used on property cards and listing pages."
       >
-        <div className="space-y-5">
-          {featuredImage && !newFeaturedImage ? (
-            <div className="max-w-2xl border border-neutral-200">
-              <div className="aspect-[16/9] overflow-hidden bg-neutral-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  alt={featuredImage.alt}
-                  className="h-full w-full object-cover"
-                  src={featuredImage.url}
-                />
-              </div>
-
-              <div className="flex items-center gap-3 border-t border-neutral-200 p-4">
-                <p className="min-w-0 flex-1 truncate text-sm text-neutral-700">
-                  {featuredImage.filename}
-                </p>
-
-                <button
-                  type="button"
-                  className="border border-neutral-300 px-3 py-2 text-sm text-neutral-700"
-                  onClick={() => featuredInputRef.current?.click()}
-                >
-                  Replace
-                </button>
-
-                <button
-                  type="button"
-                  className="border border-red-200 px-3 py-2 text-sm text-red-700"
-                  onClick={() => {
-                    beginEdit()
-                    setFeaturedImage(null)
-                    setNewFeaturedImage(null)
-                  }}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ) : (
-            <FileDropzone
-              accept="image/*"
-              description="Drag and drop an image here, or choose one from your computer."
-              inputRef={featuredInputRef}
-              label="Upload featured image"
-              onChange={(files) => {
-                beginEdit()
-                setNewFeaturedImage(files[0] || null)
-              }}
-            />
-          )}
-
-          {newFeaturedImage ? (
-            <div className="max-w-sm">
-              <NewFileCard
-                file={newFeaturedImage}
-                onRemove={() => {
-                  beginEdit()
-                  setNewFeaturedImage(null)
-                }}
-              />
-            </div>
-          ) : null}
-        </div>
+        <WorkspaceUploadField
+          accept="image/*"
+          description="Drag and drop an image here, or choose one from your computer."
+          file={newFeaturedImage}
+          filename={featuredImage?.filename || null}
+          inputRef={featuredInputRef}
+          label="Featured image"
+          previewUrl={featuredImage?.url || null}
+          onChoose={() => featuredInputRef.current?.click()}
+          onDrop={(files) => {
+            beginEdit()
+            setNewFeaturedImage(files[0] || null)
+          }}
+          onFileChange={(file) => {
+            beginEdit()
+            setNewFeaturedImage(file)
+          }}
+          onRemove={() => {
+            beginEdit()
+            setFeaturedImage(null)
+            setNewFeaturedImage(null)
+          }}
+        />
       </WorkspacePanel>
 
       <WorkspacePanel
@@ -577,6 +451,7 @@ export function MediaTab({ property }: MediaTabProps) {
         <div className="space-y-5">
           {gallery.length > 0 ? (
             <DndContext
+              id="property-gallery-dnd"
               collisionDetection={closestCenter}
               sensors={sensors}
               onDragEnd={handleGalleryDragEnd}
@@ -587,7 +462,7 @@ export function MediaTab({ property }: MediaTabProps) {
               >
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {gallery.map((item, index) => (
-                    <SortableMediaCard
+                    <WorkspaceSortableMediaCard
                       key={item.id}
                       index={index}
                       isLast={index === gallery.length - 1}
@@ -657,6 +532,7 @@ export function MediaTab({ property }: MediaTabProps) {
         <div className="space-y-5">
           {floorPlans.length > 0 ? (
             <DndContext
+              id="property-floorplans-dnd"
               collisionDetection={closestCenter}
               sensors={sensors}
               onDragEnd={handleFloorPlanDragEnd}
@@ -667,7 +543,7 @@ export function MediaTab({ property }: MediaTabProps) {
               >
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {floorPlans.map((item, index) => (
-                    <SortableMediaCard
+                    <WorkspaceSortableMediaCard
                       key={item.id}
                       index={index}
                       isLast={index === floorPlans.length - 1}
@@ -716,15 +592,35 @@ export function MediaTab({ property }: MediaTabProps) {
             </div>
           ) : null}
 
-          <FileDropzone
+          <WorkspaceUploadField
             accept="image/*,.pdf"
-            description="Upload floorplans or site plans. Image previews are displayed immediately."
+            description="Upload floorplans or site plans. You can select several files."
+            file={null}
+            filename={
+              newFloorPlanFiles.length > 0
+                ? `${newFloorPlanFiles.length} file${
+                    newFloorPlanFiles.length === 1 ? '' : 's'
+                  } ready`
+                : null
+            }
             inputRef={floorPlanInputRef}
             label="Add floorplans"
             multiple
-            onChange={(files) => {
+            previewUrl={null}
+            onChoose={() => floorPlanInputRef.current?.click()}
+            onDrop={(files) => {
               beginEdit()
-              setNewFloorPlanFiles((current) => [...current, ...files])
+              setNewFloorPlanFiles((current) => [...current, ...Array.from(files)])
+            }}
+            onFileChange={(file) => {
+              if (!file) return
+
+              beginEdit()
+              setNewFloorPlanFiles((current) => [...current, file])
+            }}
+            onRemove={() => {
+              beginEdit()
+              setNewFloorPlanFiles([])
             }}
           />
         </div>

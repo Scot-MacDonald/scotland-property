@@ -5,5 +5,7 @@ export { WorkspaceSidebarItem } from './WorkspaceSidebar'
 export { WorkspaceHeader } from './WorkspaceHeader'
 export { WorkspaceTabs } from './WorkspaceTabs'
 export { WorkspaceStatusFooter } from './WorkspaceStatusFooter'
+export { WorkspaceUploadField } from './WorkspaceUploadField'
+export { WorkspaceSortableMediaCard, type WorkspaceMediaItem } from './WorkspaceSortableMediaCard'
 
 export type { WorkspaceTab } from './WorkspaceTabs'

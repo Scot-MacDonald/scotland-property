@@ -1,8 +1,11 @@
 'use client'
 
-import { useMemo, useRef, useState, type ChangeEvent, type RefObject } from 'react'
-
-import { WorkspacePanel, WorkspaceStatusFooter } from '@/components/DashboardV2/Workspace'
+import { useRef, useState } from 'react'
+import {
+  WorkspacePanel,
+  WorkspaceStatusFooter,
+  WorkspaceUploadField,
+} from '@/components/DashboardV2/Workspace'
 import type { Media, Property } from '@/payload-types'
 import { useWorkspaceForm } from '@/hooks/useWorkspaceForm'
 
@@ -55,91 +58,6 @@ function normaliseMedia(
     url: value.url,
     alt: value.alt || fallback,
   }
-}
-
-function UploadField({
-  accept,
-  description,
-  file,
-  inputRef,
-  label,
-  media,
-  onFileChange,
-  onRemove,
-}: {
-  accept: string
-  description: string
-  file: File | null
-  inputRef: RefObject<HTMLInputElement | null>
-  label: string
-  media: MarketingMedia | null
-  onFileChange: (file: File | null) => void
-  onRemove: () => void
-}) {
-  const previewUrl = useMemo(
-    () => (file && file.type.startsWith('image/') ? URL.createObjectURL(file) : null),
-    [file],
-  )
-
-  return (
-    <div className="border border-neutral-200 bg-white">
-      <input
-        ref={inputRef}
-        accept={accept}
-        className="sr-only"
-        type="file"
-        onChange={(event: ChangeEvent<HTMLInputElement>) => {
-          onFileChange(event.target.files?.[0] || null)
-          event.target.value = ''
-        }}
-      />
-
-      {previewUrl ? (
-        <div className="aspect-[1.91/1] overflow-hidden bg-neutral-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img alt={file?.name || label} className="h-full w-full object-cover" src={previewUrl} />
-        </div>
-      ) : media?.url && !file ? (
-        <div className="aspect-[1.91/1] overflow-hidden bg-neutral-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img alt={media.alt} className="h-full w-full object-cover" src={media.url} />
-        </div>
-      ) : (
-        <div className="flex min-h-48 items-center justify-center bg-neutral-50 p-6 text-center">
-          <div>
-            <p className="text-sm font-semibold text-neutral-900">{label}</p>
-            <p className="mt-2 max-w-sm text-sm leading-6 text-neutral-500">{description}</p>
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-wrap items-center gap-3 border-t border-neutral-200 p-4">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm text-neutral-700">
-            {file?.name || media?.filename || 'No file selected'}
-          </p>
-        </div>
-
-        <button
-          type="button"
-          className="border border-neutral-300 px-3 py-2 text-sm text-neutral-700"
-          onClick={() => inputRef.current?.click()}
-        >
-          {file || media ? 'Replace' : 'Choose file'}
-        </button>
-
-        {file || media ? (
-          <button
-            type="button"
-            className="border border-red-200 px-3 py-2 text-sm text-red-700"
-            onClick={onRemove}
-          >
-            Remove
-          </button>
-        ) : null}
-      </div>
-    </div>
-  )
 }
 
 function ToggleRow({
@@ -511,13 +429,19 @@ export function MarketingTab({ property }: MarketingTabProps) {
               </p>
             </div>
 
-            <UploadField
+            <WorkspaceUploadField
               accept="image/*"
               description="Upload a landscape image for social media and shared-link previews."
               file={newSocialImage}
+              filename={socialImage?.filename || null}
               inputRef={socialImageInputRef}
               label="Social sharing image"
-              media={socialImage}
+              previewUrl={socialImage?.url || null}
+              onChoose={() => socialImageInputRef.current?.click()}
+              onDrop={(files) => {
+                beginEdit()
+                setNewSocialImage(files[0] || null)
+              }}
               onFileChange={(file) => {
                 beginEdit()
                 setNewSocialImage(file)
@@ -538,13 +462,19 @@ export function MarketingTab({ property }: MarketingTabProps) {
               </p>
             </div>
 
-            <UploadField
+            <WorkspaceUploadField
               accept="application/pdf,.pdf"
               description="Upload a PDF brochure containing the property particulars."
               file={newBrochure}
+              filename={brochure?.filename || null}
               inputRef={brochureInputRef}
               label="Property brochure"
-              media={brochure}
+              previewUrl={null}
+              onChoose={() => brochureInputRef.current?.click()}
+              onDrop={(files) => {
+                beginEdit()
+                setNewBrochure(files[0] || null)
+              }}
               onFileChange={(file) => {
                 beginEdit()
                 setNewBrochure(file)
