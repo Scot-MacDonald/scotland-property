@@ -998,6 +998,30 @@ export interface Property {
   longitude?: number | null;
   virtualTour?: string | null;
   youtubeVideo?: string | null;
+  /**
+   * Optional promotional headline used in marketing campaigns.
+   */
+  marketingHeadline?: string | null;
+  /**
+   * Search engine title. Aim for 50–60 characters.
+   */
+  seoTitle?: string | null;
+  /**
+   * Search engine description. Aim for 140–160 characters.
+   */
+  seoDescription?: string | null;
+  /**
+   * Optional image used when sharing this property on social media.
+   */
+  socialImage?: (string | null) | Media;
+  /**
+   * Downloadable property brochure PDF.
+   */
+  brochure?: (string | null) | Media;
+  publishOnWebsite?: boolean | null;
+  publishToJamesEdition?: boolean | null;
+  publishToRightmove?: boolean | null;
+  publishToZoopla?: boolean | null;
   region: string | Region;
   town: string | Town;
   propertyType?: (string | null) | PropertyType;
@@ -1892,6 +1916,15 @@ export interface PropertiesSelect<T extends boolean = true> {
   longitude?: T;
   virtualTour?: T;
   youtubeVideo?: T;
+  marketingHeadline?: T;
+  seoTitle?: T;
+  seoDescription?: T;
+  socialImage?: T;
+  brochure?: T;
+  publishOnWebsite?: T;
+  publishToJamesEdition?: T;
+  publishToRightmove?: T;
+  publishToZoopla?: T;
   region?: T;
   town?: T;
   propertyType?: T;

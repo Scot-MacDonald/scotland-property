@@ -1,35 +1,40 @@
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
-import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import type { Media } from '@/payload-types'
-import { PropertyGallery } from '@/components/PropertyGallery'
-import { TrackRecentlyViewed } from '@/components/TrackRecentlyViewed'
-import { PropertyDetails } from '@/components/Property/PropertyDetails'
-import { PropertySidebar } from '@/components/Property/PropertySidebar'
-import { PropertyFeatures } from '@/components/Property/PropertyFeatures'
+import { notFound } from 'next/navigation'
+import { getPayload } from 'payload'
+
 import { PropertyAmenities } from '@/components/Property/PropertyAmenities'
 import { PropertyDescription } from '@/components/Property/PropertyDescription'
+import { PropertyDetails } from '@/components/Property/PropertyDetails'
+import { PropertyFeatures } from '@/components/Property/PropertyFeatures'
+import { PropertySidebar } from '@/components/Property/PropertySidebar'
+import { PropertyGallery } from '@/components/PropertyGallery'
 import { SimilarProperties } from '@/components/Property/SimilarProperties'
+import { TrackRecentlyViewed } from '@/components/TrackRecentlyViewed'
+import type { Media, Property } from '@/payload-types'
 
 type Props = {
-  params: Promise<{ slug: string }>
+  params: Promise<{
+    slug: string
+  }>
 }
 
 function isMediaWithUrl(
-  image: string | Media | null | undefined,
-): image is Media & { url: string } {
+  media: string | Media | null | undefined,
+): media is Media & { url: string } {
   return (
-    typeof image === 'object' &&
-    image !== null &&
-    typeof image.url === 'string' &&
-    image.url.length > 0
+    typeof media === 'object' &&
+    media !== null &&
+    typeof media.url === 'string' &&
+    media.url.length > 0
   )
 }
 
-export default async function PropertyPage({ params }: Props) {
-  const { slug } = await params
-  const payload = await getPayload({ config: configPromise })
+async function getPublicProperty(slug: string): Promise<Property | null> {
+  const payload = await getPayload({
+    config: configPromise,
+  })
 
   const result = await payload.find({
     collection: 'properties',
@@ -37,17 +42,82 @@ export default async function PropertyPage({ params }: Props) {
     limit: 1,
     overrideAccess: true,
     where: {
-      slug: {
-        equals: slug,
-      },
+      and: [
+        {
+          slug: {
+            equals: slug,
+          },
+        },
+        {
+          publishOnWebsite: {
+            not_equals: false,
+          },
+        },
+      ],
     },
   })
 
-  const property = result.docs[0]
+  return result.docs[0] || null
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const property = await getPublicProperty(slug)
+
+  if (!property) {
+    return {
+      title: 'Property not found',
+    }
+  }
+
+  const title = property.seoTitle?.trim() || property.title
+  const description =
+    property.seoDescription?.trim() ||
+    property.excerpt?.trim() ||
+    `View ${property.title} on Scotland Luxury Estates.`
+
+  const socialImage = isMediaWithUrl(property.socialImage)
+    ? property.socialImage
+    : isMediaWithUrl(property.featuredImage)
+      ? property.featuredImage
+      : null
+
+  return {
+    title,
+    description,
+    openGraph: {
+      type: 'article',
+      title,
+      description,
+      images: socialImage
+        ? [
+            {
+              url: socialImage.url,
+              alt: socialImage.alt || property.title,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: socialImage ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      images: socialImage ? [socialImage.url] : undefined,
+    },
+  }
+}
+
+export default async function PropertyPage({ params }: Props) {
+  const { slug } = await params
+  const property = await getPublicProperty(slug)
 
   if (!property) {
     notFound()
   }
+
+  const payload = await getPayload({
+    config: configPromise,
+  })
 
   const region =
     typeof property.region === 'object' && property.region !== null ? property.region : null
@@ -71,7 +141,11 @@ export default async function PropertyPage({ params }: Props) {
             not_equals: property.id,
           },
         },
-
+        {
+          publishOnWebsite: {
+            not_equals: false,
+          },
+        },
         ...(region
           ? [
               {
@@ -81,7 +155,6 @@ export default async function PropertyPage({ params }: Props) {
               },
             ]
           : []),
-
         ...(propertyType
           ? [
               {
@@ -105,6 +178,8 @@ export default async function PropertyPage({ params }: Props) {
     alt: image.alt || property.title,
   }))
 
+  const brochure = isMediaWithUrl(property.brochure) ? property.brochure : null
+
   return (
     <main className="bg-background">
       <TrackRecentlyViewed propertyId={String(property.id)} />
@@ -115,9 +190,25 @@ export default async function PropertyPage({ params }: Props) {
             ← Back to search
           </Link>
 
-          <div className="flex gap-4">
-            <button className="text-muted-foreground hover:text-foreground">Save</button>
-            <button className="text-muted-foreground hover:text-foreground">Share</button>
+          <div className="flex items-center gap-4">
+            {brochure ? (
+              <a
+                href={brochure.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Download brochure
+              </a>
+            ) : null}
+
+            <button type="button" className="text-muted-foreground hover:text-foreground">
+              Save
+            </button>
+
+            <button type="button" className="text-muted-foreground hover:text-foreground">
+              Share
+            </button>
           </div>
         </div>
 
@@ -128,19 +219,19 @@ export default async function PropertyPage({ params }: Props) {
         <div className="grid gap-20 lg:grid-cols-[minmax(0,1fr)_380px]">
           <article>
             <div className="mb-4 flex flex-wrap gap-2 text-sm text-muted-foreground">
-              {region?.slug && (
+              {region?.slug ? (
                 <Link href={`/scotland/${region.slug}`} className="underline">
                   {region.name}
                 </Link>
-              )}
+              ) : null}
 
-              {region?.slug && town?.slug && <span>→</span>}
+              {region?.slug && town?.slug ? <span>→</span> : null}
 
-              {region?.slug && town?.slug && (
+              {region?.slug && town?.slug ? (
                 <Link href={`/scotland/${region.slug}/${town.slug}`} className="underline">
                   {town.name}
                 </Link>
-              )}
+              ) : null}
             </div>
 
             <p className="mb-3 text-3xl font-medium">£{property.price?.toLocaleString('en-GB')}</p>
@@ -149,20 +240,50 @@ export default async function PropertyPage({ params }: Props) {
               {property.title}
             </h1>
 
+            {property.marketingHeadline ? (
+              <p className="mb-6 max-w-3xl text-xl leading-relaxed text-neutral-700">
+                {property.marketingHeadline}
+              </p>
+            ) : null}
+
             <PropertyDetails property={property} />
 
-            {property.excerpt && (
+            {property.excerpt ? (
               <p className="mb-10 max-w-3xl text-xl leading-relaxed text-muted-foreground">
                 {property.excerpt}
               </p>
-            )}
+            ) : null}
+
+            {brochure ? (
+              <section className="mb-12 border-y border-neutral-200 py-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-medium">Property brochure</h2>
+
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Download the full property particulars.
+                    </p>
+                  </div>
+
+                  <a
+                    href={brochure.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-11 items-center justify-center border border-neutral-950 bg-neutral-950 px-5 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                  >
+                    Download brochure
+                  </a>
+                </div>
+              </section>
+            ) : null}
 
             <section className="mb-12">
               <h2 className="mb-5 text-2xl font-medium">About the Property</h2>
+
               <PropertyDescription property={property} />
             </section>
 
-            {property.virtualTour && (
+            {property.virtualTour ? (
               <section className="mb-12">
                 <h2 className="mb-5 text-2xl font-medium">Virtual Tour</h2>
 
@@ -175,9 +296,9 @@ export default async function PropertyPage({ params }: Props) {
                   Open Virtual Tour
                 </a>
               </section>
-            )}
+            ) : null}
 
-            {property.youtubeVideo && (
+            {property.youtubeVideo ? (
               <section className="mb-12">
                 <h2 className="mb-5 text-2xl font-medium">Property Video</h2>
 
@@ -190,7 +311,7 @@ export default async function PropertyPage({ params }: Props) {
                   Watch Video
                 </a>
               </section>
-            )}
+            ) : null}
 
             <PropertyFeatures property={property} />
 

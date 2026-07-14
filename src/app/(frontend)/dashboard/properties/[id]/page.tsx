@@ -390,7 +390,7 @@ export default async function PropertyWorkspacePage({
         />
       ) : null}
 
-      {activeTab === 'marketing' ? <MarketingTab /> : null}
+      {activeTab === 'marketing' ? <MarketingTab property={property} /> : null}
 
       {activeTab === 'documents' ? <DocumentsTab /> : null}
 
