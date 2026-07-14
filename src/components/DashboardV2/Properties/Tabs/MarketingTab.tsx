@@ -2,8 +2,9 @@
 
 import { useMemo, useRef, useState, type ChangeEvent, type RefObject } from 'react'
 
-import { WorkspacePanel } from '@/components/DashboardV2/Workspace'
+import { WorkspacePanel, WorkspaceStatusFooter } from '@/components/DashboardV2/Workspace'
 import type { Media, Property } from '@/payload-types'
+import { useWorkspaceForm } from '@/hooks/useWorkspaceForm'
 
 type MarketingMedia = {
   id: string
@@ -258,9 +259,8 @@ export function MarketingTab({ property }: MarketingTabProps) {
   const [brochure, setBrochure] = useState<MarketingMedia | null>(initialBrochure)
   const [newBrochure, setNewBrochure] = useState<File | null>(null)
 
-  const [isSaving, setIsSaving] = useState(false)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
+  const { isSaving, message, error, beginSave, finishSave, failSave, clearMessages } =
+    useWorkspaceForm()
 
   const isDirty =
     marketingHeadline !== savedMarketingHeadline ||
@@ -322,8 +322,7 @@ export function MarketingTab({ property }: MarketingTabProps) {
   const readinessPercentage = Math.round((completedItems / readinessItems.length) * 100)
 
   function beginEdit() {
-    setMessage('')
-    setError('')
+    clearMessages()
   }
 
   function discardChanges() {
@@ -338,14 +337,11 @@ export function MarketingTab({ property }: MarketingTabProps) {
     setNewSocialImage(null)
     setBrochure(savedBrochure)
     setNewBrochure(null)
-    setMessage('')
-    setError('')
+    clearMessages()
   }
 
   async function saveMarketing() {
-    setIsSaving(true)
-    setMessage('')
-    setError('')
+    beginSave()
 
     try {
       const formData = new FormData()
@@ -407,17 +403,9 @@ export function MarketingTab({ property }: MarketingTabProps) {
 
       setNewSocialImage(null)
       setNewBrochure(null)
-      setMessage('Marketing settings saved successfully.')
-
-      window.setTimeout(() => {
-        setMessage('')
-      }, 3000)
+      finishSave('Marketing settings saved successfully.')
     } catch (saveError) {
-      setError(
-        saveError instanceof Error ? saveError.message : 'Could not update property marketing.',
-      )
-    } finally {
-      setIsSaving(false)
+      failSave(saveError, 'Could not update property marketing.')
     }
   }
 
@@ -650,39 +638,15 @@ export function MarketingTab({ property }: MarketingTabProps) {
         </div>
       </WorkspacePanel>
 
-      <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-4 border border-neutral-200 bg-white p-4 shadow-[0_-8px_30px_rgba(0,0,0,0.04)]">
-        <div>
-          {error ? <p className="text-sm text-red-700">{error}</p> : null}
-
-          {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
-
-          {!error && !message ? (
-            <p className="text-sm text-neutral-500">
-              {isDirty ? 'You have unsaved changes.' : 'All changes are saved.'}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="flex gap-3">
-          <button
-            type="button"
-            className="border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
-            disabled={!isDirty || isSaving}
-            onClick={discardChanges}
-          >
-            Discard
-          </button>
-
-          <button
-            type="button"
-            className="border border-neutral-950 bg-neutral-950 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
-            disabled={!isDirty || isSaving}
-            onClick={saveMarketing}
-          >
-            {isSaving ? 'Saving…' : 'Save marketing'}
-          </button>
-        </div>
-      </div>
+      <WorkspaceStatusFooter
+        error={error}
+        isDirty={isDirty}
+        isSaving={isSaving}
+        message={message}
+        onDiscard={discardChanges}
+        onSave={saveMarketing}
+        saveLabel="Save marketing"
+      />
     </div>
   )
 }
