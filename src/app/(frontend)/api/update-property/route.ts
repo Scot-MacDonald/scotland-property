@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 
 import type { Property } from '@/payload-types'
 
+type Payload = Awaited<ReturnType<typeof getPayload>>
 type PropertyStatus = NonNullable<Property['status']>
 
 function createSlug(value: string) {
@@ -62,11 +63,29 @@ function getPropertyStatus(value: FormDataEntryValue | null): PropertyStatus | u
   return undefined
 }
 
-async function uploadImage(
-  payload: Awaited<ReturnType<typeof getPayload>>,
-  file: FormDataEntryValue | null,
-  alt: string,
-) {
+function getRelationshipId(value: unknown) {
+  if (!value) return null
+
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (typeof value === 'object' && 'id' in value && typeof value.id === 'string') {
+    return value.id
+  }
+
+  return null
+}
+
+function getRelationshipIds(value: unknown) {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value.map(getRelationshipId).filter((id): id is string => Boolean(id))
+}
+
+async function uploadFile(payload: Payload, file: FormDataEntryValue | null, alt: string) {
   if (!(file instanceof File) || file.size === 0) {
     return undefined
   }
@@ -88,6 +107,20 @@ async function uploadImage(
   })
 
   return uploaded.id
+}
+
+async function uploadFiles(payload: Payload, files: FormDataEntryValue[], alt: string) {
+  const ids: string[] = []
+
+  for (const file of files) {
+    const uploadedId = await uploadFile(payload, file, alt)
+
+    if (uploadedId) {
+      ids.push(uploadedId)
+    }
+  }
+
+  return ids
 }
 
 export async function POST(req: Request) {
@@ -112,25 +145,12 @@ export async function POST(req: Request) {
     }
 
     const formData = await req.formData()
-
     const id = String(formData.get('id') || '').trim()
-    const title = String(formData.get('title') || '').trim()
 
     if (!id) {
       return NextResponse.json(
         {
           error: 'Missing property ID.',
-        },
-        {
-          status: 400,
-        },
-      )
-    }
-
-    if (!title) {
-      return NextResponse.json(
-        {
-          error: 'Property title is required.',
         },
         {
           status: 400,
@@ -146,13 +166,8 @@ export async function POST(req: Request) {
     })
 
     const isSuperAdmin = user.role === 'super-admin'
-
-    const agencyId = typeof user.agency === 'object' ? user.agency?.id : user.agency
-
-    const propertyAgencyId =
-      typeof existingProperty.agency === 'object'
-        ? existingProperty.agency?.id
-        : existingProperty.agency
+    const agencyId = getRelationshipId(user.agency)
+    const propertyAgencyId = getRelationshipId(existingProperty.agency)
 
     if (!isSuperAdmin && agencyId !== propertyAgencyId) {
       return NextResponse.json(
@@ -165,39 +180,27 @@ export async function POST(req: Request) {
       )
     }
 
-    const featuredImageId = await uploadImage(payload, formData.get('featuredImage'), title)
+    const data: Record<string, unknown> = {}
 
-    const galleryFiles = formData.getAll('gallery')
-    const newGalleryIds: string[] = []
+    if (formData.has('title')) {
+      const title = String(formData.get('title') || '').trim()
 
-    for (const file of galleryFiles) {
-      const uploadedId = await uploadImage(payload, file, title)
-
-      if (uploadedId) {
-        newGalleryIds.push(uploadedId)
+      if (!title) {
+        return NextResponse.json(
+          {
+            error: 'Property title is required.',
+          },
+          {
+            status: 400,
+          },
+        )
       }
-    }
 
-    const existingGallery = Array.isArray(existingProperty.gallery)
-      ? existingProperty.gallery
-          .map((item) => {
-            if (typeof item === 'string') {
-              return item
-            }
+      data.title = title
 
-            return item?.id || null
-          })
-          .filter((item): item is string => Boolean(item))
-      : []
-
-    const existingFeaturedImageId =
-      typeof existingProperty.featuredImage === 'object'
-        ? existingProperty.featuredImage?.id
-        : existingProperty.featuredImage
-
-    const data: Record<string, unknown> = {
-      title,
-      slug: existingProperty.slug || `${createSlug(title)}-${Date.now().toString().slice(-6)}`,
+      if (!existingProperty.slug) {
+        data.slug = `${createSlug(title)}-${Date.now().toString().slice(-6)}`
+      }
     }
 
     if (formData.has('reference')) {
@@ -280,25 +283,70 @@ export async function POST(req: Request) {
       data.amenities = formData.getAll('amenities').map(String).filter(Boolean)
     }
 
-    if (featuredImageId) {
-      data.featuredImage = featuredImageId
-    } else if (existingFeaturedImageId) {
-      data.featuredImage = existingFeaturedImageId
+    if (formData.has('featuredImageManaged')) {
+      const featuredImageId = optionalString(formData.get('featuredImageId'))
+      const uploadedFeaturedImageId = await uploadFile(
+        payload,
+        formData.get('featuredImage'),
+        existingProperty.title,
+      )
+
+      data.featuredImage = uploadedFeaturedImageId || featuredImageId || null
     }
 
-    if (newGalleryIds.length > 0) {
-      data.gallery = [...existingGallery, ...newGalleryIds]
+    if (formData.has('galleryManaged')) {
+      const retainedGalleryIds = formData.getAll('galleryIds').map(String).filter(Boolean)
+
+      const uploadedGalleryIds = await uploadFiles(
+        payload,
+        formData.getAll('galleryFiles'),
+        existingProperty.title,
+      )
+
+      data.gallery = [...retainedGalleryIds, ...uploadedGalleryIds]
+    }
+
+    if (formData.has('floorPlansManaged')) {
+      const retainedFloorPlanIds = formData.getAll('floorPlanIds').map(String).filter(Boolean)
+
+      const uploadedFloorPlanIds = await uploadFiles(
+        payload,
+        formData.getAll('floorPlanFiles'),
+        `${existingProperty.title} floorplan`,
+      )
+
+      data.floorPlans = [...retainedFloorPlanIds, ...uploadedFloorPlanIds]
+    }
+
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json(
+        {
+          error: 'No property changes were submitted.',
+        },
+        {
+          status: 400,
+        },
+      )
     }
 
     await payload.update({
       collection: 'properties',
       id,
+      depth: 0,
       overrideAccess: true,
       data,
     })
 
+    const updatedProperty = await payload.findByID({
+      collection: 'properties',
+      id,
+      depth: 1,
+      overrideAccess: true,
+    })
+
     return NextResponse.json({
       ok: true,
+      property: updatedProperty,
     })
   } catch (error: unknown) {
     console.error('Update property error:', error)

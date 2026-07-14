@@ -378,7 +378,7 @@ export default async function PropertyWorkspacePage({
         />
       ) : null}
 
-      {activeTab === 'media' ? <MediaTab /> : null}
+      {activeTab === 'media' ? <MediaTab property={property} /> : null}
 
       {activeTab === 'pricing' ? (
         <PricingTab
