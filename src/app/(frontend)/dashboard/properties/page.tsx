@@ -172,7 +172,7 @@ export default async function DashboardV2PropertiesPage({
                 bathrooms={property.bathrooms || 0}
                 image={property.image}
                 featured={property.featured}
-                href={`/dashboard/properties/${property.id}/edit`}
+                href={`/dashboard/properties/${property.id}`}
                 viewHref={`/property/${property.slug}`}
               />
             )

@@ -32,14 +32,34 @@ function optionalNumber(value: FormDataEntryValue | null) {
   return Number.isFinite(numberValue) ? numberValue : undefined
 }
 
-function getPropertyStatus(value: FormDataEntryValue | null): PropertyStatus {
-  const status = String(value || '').trim()
+function optionalBoolean(value: FormDataEntryValue | null) {
+  if (value === null) {
+    return undefined
+  }
+
+  const stringValue = String(value).trim().toLowerCase()
+
+  if (stringValue === 'true') {
+    return true
+  }
+
+  if (stringValue === 'false') {
+    return false
+  }
+
+  return undefined
+}
+
+function getPropertyStatus(value: FormDataEntryValue | null): PropertyStatus | undefined {
+  if (value === null) return undefined
+
+  const status = String(value).trim()
 
   if (status === 'for-sale' || status === 'reserved' || status === 'sold') {
     return status
   }
 
-  return 'for-sale'
+  return undefined
 }
 
 async function uploadImage(
@@ -175,34 +195,106 @@ export async function POST(req: Request) {
         ? existingProperty.featuredImage?.id
         : existingProperty.featuredImage
 
+    const data: Record<string, unknown> = {
+      title,
+      slug: existingProperty.slug || `${createSlug(title)}-${Date.now().toString().slice(-6)}`,
+    }
+
+    if (formData.has('reference')) {
+      data.reference = optionalString(formData.get('reference'))
+    }
+
+    if (formData.has('price')) {
+      data.price = optionalNumber(formData.get('price'))
+    }
+
+    if (formData.has('status')) {
+      data.status = getPropertyStatus(formData.get('status'))
+    }
+
+    if (formData.has('excerpt')) {
+      data.excerpt = optionalString(formData.get('excerpt'))
+    }
+
+    if (formData.has('bedrooms')) {
+      data.bedrooms = optionalNumber(formData.get('bedrooms'))
+    }
+
+    if (formData.has('bathrooms')) {
+      data.bathrooms = optionalNumber(formData.get('bathrooms'))
+    }
+
+    if (formData.has('internalArea')) {
+      data.internalArea = optionalNumber(formData.get('internalArea'))
+    }
+
+    if (formData.has('landArea')) {
+      data.landArea = optionalNumber(formData.get('landArea'))
+    }
+
+    if (formData.has('yearBuilt')) {
+      data.yearBuilt = optionalNumber(formData.get('yearBuilt'))
+    }
+
+    if (formData.has('energyRating')) {
+      data.energyRating = optionalString(formData.get('energyRating'))
+    }
+
+    if (formData.has('latitude')) {
+      data.latitude = optionalNumber(formData.get('latitude'))
+    }
+
+    if (formData.has('longitude')) {
+      data.longitude = optionalNumber(formData.get('longitude'))
+    }
+
+    if (formData.has('virtualTour')) {
+      data.virtualTour = optionalString(formData.get('virtualTour'))
+    }
+
+    if (formData.has('youtubeVideo')) {
+      data.youtubeVideo = optionalString(formData.get('youtubeVideo'))
+    }
+
+    if (formData.has('region')) {
+      data.region = optionalString(formData.get('region'))
+    }
+
+    if (formData.has('town')) {
+      data.town = optionalString(formData.get('town'))
+    }
+
+    if (formData.has('propertyType')) {
+      data.propertyType = optionalString(formData.get('propertyType'))
+    }
+
+    if (formData.has('agent')) {
+      data.agent = optionalString(formData.get('agent'))
+    }
+
+    if (formData.has('featured')) {
+      data.featured = optionalBoolean(formData.get('featured'))
+    }
+
+    if (formData.has('amenities')) {
+      data.amenities = formData.getAll('amenities').map(String).filter(Boolean)
+    }
+
+    if (featuredImageId) {
+      data.featuredImage = featuredImageId
+    } else if (existingFeaturedImageId) {
+      data.featuredImage = existingFeaturedImageId
+    }
+
+    if (newGalleryIds.length > 0) {
+      data.gallery = [...existingGallery, ...newGalleryIds]
+    }
+
     await payload.update({
       collection: 'properties',
       id,
       overrideAccess: true,
-      data: {
-        title,
-        slug: existingProperty.slug || `${createSlug(title)}-${Date.now().toString().slice(-6)}`,
-        price: optionalNumber(formData.get('price')),
-        status: getPropertyStatus(formData.get('status')),
-        excerpt: optionalString(formData.get('excerpt')),
-        bedrooms: optionalNumber(formData.get('bedrooms')),
-        bathrooms: optionalNumber(formData.get('bathrooms')),
-        internalArea: optionalNumber(formData.get('internalArea')),
-        landArea: optionalNumber(formData.get('landArea')),
-        yearBuilt: optionalNumber(formData.get('yearBuilt')),
-        energyRating: optionalString(formData.get('energyRating')),
-        latitude: optionalNumber(formData.get('latitude')),
-        longitude: optionalNumber(formData.get('longitude')),
-        virtualTour: optionalString(formData.get('virtualTour')),
-        youtubeVideo: optionalString(formData.get('youtubeVideo')),
-        region: optionalString(formData.get('region')),
-        town: optionalString(formData.get('town')),
-        propertyType: optionalString(formData.get('propertyType')),
-        agent: optionalString(formData.get('agent')),
-        amenities: formData.getAll('amenities').map(String).filter(Boolean),
-        featuredImage: featuredImageId || existingFeaturedImageId || undefined,
-        gallery: [...existingGallery, ...newGalleryIds],
-      },
+      data,
     })
 
     return NextResponse.json({
