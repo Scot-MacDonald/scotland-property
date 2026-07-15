@@ -1,10 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-
 import { SelectField, TextField } from '@/components/DashboardV2/Fields'
 import { WorkspacePanel, WorkspaceStatusFooter } from '@/components/DashboardV2/Workspace'
-import { useWorkspaceForm } from '@/hooks/useWorkspaceForm'
+import { useWorkspaceEditor } from '@/hooks/useWorkspaceEditor'
 
 type LeadStatus = 'new' | 'contacted' | 'valuation-booked' | 'instruction-won' | 'lost'
 
@@ -24,58 +22,33 @@ type LeadOverviewFormProps = {
   }
 }
 
+type LeadOverviewValues = {
+  name: string
+  email: string
+  phone: string
+  postcode: string
+  propertyType: PropertyType
+  estimatedValue: string
+  status: LeadStatus
+  message: string
+}
+
 export function LeadOverviewForm({ lead }: LeadOverviewFormProps) {
-  const [savedName, setSavedName] = useState(lead.name || '')
-  const [savedEmail, setSavedEmail] = useState(lead.email || '')
-  const [savedPhone, setSavedPhone] = useState(lead.phone || '')
-  const [savedPostcode, setSavedPostcode] = useState(lead.postcode || '')
-  const [savedPropertyType, setSavedPropertyType] = useState<PropertyType>(lead.propertyType || '')
-  const [savedEstimatedValue, setSavedEstimatedValue] = useState(
-    lead.estimatedValue ? String(lead.estimatedValue) : '',
-  )
-  const [savedStatus, setSavedStatus] = useState<LeadStatus>(lead.status || 'new')
-  const [savedMessage, setSavedMessage] = useState(lead.message || '')
-
-  const [name, setName] = useState(savedName)
-  const [email, setEmail] = useState(savedEmail)
-  const [phone, setPhone] = useState(savedPhone)
-  const [postcode, setPostcode] = useState(savedPostcode)
-  const [propertyType, setPropertyType] = useState<PropertyType>(savedPropertyType)
-  const [estimatedValue, setEstimatedValue] = useState(savedEstimatedValue)
-  const [status, setStatus] = useState<LeadStatus>(savedStatus)
-  const [messageText, setMessageText] = useState(savedMessage)
-
-  const { isSaving, message, error, beginSave, finishSave, failSave, clearMessages } =
-    useWorkspaceForm()
-
-  const isDirty =
-    name !== savedName ||
-    email !== savedEmail ||
-    phone !== savedPhone ||
-    postcode !== savedPostcode ||
-    propertyType !== savedPropertyType ||
-    estimatedValue !== savedEstimatedValue ||
-    status !== savedStatus ||
-    messageText !== savedMessage
-
-  function beginEdit() {
-    clearMessages()
-  }
-
-  function discardChanges() {
-    setName(savedName)
-    setEmail(savedEmail)
-    setPhone(savedPhone)
-    setPostcode(savedPostcode)
-    setPropertyType(savedPropertyType)
-    setEstimatedValue(savedEstimatedValue)
-    setStatus(savedStatus)
-    setMessageText(savedMessage)
-    clearMessages()
-  }
+  const editor = useWorkspaceEditor<LeadOverviewValues>({
+    initialValues: {
+      name: lead.name || '',
+      email: lead.email || '',
+      phone: lead.phone || '',
+      postcode: lead.postcode || '',
+      propertyType: lead.propertyType || '',
+      estimatedValue: typeof lead.estimatedValue === 'number' ? String(lead.estimatedValue) : '',
+      status: lead.status || 'new',
+      message: lead.message || '',
+    },
+  })
 
   async function saveLead() {
-    beginSave()
+    editor.beginSave()
 
     try {
       const response = await fetch('/api/update-valuation-lead', {
@@ -85,14 +58,14 @@ export function LeadOverviewForm({ lead }: LeadOverviewFormProps) {
         },
         body: JSON.stringify({
           leadId: lead.id,
-          name,
-          email,
-          phone,
-          postcode,
-          propertyType,
-          estimatedValue,
-          status,
-          message: messageText,
+          name: editor.values.name,
+          email: editor.values.email,
+          phone: editor.values.phone,
+          postcode: editor.values.postcode,
+          propertyType: editor.values.propertyType,
+          estimatedValue: editor.values.estimatedValue,
+          status: editor.values.status,
+          message: editor.values.message,
         }),
       })
 
@@ -105,18 +78,10 @@ export function LeadOverviewForm({ lead }: LeadOverviewFormProps) {
         throw new Error(result.error || 'Could not update lead.')
       }
 
-      setSavedName(name)
-      setSavedEmail(email)
-      setSavedPhone(phone)
-      setSavedPostcode(postcode)
-      setSavedPropertyType(propertyType)
-      setSavedEstimatedValue(estimatedValue)
-      setSavedStatus(status)
-      setSavedMessage(messageText)
-
-      finishSave('Lead saved successfully.')
+      editor.commitValues()
+      editor.finishSave('Lead saved successfully.')
     } catch (saveError) {
-      failSave(saveError, 'Could not update lead.')
+      editor.failSave(saveError, 'Could not update lead.')
     }
   }
 
@@ -131,10 +96,9 @@ export function LeadOverviewForm({ lead }: LeadOverviewFormProps) {
             label="Name"
             name="name"
             required
-            value={name}
+            value={editor.values.name}
             onChange={(event) => {
-              beginEdit()
-              setName(event.target.value)
+              editor.setField('name', event.target.value)
             }}
           />
 
@@ -143,10 +107,9 @@ export function LeadOverviewForm({ lead }: LeadOverviewFormProps) {
             name="email"
             required
             type="email"
-            value={email}
+            value={editor.values.email}
             onChange={(event) => {
-              beginEdit()
-              setEmail(event.target.value)
+              editor.setField('email', event.target.value)
             }}
           />
 
@@ -154,10 +117,9 @@ export function LeadOverviewForm({ lead }: LeadOverviewFormProps) {
             label="Phone"
             name="phone"
             type="tel"
-            value={phone}
+            value={editor.values.phone}
             onChange={(event) => {
-              beginEdit()
-              setPhone(event.target.value)
+              editor.setField('phone', event.target.value)
             }}
           />
 
@@ -165,10 +127,9 @@ export function LeadOverviewForm({ lead }: LeadOverviewFormProps) {
             label="Postcode"
             name="postcode"
             required
-            value={postcode}
+            value={editor.values.postcode}
             onChange={(event) => {
-              beginEdit()
-              setPostcode(event.target.value)
+              editor.setField('postcode', event.target.value)
             }}
           />
         </div>
@@ -182,7 +143,7 @@ export function LeadOverviewForm({ lead }: LeadOverviewFormProps) {
           <SelectField
             label="Property type"
             name="propertyType"
-            value={propertyType}
+            value={editor.values.propertyType}
             options={[
               {
                 label: 'Not specified',
@@ -214,8 +175,7 @@ export function LeadOverviewForm({ lead }: LeadOverviewFormProps) {
               },
             ]}
             onChange={(event) => {
-              beginEdit()
-              setPropertyType(event.target.value as PropertyType)
+              editor.setField('propertyType', event.target.value as PropertyType)
             }}
           />
 
@@ -225,10 +185,9 @@ export function LeadOverviewForm({ lead }: LeadOverviewFormProps) {
             min="0"
             step="1"
             type="number"
-            value={estimatedValue}
+            value={editor.values.estimatedValue}
             onChange={(event) => {
-              beginEdit()
-              setEstimatedValue(event.target.value)
+              editor.setField('estimatedValue', event.target.value)
             }}
           />
 
@@ -236,7 +195,7 @@ export function LeadOverviewForm({ lead }: LeadOverviewFormProps) {
             <SelectField
               label="Status"
               name="status"
-              value={status}
+              value={editor.values.status}
               options={[
                 {
                   label: 'New',
@@ -260,8 +219,7 @@ export function LeadOverviewForm({ lead }: LeadOverviewFormProps) {
                 },
               ]}
               onChange={(event) => {
-                beginEdit()
-                setStatus(event.target.value as LeadStatus)
+                editor.setField('status', event.target.value as LeadStatus)
               }}
             />
           </div>
@@ -281,21 +239,20 @@ export function LeadOverviewForm({ lead }: LeadOverviewFormProps) {
             id="message"
             name="message"
             className="mt-2 min-h-40 w-full resize-y border border-neutral-300 bg-white px-3 py-3 text-sm leading-6 text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950"
-            value={messageText}
+            value={editor.values.message}
             onChange={(event) => {
-              beginEdit()
-              setMessageText(event.target.value)
+              editor.setField('message', event.target.value)
             }}
           />
         </div>
       </WorkspacePanel>
 
       <WorkspaceStatusFooter
-        error={error}
-        isDirty={isDirty}
-        isSaving={isSaving}
-        message={message}
-        onDiscard={discardChanges}
+        error={editor.error}
+        isDirty={editor.isDirty}
+        isSaving={editor.isSaving}
+        message={editor.message}
+        onDiscard={editor.discardChanges}
         onSave={saveLead}
         saveLabel="Save lead"
       />

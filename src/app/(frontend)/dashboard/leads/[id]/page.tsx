@@ -2,7 +2,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
-import { LeadOverviewForm } from '@/components/DashboardV2/Leads'
+import { LeadOverviewForm, LeadFollowUpForm, LeadNotesForm } from '@/components/DashboardV2/Leads'
 import {
   WorkspaceHeader,
   WorkspaceLayout,
@@ -276,39 +276,23 @@ export default async function LeadWorkspacePage({ params, searchParams }: LeadWo
       ) : null}
 
       {activeTab === 'follow-up' ? (
-        <WorkspacePanel
-          title="Follow Up"
-          description="Manage the next action and follow-up date for this lead."
-        >
-          <dl className="grid gap-6 text-sm md:grid-cols-2">
-            <div>
-              <dt className="text-neutral-500">Next follow-up</dt>
-              <dd className="mt-1 font-medium text-neutral-950">
-                {formatDateTime(lead.nextFollowUpAt)}
-              </dd>
-            </div>
-
-            <div>
-              <dt className="text-neutral-500">Completed</dt>
-              <dd className="mt-1 font-medium text-neutral-950">
-                {lead.followUpCompleted ? 'Yes' : 'No'}
-              </dd>
-            </div>
-
-            <div className="md:col-span-2">
-              <dt className="text-neutral-500">Next task</dt>
-              <dd className="mt-1 font-medium text-neutral-950">{lead.nextFollowUpTask || '—'}</dd>
-            </div>
-          </dl>
-        </WorkspacePanel>
+        <LeadFollowUpForm
+          lead={{
+            id: String(lead.id),
+            nextFollowUpAt: lead.nextFollowUpAt,
+            nextFollowUpTask: lead.nextFollowUpTask,
+            followUpCompleted: lead.followUpCompleted,
+          }}
+        />
       ) : null}
 
       {activeTab === 'notes' ? (
-        <WorkspacePanel title="Internal notes" description="Private notes for agency staff.">
-          <p className="whitespace-pre-wrap text-sm leading-7 text-neutral-700">
-            {lead.notes || 'No internal notes have been added.'}
-          </p>
-        </WorkspacePanel>
+        <LeadNotesForm
+          lead={{
+            id: String(lead.id),
+            notes: lead.notes,
+          }}
+        />
       ) : null}
 
       {activeTab === 'attachments' ? (
