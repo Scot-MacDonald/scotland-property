@@ -10,6 +10,7 @@ import {
   WorkspaceSidebar,
   WorkspaceSidebarItem,
   WorkspaceTabs,
+  WorkspaceTimeline,
   type WorkspaceTab,
 } from '@/components/DashboardV2/Workspace'
 
@@ -308,19 +309,22 @@ export default async function LeadWorkspacePage({ params, searchParams }: LeadWo
 
       {activeTab === 'history' ? (
         <WorkspacePanel title="History" description="Recent activity for this lead.">
-          <div className="space-y-5">
-            <div className="border-l-2 border-neutral-950 pl-4">
-              <p className="text-sm font-medium text-neutral-950">Lead last updated</p>
-
-              <p className="mt-1 text-sm text-neutral-500">{formatDateTime(lead.updatedAt)}</p>
-            </div>
-
-            <div className="border-l-2 border-neutral-300 pl-4">
-              <p className="text-sm font-medium text-neutral-950">Lead created</p>
-
-              <p className="mt-1 text-sm text-neutral-500">{formatDateTime(lead.createdAt)}</p>
-            </div>
-          </div>
+          <WorkspaceTimeline
+            items={[
+              {
+                id: 'updated',
+                title: 'Lead last updated',
+                date: lead.updatedAt,
+                description: 'The lead record was changed.',
+              },
+              {
+                id: 'created',
+                title: 'Lead received',
+                date: lead.createdAt,
+                description: 'The seller submitted a valuation request.',
+              },
+            ]}
+          />
         </WorkspacePanel>
       ) : null}
     </WorkspaceLayout>
