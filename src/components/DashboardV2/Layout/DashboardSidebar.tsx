@@ -40,6 +40,10 @@ export function DashboardSidebar({ counts = {} }: DashboardSidebarProps) {
       attention: Boolean(counts.enquiries),
     },
     {
+      label: 'Buyers',
+      href: '/dashboard/buyers',
+    },
+    {
       label: 'Analytics',
       href: '/dashboard/analytics',
     },

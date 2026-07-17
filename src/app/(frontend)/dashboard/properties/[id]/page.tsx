@@ -21,6 +21,8 @@ import {
   type WorkspaceTab,
 } from '@/components/DashboardV2/Workspace'
 
+import { formatDate, formatLabel, getRelationshipId, getRelationshipLabel } from '@/lib/dashboard'
+
 type PropertyWorkspacePageProps = {
   params: Promise<{
     id: string
@@ -46,46 +48,6 @@ function isPropertyTabId(value: string): value is PropertyTabId {
   return propertyTabIds.includes(value as PropertyTabId)
 }
 
-function getRelationshipLabel(
-  relationship:
-    | string
-    | number
-    | {
-        id?: string | number
-        name?: string | null
-        title?: string | null
-      }
-    | null
-    | undefined,
-) {
-  if (!relationship) return '—'
-
-  if (typeof relationship === 'string' || typeof relationship === 'number') {
-    return String(relationship)
-  }
-
-  return relationship.name || relationship.title || '—'
-}
-
-function getRelationshipId(
-  relationship:
-    | string
-    | number
-    | {
-        id?: string | number
-      }
-    | null
-    | undefined,
-) {
-  if (!relationship) return null
-
-  if (typeof relationship === 'string' || typeof relationship === 'number') {
-    return String(relationship)
-  }
-
-  return relationship.id ? String(relationship.id) : null
-}
-
 function relationshipValue(
   relationship:
     | string
@@ -97,25 +59,6 @@ function relationshipValue(
     | undefined,
 ) {
   return getRelationshipId(relationship) || ''
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return '—'
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(value))
-}
-
-function formatStatus(value: string | null | undefined) {
-  if (!value) return 'Unknown'
-
-  return value
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
 }
 
 function getStatusClasses(status: string | null | undefined) {
@@ -301,7 +244,7 @@ export default async function PropertyWorkspacePage({
                 getStatusClasses(property.status),
               ].join(' ')}
             >
-              {formatStatus(property.status)}
+              {formatLabel(property.status)}
             </span>
           }
           actions={
@@ -329,7 +272,7 @@ export default async function PropertyWorkspacePage({
       tabs={<WorkspaceTabs tabs={workspaceTabs} activeTab={activeTab} />}
       sidebar={
         <WorkspaceSidebar title="Property details">
-          <WorkspaceSidebarItem label="Status" value={formatStatus(property.status)} />
+          <WorkspaceSidebarItem label="Status" value={formatLabel(property.status)} />
 
           <WorkspaceSidebarItem label="Agency" value={getRelationshipLabel(property.agency)} />
 

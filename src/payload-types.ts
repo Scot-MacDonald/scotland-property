@@ -1084,7 +1084,19 @@ export interface Enquiry {
 export interface Buyer {
   id: string;
   name?: string | null;
+  /**
+   * Agency responsible for managing this buyer.
+   */
+  agency?: (string | null) | Agency;
+  /**
+   * Updated automatically whenever the buyer uses the platform.
+   */
+  lastActiveAt?: string | null;
   savedProperties?: (string | Property)[] | null;
+  /**
+   * Property enquiries submitted by this buyer.
+   */
+  propertyEnquiries?: (string | Enquiry)[] | null;
   savedSearches?:
     | {
         label: string;
@@ -1968,7 +1980,10 @@ export interface EnquiriesSelect<T extends boolean = true> {
  */
 export interface BuyersSelect<T extends boolean = true> {
   name?: T;
+  agency?: T;
+  lastActiveAt?: T;
   savedProperties?: T;
+  propertyEnquiries?: T;
   savedSearches?:
     | T
     | {
