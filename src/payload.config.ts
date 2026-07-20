@@ -23,6 +23,7 @@ import { Buyers } from './collections/Buyers'
 import { ImportLogs } from './collections/ImportLogs'
 import { AlertLogs } from './collections/AlertLogs'
 import { ValuationLeads } from './collections/ValuationLeads'
+import { Viewings } from './collections/Viewings'
 
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -103,6 +104,7 @@ export default buildConfig({
     ImportLogs,
     AlertLogs,
     ValuationLeads,
+    Viewings,
     UserInvitations,
   ],
   cors: [getServerSideURL()].filter(Boolean),

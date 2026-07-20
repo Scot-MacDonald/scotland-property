@@ -1,4 +1,4 @@
-import type { Payload } from 'payload'
+import type { Payload, Where } from 'payload'
 
 import { getDashboardStats } from './getDashboardStats'
 import { getAgencyWhere } from './getAgencyWhere'
@@ -27,6 +27,7 @@ export type DashboardContext = {
     agents: number
     leads: number
     enquiries: number
+    viewings: number
   }
 
   permissions: {
@@ -95,6 +96,16 @@ export async function getDashboardContext({
     }
   }
 
+  const agencyWhere = getAgencyWhere(agencyId, isSuperAdmin)
+
+  const viewingsWhere: Where | undefined = agencyWhere || undefined
+
+  const viewingsResult = await payload.count({
+    collection: 'viewings',
+    where: viewingsWhere,
+    overrideAccess: true,
+  })
+
   return {
     user,
 
@@ -107,6 +118,7 @@ export async function getDashboardContext({
       agents: stats.totalAgents,
       leads: stats.newLeads,
       enquiries: stats.newEnquiries,
+      viewings: viewingsResult.totalDocs,
     },
 
     permissions: {

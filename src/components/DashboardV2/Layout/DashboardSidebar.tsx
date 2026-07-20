@@ -5,6 +5,7 @@ export type DashboardNavigationCounts = {
   agents?: number
   leads?: number
   enquiries?: number
+  viewings?: number
 }
 
 type DashboardSidebarProps = {
@@ -23,9 +24,15 @@ export function DashboardSidebar({ counts = {} }: DashboardSidebarProps) {
       count: counts.properties,
     },
     {
-      label: 'Agents',
-      href: '/dashboard/agents',
-      count: counts.agents,
+      label: 'Enquiries',
+      href: '/dashboard/enquiries',
+      count: counts.enquiries,
+      attention: Boolean(counts.enquiries),
+    },
+    {
+      label: 'Viewings',
+      href: '/dashboard/viewings',
+      count: counts.viewings,
     },
     {
       label: 'Leads',
@@ -34,14 +41,13 @@ export function DashboardSidebar({ counts = {} }: DashboardSidebarProps) {
       attention: Boolean(counts.leads),
     },
     {
-      label: 'Enquiries',
-      href: '/dashboard/enquiries',
-      count: counts.enquiries,
-      attention: Boolean(counts.enquiries),
-    },
-    {
       label: 'Buyers',
       href: '/dashboard/buyers',
+    },
+    {
+      label: 'Agents',
+      href: '/dashboard/agents',
+      count: counts.agents,
     },
     {
       label: 'Analytics',

@@ -86,6 +86,7 @@ export interface Config {
     'import-logs': ImportLog;
     'alert-logs': AlertLog;
     'valuation-leads': ValuationLead;
+    viewings: Viewing;
     'user-invitations': UserInvitation;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -120,6 +121,7 @@ export interface Config {
     'import-logs': ImportLogsSelect<false> | ImportLogsSelect<true>;
     'alert-logs': AlertLogsSelect<false> | AlertLogsSelect<true>;
     'valuation-leads': ValuationLeadsSelect<false> | ValuationLeadsSelect<true>;
+    viewings: ViewingsSelect<false> | ViewingsSelect<true>;
     'user-invitations': UserInvitationsSelect<false> | UserInvitationsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -1201,6 +1203,38 @@ export interface ValuationLead {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "viewings".
+ */
+export interface Viewing {
+  id: string;
+  dateTime: string;
+  durationMinutes: number;
+  status: 'requested' | 'confirmed' | 'completed' | 'cancelled' | 'no-show';
+  property: string | Property;
+  agent?: (string | null) | Agent;
+  agency: string | Agency;
+  buyer?: (string | null) | Buyer;
+  enquiry?: (string | null) | Enquiry;
+  contactName: string;
+  contactEmail: string;
+  contactPhone?: string | null;
+  internalNotes?: string | null;
+  /**
+   * Overall viewer interest from 1 to 5.
+   */
+  viewerRating?: number | null;
+  viewingOutcome?:
+    | ('not-recorded' | 'interested' | 'second-viewing' | 'considering-offer' | 'offer-expected' | 'not-interested')
+    | null;
+  followUpRequired?: boolean | null;
+  feedback?: string | null;
+  vendorFeedback?: string | null;
+  followUpNotes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "user-invitations".
  */
 export interface UserInvitation {
@@ -1422,6 +1456,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'valuation-leads';
         value: string | ValuationLead;
+      } | null)
+    | ({
+        relationTo: 'viewings';
+        value: string | Viewing;
       } | null)
     | ({
         relationTo: 'user-invitations';
@@ -2063,6 +2101,32 @@ export interface ValuationLeadsSelect<T extends boolean = true> {
   followUpCompleted?: T;
   source?: T;
   assignedAgency?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "viewings_select".
+ */
+export interface ViewingsSelect<T extends boolean = true> {
+  dateTime?: T;
+  durationMinutes?: T;
+  status?: T;
+  property?: T;
+  agent?: T;
+  agency?: T;
+  buyer?: T;
+  enquiry?: T;
+  contactName?: T;
+  contactEmail?: T;
+  contactPhone?: T;
+  internalNotes?: T;
+  viewerRating?: T;
+  viewingOutcome?: T;
+  followUpRequired?: T;
+  feedback?: T;
+  vendorFeedback?: T;
+  followUpNotes?: T;
   updatedAt?: T;
   createdAt?: T;
 }
