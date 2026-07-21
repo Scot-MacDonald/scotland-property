@@ -12,6 +12,15 @@ export const ActivityTypes = {
 
   VIEWING_CREATED: 'viewing-created',
   VIEWING_UPDATED: 'viewing-updated',
+
+  VIEWING_STATUS_CHANGED: 'viewing-status-changed',
+  VIEWING_RESCHEDULED: 'viewing-rescheduled',
+  VIEWING_AGENT_CHANGED: 'viewing-agent-changed',
+  VIEWING_NOTES_UPDATED: 'viewing-notes-updated',
+  VIEWING_FEEDBACK_UPDATED: 'viewing-feedback-updated',
+  VIEWING_OUTCOME_UPDATED: 'viewing-outcome-updated',
+  VIEWING_FOLLOW_UP_UPDATED: 'viewing-follow-up-updated',
+
   VIEWING_BOOKED: 'viewing-booked',
   VIEWING_COMPLETED: 'viewing-completed',
   VIEWING_CANCELLED: 'viewing-cancelled',

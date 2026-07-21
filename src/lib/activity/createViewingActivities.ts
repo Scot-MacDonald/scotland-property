@@ -3,6 +3,7 @@ import {
   ActivitySeverities,
   ActivityTypes,
   createActivity,
+  type ActivityType,
 } from '@/lib/activity'
 
 function formatStatus(status: string | null | undefined) {
@@ -44,21 +45,26 @@ export async function createViewingActivities({
   agencyId,
   userId,
 }: Args) {
-  const create = (title: string, description: string, metadata: Record<string, unknown> = {}) =>
+  const create = (
+    type: ActivityType,
+    title: string,
+    description: string,
+    metadata: Record<string, unknown> = {},
+  ) =>
     createActivity({
-      type: ActivityTypes.VIEWING_UPDATED,
-      title,
-      description,
-      severity: ActivitySeverities.INFO,
+      agency: agencyId,
       entityType: ActivityEntityTypes.VIEWING,
       entityId: String(viewing.id),
-      agency: agencyId,
-      user: userId,
+      type,
+      title,
+      description,
       metadata,
+      user: userId,
     })
 
   if (changedFields.includes('status')) {
     await create(
+      ActivityTypes.VIEWING_STATUS_CHANGED,
       'Viewing status changed',
       `${formatStatus(previousViewing.status)} → ${formatStatus(viewing.status)}`,
       {
@@ -70,6 +76,7 @@ export async function createViewingActivities({
 
   if (changedFields.includes('dateTime')) {
     await create(
+      ActivityTypes.VIEWING_RESCHEDULED,
       'Viewing rescheduled',
       `${formatDateTime(previousViewing.dateTime)} → ${formatDateTime(viewing.dateTime)}`,
       {
@@ -81,6 +88,7 @@ export async function createViewingActivities({
 
   if (changedFields.includes('durationMinutes')) {
     await create(
+      ActivityTypes.VIEWING_UPDATED,
       'Viewing duration changed',
       `${previousViewing.durationMinutes ?? 'Unknown'} minutes → ${
         viewing.durationMinutes ?? 'Unknown'
@@ -93,18 +101,28 @@ export async function createViewingActivities({
   }
 
   if (changedFields.includes('agent')) {
-    await create('Assigned agent changed', 'The assigned agent was updated.', {
-      previousAgent: previousViewing.agent,
-      newAgent: viewing.agent,
-    })
+    await create(
+      ActivityTypes.VIEWING_AGENT_CHANGED,
+      'Assigned agent changed',
+      'The assigned agent was updated.',
+      {
+        previousAgent: previousViewing.agent,
+        newAgent: viewing.agent,
+      },
+    )
   }
 
   if (changedFields.includes('internalNotes')) {
-    await create('Internal notes updated', 'Internal viewing notes were updated.')
+    await create(
+      ActivityTypes.VIEWING_NOTES_UPDATED,
+      'Internal notes updated',
+      'Internal viewing notes were updated.',
+    )
   }
 
   if (changedFields.includes('viewerRating')) {
     await create(
+      ActivityTypes.VIEWING_FEEDBACK_UPDATED,
       'Viewer rating updated',
       viewing.viewerRating
         ? `Viewer rating changed to ${viewing.viewerRating} out of 5.`
@@ -118,6 +136,7 @@ export async function createViewingActivities({
 
   if (changedFields.includes('viewingOutcome')) {
     await create(
+      ActivityTypes.VIEWING_OUTCOME_UPDATED,
       'Viewing outcome updated',
       `${formatStatus(previousViewing.viewingOutcome)} → ${formatStatus(viewing.viewingOutcome)}`,
       {
@@ -128,15 +147,24 @@ export async function createViewingActivities({
   }
 
   if (changedFields.includes('feedback')) {
-    await create('Viewer feedback updated', 'Viewer feedback was updated.')
+    await create(
+      ActivityTypes.VIEWING_FEEDBACK_UPDATED,
+      'Viewer feedback updated',
+      'Viewer feedback was updated.',
+    )
   }
 
   if (changedFields.includes('vendorFeedback')) {
-    await create('Vendor feedback updated', 'Vendor feedback was updated.')
+    await create(
+      ActivityTypes.VIEWING_FEEDBACK_UPDATED,
+      'Vendor feedback updated',
+      'Vendor feedback was updated.',
+    )
   }
 
   if (changedFields.includes('followUpRequired') || changedFields.includes('followUpNotes')) {
     await create(
+      ActivityTypes.VIEWING_FOLLOW_UP_UPDATED,
       'Follow-up updated',
       viewing.followUpRequired
         ? 'Follow-up is required for this viewing.'
@@ -161,11 +189,20 @@ export async function createViewingActivities({
     'followUpNotes',
   ]
 
-  const remainingFields = changedFields.filter((field) => !handledFields.includes(field))
+  const ignoredFields = ['updatedAt', 'createdAt']
+
+  const remainingFields = changedFields.filter(
+    (field) => !handledFields.includes(field) && !ignoredFields.includes(field),
+  )
 
   if (remainingFields.length > 0) {
-    await create('Viewing updated', 'General viewing details were updated.', {
-      updatedFields: remainingFields,
-    })
+    await create(
+      ActivityTypes.VIEWING_UPDATED,
+      'Viewing updated',
+      'General viewing details were updated.',
+      {
+        updatedFields: remainingFields,
+      },
+    )
   }
 }
