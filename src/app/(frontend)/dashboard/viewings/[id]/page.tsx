@@ -5,6 +5,8 @@ import { notFound, redirect } from 'next/navigation'
 import { ViewingOverviewForm } from '@/components/DashboardV2/Viewings/ViewingOverviewForm'
 import { ViewingNotesForm } from '@/components/DashboardV2/Viewings/ViewingNotesForm'
 import { ViewingFeedbackForm } from '@/components/DashboardV2/Viewings/ViewingFeedbackForm'
+import { Timeline } from '@/components/DashboardV2/Timeline'
+import { ActivityEntityTypes } from '@/lib/activity'
 
 import {
   WorkspaceHeader,
@@ -263,23 +265,17 @@ export default async function ViewingWorkspacePage({
       {activeTab === 'history' ? (
         <section className="border border-neutral-200 bg-white p-6">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-500">
-            Record history
+            Activity history
           </p>
 
           <h2 className="mt-2 text-xl font-semibold text-neutral-950">Viewing activity</h2>
 
-          <div className="mt-6 space-y-5 border-l border-neutral-200 pl-5">
-            <div>
-              <p className="text-sm font-semibold text-neutral-900">Viewing updated</p>
+          <p className="mt-2 text-sm leading-6 text-neutral-500">
+            Every significant change made to this viewing is recorded here.
+          </p>
 
-              <p className="mt-1 text-sm text-neutral-500">{formatDateTime(viewing.updatedAt)}</p>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold text-neutral-900">Viewing created</p>
-
-              <p className="mt-1 text-sm text-neutral-500">{formatDateTime(viewing.createdAt)}</p>
-            </div>
+          <div className="mt-8">
+            <Timeline entityType={ActivityEntityTypes.VIEWING} entityId={String(viewing.id)} />
           </div>
         </section>
       ) : null}

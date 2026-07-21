@@ -2,7 +2,8 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
-
+import { getChangedFields } from '@/lib/activity/getChangedFields'
+import { createViewingActivities } from '@/lib/activity/createViewingActivities'
 import { getRelationshipId } from '@/lib/dashboard/workspaceHelpers'
 
 const allowedStatuses = ['requested', 'confirmed', 'completed', 'cancelled', 'no-show'] as const
@@ -381,6 +382,15 @@ export async function POST(request: Request) {
       overrideAccess: true,
     })
 
+    const changedFields = getChangedFields(viewing, updatedViewing, Object.keys(updateData))
+
+    await createViewingActivities({
+      previousViewing: viewing,
+      viewing: updatedViewing,
+      changedFields,
+      agencyId: getRelationshipId(updatedViewing.agency)!,
+      userId: user.id,
+    })
     return NextResponse.json({
       ok: true,
       viewing: updatedViewing,

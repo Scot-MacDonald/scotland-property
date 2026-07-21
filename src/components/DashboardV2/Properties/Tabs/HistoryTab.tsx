@@ -1,29 +1,22 @@
-import { WorkspacePanel, WorkspaceTimeline } from '@/components/DashboardV2/Workspace'
+import { Timeline } from '@/components/DashboardV2/Timeline'
+import { ActivityEntityTypes } from '@/lib/activity'
 
 type HistoryTabProps = {
-  createdAt: string
-  updatedAt: string
+  propertyId: string
 }
 
-export function HistoryTab({ createdAt, updatedAt }: HistoryTabProps) {
+export async function HistoryTab({ propertyId }: HistoryTabProps) {
   return (
-    <WorkspacePanel title="History" description="Recent activity for this property.">
-      <WorkspaceTimeline
-        items={[
-          {
-            id: 'updated',
-            title: 'Property last updated',
-            date: updatedAt,
-            description: 'The property record was changed.',
-          },
-          {
-            id: 'created',
-            title: 'Property created',
-            date: createdAt,
-            description: 'The property listing was created.',
-          },
-        ]}
-      />
-    </WorkspacePanel>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-neutral-950">Activity History</h2>
+
+        <p className="mt-1 text-sm text-neutral-500">
+          Every significant change made to this property is recorded here.
+        </p>
+      </div>
+
+      <Timeline entityType={ActivityEntityTypes.PROPERTY} entityId={propertyId} />
+    </div>
   )
 }

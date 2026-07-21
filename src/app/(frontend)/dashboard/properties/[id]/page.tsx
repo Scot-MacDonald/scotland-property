@@ -337,9 +337,7 @@ export default async function PropertyWorkspacePage({
 
       {activeTab === 'documents' ? <DocumentsTab /> : null}
 
-      {activeTab === 'history' ? (
-        <HistoryTab createdAt={property.createdAt} updatedAt={property.updatedAt} />
-      ) : null}
+      {activeTab === 'history' ? <HistoryTab propertyId={property.id} /> : null}
     </WorkspaceLayout>
   )
 }

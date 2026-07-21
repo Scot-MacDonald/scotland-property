@@ -87,6 +87,7 @@ export interface Config {
     'alert-logs': AlertLog;
     'valuation-leads': ValuationLead;
     viewings: Viewing;
+    activities: Activity;
     'user-invitations': UserInvitation;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -122,6 +123,7 @@ export interface Config {
     'alert-logs': AlertLogsSelect<false> | AlertLogsSelect<true>;
     'valuation-leads': ValuationLeadsSelect<false> | ValuationLeadsSelect<true>;
     viewings: ViewingsSelect<false> | ViewingsSelect<true>;
+    activities: ActivitiesSelect<false> | ActivitiesSelect<true>;
     'user-invitations': UserInvitationsSelect<false> | UserInvitationsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -1235,6 +1237,44 @@ export interface Viewing {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activities".
+ */
+export interface Activity {
+  id: string;
+  /**
+   * Machine-readable event type, for example viewing-status-changed.
+   */
+  type: string;
+  title: string;
+  description?: string | null;
+  severity: 'info' | 'success' | 'warning' | 'error';
+  entityType: 'property' | 'enquiry' | 'lead' | 'viewing' | 'offer' | 'buyer' | 'agent' | 'agency';
+  /**
+   * ID of the record associated with this activity.
+   */
+  entityId: string;
+  agency: string | Agency;
+  /**
+   * The dashboard user who caused the activity.
+   */
+  user?: (string | null) | User;
+  /**
+   * Structured information used by timelines, reports and analytics.
+   */
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "user-invitations".
  */
 export interface UserInvitation {
@@ -1460,6 +1500,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'viewings';
         value: string | Viewing;
+      } | null)
+    | ({
+        relationTo: 'activities';
+        value: string | Activity;
       } | null)
     | ({
         relationTo: 'user-invitations';
@@ -2127,6 +2171,23 @@ export interface ViewingsSelect<T extends boolean = true> {
   feedback?: T;
   vendorFeedback?: T;
   followUpNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activities_select".
+ */
+export interface ActivitiesSelect<T extends boolean = true> {
+  type?: T;
+  title?: T;
+  description?: T;
+  severity?: T;
+  entityType?: T;
+  entityId?: T;
+  agency?: T;
+  user?: T;
+  metadata?: T;
   updatedAt?: T;
   createdAt?: T;
 }
