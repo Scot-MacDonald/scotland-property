@@ -3,6 +3,8 @@ import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+import { createPropertyActivities } from '@/lib/activity/createPropertyActivities'
+import { getChangedFields } from '@/lib/activity/getChangedFields'
 import type { Property } from '@/payload-types'
 
 type Payload = Awaited<ReturnType<typeof getPayload>>
@@ -88,7 +90,10 @@ async function uploadFiles(payload: Payload, files: FormDataEntryValue[], alt: s
 
   for (const file of files) {
     const uploadedId = await uploadFile(payload, file, alt)
-    if (uploadedId) ids.push(uploadedId)
+
+    if (uploadedId) {
+      ids.push(uploadedId)
+    }
   }
 
   return ids
@@ -146,36 +151,93 @@ export async function POST(req: Request) {
       }
     }
 
-    if (formData.has('reference')) data.reference = optionalString(formData.get('reference'))
-    if (formData.has('price')) data.price = optionalNumber(formData.get('price'))
-    if (formData.has('status')) data.status = getPropertyStatus(formData.get('status'))
-    if (formData.has('excerpt')) data.excerpt = optionalString(formData.get('excerpt'))
-    if (formData.has('bedrooms')) data.bedrooms = optionalNumber(formData.get('bedrooms'))
-    if (formData.has('bathrooms')) data.bathrooms = optionalNumber(formData.get('bathrooms'))
-    if (formData.has('internalArea'))
+    if (formData.has('reference')) {
+      data.reference = optionalString(formData.get('reference'))
+    }
+
+    if (formData.has('price')) {
+      data.price = optionalNumber(formData.get('price'))
+    }
+
+    if (formData.has('status')) {
+      data.status = getPropertyStatus(formData.get('status'))
+    }
+
+    if (formData.has('excerpt')) {
+      data.excerpt = optionalString(formData.get('excerpt'))
+    }
+
+    if (formData.has('bedrooms')) {
+      data.bedrooms = optionalNumber(formData.get('bedrooms'))
+    }
+
+    if (formData.has('bathrooms')) {
+      data.bathrooms = optionalNumber(formData.get('bathrooms'))
+    }
+
+    if (formData.has('internalArea')) {
       data.internalArea = optionalNumber(formData.get('internalArea'))
-    if (formData.has('landArea')) data.landArea = optionalNumber(formData.get('landArea'))
-    if (formData.has('yearBuilt')) data.yearBuilt = optionalNumber(formData.get('yearBuilt'))
-    if (formData.has('energyRating'))
+    }
+
+    if (formData.has('landArea')) {
+      data.landArea = optionalNumber(formData.get('landArea'))
+    }
+
+    if (formData.has('yearBuilt')) {
+      data.yearBuilt = optionalNumber(formData.get('yearBuilt'))
+    }
+
+    if (formData.has('energyRating')) {
       data.energyRating = optionalString(formData.get('energyRating'))
+    }
+
     if (formData.has('marketingHeadline')) {
       data.marketingHeadline = optionalString(formData.get('marketingHeadline'))
     }
-    if (formData.has('seoTitle')) data.seoTitle = optionalString(formData.get('seoTitle'))
+
+    if (formData.has('seoTitle')) {
+      data.seoTitle = optionalString(formData.get('seoTitle'))
+    }
+
     if (formData.has('seoDescription')) {
       data.seoDescription = optionalString(formData.get('seoDescription'))
     }
-    if (formData.has('latitude')) data.latitude = optionalNumber(formData.get('latitude'))
-    if (formData.has('longitude')) data.longitude = optionalNumber(formData.get('longitude'))
-    if (formData.has('virtualTour')) data.virtualTour = optionalString(formData.get('virtualTour'))
-    if (formData.has('youtubeVideo'))
+
+    if (formData.has('latitude')) {
+      data.latitude = optionalNumber(formData.get('latitude'))
+    }
+
+    if (formData.has('longitude')) {
+      data.longitude = optionalNumber(formData.get('longitude'))
+    }
+
+    if (formData.has('virtualTour')) {
+      data.virtualTour = optionalString(formData.get('virtualTour'))
+    }
+
+    if (formData.has('youtubeVideo')) {
       data.youtubeVideo = optionalString(formData.get('youtubeVideo'))
-    if (formData.has('region')) data.region = optionalString(formData.get('region'))
-    if (formData.has('town')) data.town = optionalString(formData.get('town'))
-    if (formData.has('propertyType'))
+    }
+
+    if (formData.has('region')) {
+      data.region = optionalString(formData.get('region'))
+    }
+
+    if (formData.has('town')) {
+      data.town = optionalString(formData.get('town'))
+    }
+
+    if (formData.has('propertyType')) {
       data.propertyType = optionalString(formData.get('propertyType'))
-    if (formData.has('agent')) data.agent = optionalString(formData.get('agent'))
-    if (formData.has('featured')) data.featured = optionalBoolean(formData.get('featured'))
+    }
+
+    if (formData.has('agent')) {
+      data.agent = optionalString(formData.get('agent'))
+    }
+
+    if (formData.has('featured')) {
+      data.featured = optionalBoolean(formData.get('featured'))
+    }
 
     if (formData.has('amenities')) {
       data.amenities = formData.getAll('amenities').map(String).filter(Boolean)
@@ -184,12 +246,15 @@ export async function POST(req: Request) {
     if (formData.has('publishOnWebsite')) {
       data.publishOnWebsite = optionalBoolean(formData.get('publishOnWebsite'))
     }
+
     if (formData.has('publishToJamesEdition')) {
       data.publishToJamesEdition = optionalBoolean(formData.get('publishToJamesEdition'))
     }
+
     if (formData.has('publishToRightmove')) {
       data.publishToRightmove = optionalBoolean(formData.get('publishToRightmove'))
     }
+
     if (formData.has('publishToZoopla')) {
       data.publishToZoopla = optionalBoolean(formData.get('publishToZoopla'))
     }
@@ -267,6 +332,20 @@ export async function POST(req: Request) {
       depth: 1,
       overrideAccess: true,
     })
+
+    const activityAgencyId = getRelationshipId(updatedProperty.agency) || propertyAgencyId
+
+    if (activityAgencyId) {
+      const changedFields = getChangedFields(existingProperty, updatedProperty, Object.keys(data))
+
+      await createPropertyActivities({
+        previousProperty: existingProperty,
+        property: updatedProperty,
+        changedFields,
+        agencyId: activityAgencyId,
+        userId: user.id,
+      })
+    }
 
     return NextResponse.json({
       ok: true,
