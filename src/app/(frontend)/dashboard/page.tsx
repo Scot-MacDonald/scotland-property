@@ -12,6 +12,8 @@ import { DashboardCollection } from '@/components/DashboardV2/Collection/Dashboa
 import { DashboardHero } from '@/components/DashboardV2/Layout/DashboardHero'
 import { DashboardLayout } from '@/components/DashboardV2/Layout/DashboardLayout'
 import { DashboardWorkspace } from '@/components/DashboardV2/Layout/DashboardWorkspace'
+import { DashboardTodayViewings } from '@/components/DashboardV2/Cards/DashboardTodayViewings'
+import { getDashboardViewings } from '@/lib/dashboard/getDashboardViewings'
 
 import { getDashboardActivity } from '@/lib/dashboard/getDashboardActivity'
 import { getDashboardContext } from '@/lib/dashboard/getDashboardContext'
@@ -60,7 +62,7 @@ export default async function DashboardV2Page() {
 
   const dashboardUser = user as any
 
-  const [dashboard, properties, activities] = await Promise.all([
+  const [dashboard, properties, activities, viewings] = await Promise.all([
     getDashboardContext({
       payload,
       user: dashboardUser,
@@ -77,8 +79,14 @@ export default async function DashboardV2Page() {
       user: dashboardUser,
       limit: 6,
     }),
-  ])
 
+    getDashboardViewings({
+      payload,
+      user: dashboardUser,
+      limit: 5,
+      todayOnly: true,
+    }),
+  ])
   const agencyName =
     dashboard.agency?.name ||
     (typeof dashboardUser.name === 'string' ? dashboardUser.name : null) ||
@@ -196,6 +204,8 @@ export default async function DashboardV2Page() {
           </div>
 
           <aside className="space-y-6 self-start lg:sticky lg:top-8">
+            <DashboardTodayViewings viewings={viewings.docs} />
+
             <DashboardPriorityPanel />
 
             <DashboardQuickActions />

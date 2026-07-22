@@ -76,6 +76,7 @@ export async function getDashboardViewings({
   page = 1,
   query = '',
   status = '',
+  todayOnly = false,
 }: {
   payload: Payload
   user: DashboardUser
@@ -83,6 +84,7 @@ export async function getDashboardViewings({
   page?: number
   query?: string
   status?: string
+  todayOnly?: boolean
 }): Promise<DashboardViewingsResult> {
   const isSuperAdmin = user.role === 'super-admin'
   const agencyId = getAgencyId(user)
@@ -94,10 +96,22 @@ export async function getDashboardViewings({
     conditions.push(agencyFilter)
   }
 
-  if (status) {
+  if (todayOnly) {
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+
+    const startOfTomorrow = new Date(startOfToday)
+    startOfTomorrow.setDate(startOfTomorrow.getDate() + 1)
+
     conditions.push({
-      status: {
-        equals: status,
+      dateTime: {
+        greater_than_equal: startOfToday.toISOString(),
+      },
+    })
+
+    conditions.push({
+      dateTime: {
+        less_than: startOfTomorrow.toISOString(),
       },
     })
   }
