@@ -18,6 +18,8 @@ import { getDashboardPriorities } from '@/lib/dashboard/getDashboardPriorities'
 import { getDashboardActivity } from '@/lib/dashboard/getDashboardActivity'
 import { getDashboardContext } from '@/lib/dashboard/getDashboardContext'
 import { getDashboardProperties } from '@/lib/dashboard/getDashboardProperties'
+import { DashboardRecentLeads } from '@/components/DashboardV2/Cards/DashboardRecentLeads'
+import { getDashboardLeads } from '@/lib/dashboard/getDashboardLeads'
 
 function formatPrice(value?: number | null) {
   if (!value) return 'Price on request'
@@ -62,7 +64,7 @@ export default async function DashboardV2Page() {
 
   const dashboardUser = user as any
 
-  const [dashboard, properties, activities, viewings, priorities] = await Promise.all([
+  const [dashboard, properties, activities, viewings, priorities, leads] = await Promise.all([
     getDashboardContext({
       payload,
       user: dashboardUser,
@@ -90,6 +92,12 @@ export default async function DashboardV2Page() {
     getDashboardPriorities({
       payload,
       user: dashboardUser,
+    }),
+
+    getDashboardLeads({
+      payload,
+      user: dashboardUser,
+      limit: 4,
     }),
   ])
   const agencyName =
@@ -140,6 +148,33 @@ export default async function DashboardV2Page() {
               </div>
 
               <DashboardActivityFeed activities={activities} />
+            </section>
+
+            <section>
+              <div className="mb-5 flex items-end justify-between gap-4 border-t border-neutral-200 pt-8">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-500">
+                    Seller pipeline
+                  </p>
+
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-950">
+                    Recent leads
+                  </h2>
+
+                  <p className="mt-1 text-sm leading-6 text-neutral-600">
+                    New valuation opportunities and seller enquiries.
+                  </p>
+                </div>
+
+                <Link
+                  href="/dashboard/leads"
+                  className="shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-neutral-700 transition-colors hover:text-neutral-950"
+                >
+                  View leads →
+                </Link>
+              </div>
+
+              <DashboardRecentLeads leads={leads} />
             </section>
 
             <section>
