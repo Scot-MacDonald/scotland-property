@@ -1,5 +1,6 @@
 type DashboardHeroProps = {
   agencyName: string
+  userName: string
   activeListings: number
   portfolioValue: string
   newLeads: number
@@ -8,37 +9,57 @@ type DashboardHeroProps = {
 
 export function DashboardHero({
   agencyName,
+  userName,
   activeListings,
   portfolioValue,
   newLeads,
   newEnquiries,
 }: DashboardHeroProps) {
-  const hour = new Date().getHours()
+  const now = new Date()
+  const hour = now.getHours()
 
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
 
-  return (
-    <header className="border-b border-black/10 pb-10">
-      <p className="text-sm uppercase tracking-[0.35em] text-black/50">Scotland Luxury Estates</p>
+  const firstName = userName.trim().split(/\s+/)[0] || 'there'
 
-      <div className="mt-4 grid gap-8 lg:grid-cols-[1.3fr_1fr] lg:items-end">
+  const date = now.toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+
+  const time = now.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  return (
+    <header className="border-b border-black/10 pb-8">
+      <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:items-start">
         <div>
-          <h1 className="text-5xl font-medium tracking-tight lg:text-7xl">
-            {greeting}, {agencyName}
+          <p className="text-xs font-medium uppercase tracking-[0.32em] text-black/45">
+            {agencyName}
+          </p>
+
+          <h1 className="mt-4 text-4xl font-medium tracking-tight text-black lg:text-5xl">
+            {greeting}, {firstName}
           </h1>
 
-          <p className="mt-5 max-w-2xl text-black/60">
-            Your agency operating system for luxury listings, seller leads, buyer enquiries and
-            daily priorities.
-          </p>
+          <p className="mt-3 text-base leading-7 text-black/55">Luxury agency workspace</p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <HeroMetric value={activeListings} label="Active Listings" />
-          <HeroMetric value={portfolioValue} label="Portfolio Value" />
-          <HeroMetric value={newLeads} label="New Leads" />
-          <HeroMetric value={newEnquiries} label="New Enquiries" />
+        <div className="flex flex-col items-start lg:items-end">
+          <p className="text-sm font-medium text-black">{date}</p>
+
+          <p className="mt-1 text-sm text-black/45">{time}</p>
         </div>
+      </div>
+
+      <div className="mt-8 grid gap-6 border-t border-black/10 pt-6 sm:grid-cols-2 lg:grid-cols-4">
+        <HeroMetric value={activeListings} label="Active Listings" />
+        <HeroMetric value={portfolioValue} label="Portfolio Value" />
+        <HeroMetric value={newLeads} label="New Leads" />
+        <HeroMetric value={newEnquiries} label="New Enquiries" />
       </div>
     </header>
   )
@@ -46,8 +67,8 @@ export function DashboardHero({
 
 function HeroMetric({ value, label }: { value: string | number; label: string }) {
   return (
-    <div className="border-t border-black/10 pt-4">
-      <p className="text-3xl font-medium">{value}</p>
+    <div>
+      <p className="text-4xl font-medium tracking-tight text-black">{value}</p>
 
       <p className="mt-1 text-xs uppercase tracking-[0.22em] text-black/45">{label}</p>
     </div>

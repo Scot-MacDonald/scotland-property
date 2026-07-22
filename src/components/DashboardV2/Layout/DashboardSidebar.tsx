@@ -19,6 +19,10 @@ export function DashboardSidebar({ counts = {} }: DashboardSidebarProps) {
       href: '/dashboard',
     },
     {
+      label: 'Activity',
+      href: '/dashboard/activity',
+    },
+    {
       label: 'Properties',
       href: '/dashboard/properties',
       count: counts.properties,
