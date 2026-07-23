@@ -181,7 +181,7 @@ export default async function DashboardViewingsPage({
                 key={viewing.id}
                 date={formatViewingDate(viewing.dateTime)}
                 time={formatViewingTime(viewing.dateTime)}
-                duration={`${viewing.durationMinutes} minutes`}
+                duration={`${viewing.durationMinutes} min`}
                 status={viewing.status}
                 property={viewing.propertyTitle}
                 contactName={viewing.contactName}

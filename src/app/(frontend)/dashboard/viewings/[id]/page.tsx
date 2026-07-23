@@ -1,13 +1,13 @@
 import configPromise from '@payload-config'
+import Link from 'next/link'
 import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
-import { ViewingOverviewForm } from '@/components/DashboardV2/Viewings/ViewingOverviewForm'
-import { ViewingNotesForm } from '@/components/DashboardV2/Viewings/ViewingNotesForm'
-import { ViewingFeedbackForm } from '@/components/DashboardV2/Viewings/ViewingFeedbackForm'
-import { Timeline } from '@/components/DashboardV2/Timeline'
-import { ActivityEntityTypes } from '@/lib/activity'
 
+import { Timeline } from '@/components/DashboardV2/Timeline'
+import { ViewingFeedbackForm } from '@/components/DashboardV2/Viewings/ViewingFeedbackForm'
+import { ViewingNotesForm } from '@/components/DashboardV2/Viewings/ViewingNotesForm'
+import { ViewingOverviewForm } from '@/components/DashboardV2/Viewings/ViewingOverviewForm'
 import {
   WorkspaceHeader,
   WorkspaceLayout,
@@ -17,6 +17,7 @@ import {
   type WorkspaceTab,
 } from '@/components/DashboardV2/Workspace'
 
+import { ActivityEntityTypes } from '@/lib/activity'
 import {
   formatDate,
   formatDateTime,
@@ -44,11 +45,14 @@ function isViewingTabId(value: string): value is ViewingTabId {
 
 function getStatusClasses(status: string | null | undefined) {
   switch (status) {
+    case 'requested':
+      return 'border-amber-200 bg-amber-50 text-amber-700'
+
     case 'confirmed':
-      return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      return 'border-blue-200 bg-blue-50 text-blue-700'
 
     case 'completed':
-      return 'border-blue-200 bg-blue-50 text-blue-700'
+      return 'border-emerald-200 bg-emerald-50 text-emerald-700'
 
     case 'cancelled':
       return 'border-neutral-300 bg-neutral-100 text-neutral-600'
@@ -57,8 +61,20 @@ function getStatusClasses(status: string | null | undefined) {
       return 'border-red-200 bg-red-50 text-red-700'
 
     default:
-      return 'border-amber-200 bg-amber-50 text-amber-700'
+      return 'border-neutral-200 bg-white text-neutral-600'
   }
+}
+
+function getOutcomeLabel(outcome: string | null | undefined) {
+  if (!outcome || outcome === 'not-recorded') {
+    return 'Not recorded'
+  }
+
+  return formatLabel(outcome)
+}
+
+function getFollowUpLabel(required: boolean | null | undefined) {
+  return required ? 'Required' : 'Not required'
 }
 
 export default async function ViewingWorkspacePage({
@@ -161,13 +177,21 @@ export default async function ViewingWorkspacePage({
   const enquiryId = getRelationshipId(viewing.enquiry)
   const buyerId = getRelationshipId(viewing.buyer)
 
+  const propertyLabel = getRelationshipLabel(viewing.property) || 'Property viewing'
+
+  const agentLabel = getRelationshipLabel(viewing.agent) || 'Not assigned'
+
+  const agencyLabel = getRelationshipLabel(viewing.agency) || 'Not assigned'
+
+  const buyerLabel = getRelationshipLabel(viewing.buyer) || 'No buyer record'
+
   return (
     <WorkspaceLayout
       header={
         <WorkspaceHeader
           backHref="/dashboard/viewings"
           backLabel="Viewings"
-          eyebrow={getRelationshipLabel(viewing.property) || 'Property viewing'}
+          eyebrow={propertyLabel}
           title={viewing.contactName}
           status={
             <span
@@ -181,22 +205,30 @@ export default async function ViewingWorkspacePage({
           }
           actions={
             <>
-              {propertyId ? (
+              {viewing.contactPhone ? (
                 <a
-                  href={`/dashboard/properties/${propertyId}`}
+                  href={`tel:${viewing.contactPhone}`}
                   className="inline-flex h-10 items-center justify-center border border-neutral-300 bg-white px-4 text-sm font-semibold text-neutral-800 transition hover:border-neutral-400 hover:bg-neutral-50"
                 >
-                  Open property
+                  Call contact
                 </a>
               ) : null}
 
-              <button
-                type="button"
-                disabled
-                className="inline-flex h-10 cursor-not-allowed items-center justify-center bg-neutral-950 px-4 text-sm font-semibold text-white opacity-50"
+              <a
+                href={`mailto:${viewing.contactEmail}`}
+                className="inline-flex h-10 items-center justify-center border border-neutral-300 bg-white px-4 text-sm font-semibold text-neutral-800 transition hover:border-neutral-400 hover:bg-neutral-50"
               >
-                Save changes
-              </button>
+                Email contact
+              </a>
+
+              {propertyId ? (
+                <Link
+                  href={`/dashboard/properties/${propertyId}`}
+                  className="inline-flex h-10 items-center justify-center bg-neutral-950 px-4 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                >
+                  Open property
+                </Link>
+              ) : null}
             </>
           }
         />
@@ -213,14 +245,22 @@ export default async function ViewingWorkspacePage({
             value={`${viewing.durationMinutes || 60} minutes`}
           />
 
-          <WorkspaceSidebarItem label="Property" value={getRelationshipLabel(viewing.property)} />
+          <WorkspaceSidebarItem label="Property" value={propertyLabel} />
+
+          <WorkspaceSidebarItem label="Assigned agent" value={agentLabel} />
+
+          <WorkspaceSidebarItem label="Contact" value={viewing.contactName} />
+
+          <WorkspaceSidebarItem label="Buyer record" value={buyerLabel} />
+
+          <WorkspaceSidebarItem label="Outcome" value={getOutcomeLabel(viewing.viewingOutcome)} />
 
           <WorkspaceSidebarItem
-            label="Assigned agent"
-            value={getRelationshipLabel(viewing.agent)}
+            label="Follow-up"
+            value={getFollowUpLabel(viewing.followUpRequired)}
           />
 
-          <WorkspaceSidebarItem label="Agency" value={getRelationshipLabel(viewing.agency)} />
+          <WorkspaceSidebarItem label="Agency" value={agencyLabel} />
 
           <WorkspaceSidebarItem label="Created" value={formatDate(viewing.createdAt)} />
 
@@ -268,10 +308,13 @@ export default async function ViewingWorkspacePage({
             Activity history
           </p>
 
-          <h2 className="mt-2 text-xl font-semibold text-neutral-950">Viewing activity</h2>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-neutral-950">
+            Viewing activity
+          </h2>
 
-          <p className="mt-2 text-sm leading-6 text-neutral-500">
-            Every significant change made to this viewing is recorded here.
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
+            Significant changes, status updates and actions associated with this viewing are
+            recorded here.
           </p>
 
           <div className="mt-8">
