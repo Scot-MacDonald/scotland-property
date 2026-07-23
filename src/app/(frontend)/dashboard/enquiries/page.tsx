@@ -2,7 +2,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-
+import Link from 'next/link'
 import { DashboardEnquiryCard } from '@/components/DashboardV2/Cards/DashboardEnquiryCard'
 import { DashboardCollection } from '@/components/DashboardV2/Collection/DashboardCollection'
 import { DashboardHeader } from '@/components/DashboardV2/Layout/DashboardHeader'
@@ -127,12 +127,12 @@ export default async function DashboardV2EnquiriesPage({
           </button>
 
           {(q || status) && (
-            <a
+            <Link
               href="/dashboard/enquiries"
               className="inline-flex min-h-11 items-center justify-center border border-black/10 px-5 text-sm uppercase tracking-[0.16em]"
             >
               Clear
-            </a>
+            </Link>
           )}
         </form>
 

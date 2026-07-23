@@ -17,12 +17,6 @@ export default async function LoginPage() {
   })
 
   if (user?.collection === 'users') {
-    const role = (user as any).role
-
-    if (role === 'super-admin') {
-      redirect('/admin')
-    }
-
     redirect('/dashboard')
   }
 

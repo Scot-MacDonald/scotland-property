@@ -2,6 +2,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { notFound } from 'next/navigation'
 import AgentEditForm from '@/components/AgentEditForm'
+import Link from 'next/link'
 
 type Props = {
   params: Promise<{
@@ -30,9 +31,9 @@ export default async function EditAgentPage({ params }: Props) {
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <div className="mb-8">
-        <a href="/dashboard/agents" className="text-sm text-gray-500 hover:text-black">
+        <Link href="/dashboard/agents" className="text-sm text-gray-500 hover:text-black">
           ← Back to agents
-        </a>
+        </Link>
 
         <h1 className="mt-4 text-3xl font-semibold">Edit agent</h1>
 
