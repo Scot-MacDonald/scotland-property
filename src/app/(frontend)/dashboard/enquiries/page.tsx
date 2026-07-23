@@ -169,7 +169,7 @@ export default async function DashboardV2EnquiriesPage({
 
             <div className="flex gap-2">
               {enquiries.hasPrevPage ? (
-                <a
+                <Link
                   href={createPageHref({
                     query: q,
                     status,
@@ -178,7 +178,7 @@ export default async function DashboardV2EnquiriesPage({
                   className="border border-black/10 px-4 py-2 text-sm hover:border-black"
                 >
                   Previous
-                </a>
+                </Link>
               ) : (
                 <span className="border border-black/10 px-4 py-2 text-sm opacity-40">
                   Previous
@@ -186,7 +186,7 @@ export default async function DashboardV2EnquiriesPage({
               )}
 
               {enquiries.hasNextPage ? (
-                <a
+                <Link
                   href={createPageHref({
                     query: q,
                     status,
@@ -195,7 +195,7 @@ export default async function DashboardV2EnquiriesPage({
                   className="border border-black/10 px-4 py-2 text-sm hover:border-black"
                 >
                   Next
-                </a>
+                </Link>
               ) : (
                 <span className="border border-black/10 px-4 py-2 text-sm opacity-40">Next</span>
               )}
