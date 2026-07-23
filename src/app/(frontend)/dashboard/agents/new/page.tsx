@@ -1,12 +1,13 @@
 import { AgentCreateForm } from '@/components/AgentCreateForm'
+import Link from 'next/link'
 
 export default function NewAgentPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <div className="mb-8">
-        <a href="/dashboard/agents" className="text-sm text-gray-500 hover:text-black">
+        <Link href="/dashboard/agents" className="text-sm text-gray-500 hover:text-black">
           ← Back to agents
-        </a>
+        </Link>
 
         <h1 className="mt-4 text-3xl font-semibold">Add agent</h1>
 

@@ -2,6 +2,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 
 import { DashboardPropertyCard } from '@/components/DashboardV2/Cards/DashboardPropertyCard'
 import { DashboardCollection } from '@/components/DashboardV2/Collection/DashboardCollection'
@@ -137,12 +138,12 @@ export default async function DashboardV2PropertiesPage({
           </button>
 
           {(q || status) && (
-            <a
+            <Link
               href="/dashboard/properties"
               className="inline-flex min-h-11 items-center justify-center border border-black/10 px-5 text-sm uppercase tracking-[0.16em]"
             >
               Clear
-            </a>
+            </Link>
           )}
         </form>
 
@@ -187,7 +188,7 @@ export default async function DashboardV2PropertiesPage({
 
             <div className="flex gap-2">
               {properties.hasPrevPage ? (
-                <a
+                <Link
                   href={createPageHref({
                     query: q,
                     status,
@@ -196,7 +197,7 @@ export default async function DashboardV2PropertiesPage({
                   className="border border-black/10 px-4 py-2 text-sm hover:border-black"
                 >
                   Previous
-                </a>
+                </Link>
               ) : (
                 <span className="border border-black/10 px-4 py-2 text-sm opacity-40">
                   Previous
@@ -204,7 +205,7 @@ export default async function DashboardV2PropertiesPage({
               )}
 
               {properties.hasNextPage ? (
-                <a
+                <Link
                   href={createPageHref({
                     query: q,
                     status,
@@ -213,7 +214,7 @@ export default async function DashboardV2PropertiesPage({
                   className="border border-black/10 px-4 py-2 text-sm hover:border-black"
                 >
                   Next
-                </a>
+                </Link>
               ) : (
                 <span className="border border-black/10 px-4 py-2 text-sm opacity-40">Next</span>
               )}

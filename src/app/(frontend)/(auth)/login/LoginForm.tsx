@@ -34,11 +34,7 @@ export function LoginForm() {
       }
 
       // Future 2FA challenge goes here before the final redirect.
-      if (result.role === 'super-admin') {
-        router.replace('/admin')
-      } else {
-        router.replace('/dashboard')
-      }
+      router.replace('/dashboard')
 
       router.refresh()
     } catch {
@@ -80,12 +76,12 @@ export function LoginForm() {
             Password
           </label>
 
-          <a
-            href="/forgot-password"
-            className="text-sm text-black/50 underline underline-offset-4 hover:text-black"
+          <label
+            htmlFor="password"
+            className="block text-xs uppercase tracking-[0.2em] text-black/50"
           >
-            Forgot password?
-          </a>
+            Password
+          </label>
         </div>
 
         <input
