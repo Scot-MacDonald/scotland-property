@@ -23,6 +23,8 @@ import { Buyers } from './collections/Buyers'
 import { ImportLogs } from './collections/ImportLogs'
 import { AlertLogs } from './collections/AlertLogs'
 import { ValuationLeads } from './collections/ValuationLeads'
+import { Viewings } from './collections/Viewings'
+import { Activities } from './collections/Activities'
 
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -30,6 +32,7 @@ import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { resendAdapter } from '@payloadcms/email-resend'
+import { UserInvitations } from './components/DashboardV2/Collection/UserInvitations'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -102,6 +105,9 @@ export default buildConfig({
     ImportLogs,
     AlertLogs,
     ValuationLeads,
+    Viewings,
+    Activities,
+    UserInvitations,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

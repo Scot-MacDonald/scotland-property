@@ -86,6 +86,9 @@ export interface Config {
     'import-logs': ImportLog;
     'alert-logs': AlertLog;
     'valuation-leads': ValuationLead;
+    viewings: Viewing;
+    activities: Activity;
+    'user-invitations': UserInvitation;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-kv': PayloadKv;
@@ -119,6 +122,9 @@ export interface Config {
     'import-logs': ImportLogsSelect<false> | ImportLogsSelect<true>;
     'alert-logs': AlertLogsSelect<false> | AlertLogsSelect<true>;
     'valuation-leads': ValuationLeadsSelect<false> | ValuationLeadsSelect<true>;
+    viewings: ViewingsSelect<false> | ViewingsSelect<true>;
+    activities: ActivitiesSelect<false> | ActivitiesSelect<true>;
+    'user-invitations': UserInvitationsSelect<false> | UserInvitationsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -461,8 +467,8 @@ export interface Category {
  */
 export interface User {
   id: string;
-  name?: string | null;
-  role: 'super-admin' | 'agency-admin' | 'agent';
+  name: string;
+  role: 'super-admin' | 'agency-owner' | 'agency-staff';
   agency?: (string | null) | Agency;
   updatedAt: string;
   createdAt: string;
@@ -996,6 +1002,30 @@ export interface Property {
   longitude?: number | null;
   virtualTour?: string | null;
   youtubeVideo?: string | null;
+  /**
+   * Optional promotional headline used in marketing campaigns.
+   */
+  marketingHeadline?: string | null;
+  /**
+   * Search engine title. Aim for 50–60 characters.
+   */
+  seoTitle?: string | null;
+  /**
+   * Search engine description. Aim for 140–160 characters.
+   */
+  seoDescription?: string | null;
+  /**
+   * Optional image used when sharing this property on social media.
+   */
+  socialImage?: (string | null) | Media;
+  /**
+   * Downloadable property brochure PDF.
+   */
+  brochure?: (string | null) | Media;
+  publishOnWebsite?: boolean | null;
+  publishToJamesEdition?: boolean | null;
+  publishToRightmove?: boolean | null;
+  publishToZoopla?: boolean | null;
   region: string | Region;
   town: string | Town;
   propertyType?: (string | null) | PropertyType;
@@ -1058,7 +1088,19 @@ export interface Enquiry {
 export interface Buyer {
   id: string;
   name?: string | null;
+  /**
+   * Agency responsible for managing this buyer.
+   */
+  agency?: (string | null) | Agency;
+  /**
+   * Updated automatically whenever the buyer uses the platform.
+   */
+  lastActiveAt?: string | null;
   savedProperties?: (string | Property)[] | null;
+  /**
+   * Property enquiries submitted by this buyer.
+   */
+  propertyEnquiries?: (string | Enquiry)[] | null;
   savedSearches?:
     | {
         label: string;
@@ -1158,6 +1200,95 @@ export interface ValuationLead {
    * Optional agency assigned to this valuation lead.
    */
   assignedAgency?: (string | null) | Agency;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "viewings".
+ */
+export interface Viewing {
+  id: string;
+  dateTime: string;
+  durationMinutes: number;
+  status: 'requested' | 'confirmed' | 'completed' | 'cancelled' | 'no-show';
+  property: string | Property;
+  agent?: (string | null) | Agent;
+  agency: string | Agency;
+  buyer?: (string | null) | Buyer;
+  enquiry?: (string | null) | Enquiry;
+  contactName: string;
+  contactEmail: string;
+  contactPhone?: string | null;
+  internalNotes?: string | null;
+  /**
+   * Overall viewer interest from 1 to 5.
+   */
+  viewerRating?: number | null;
+  viewingOutcome?:
+    | ('not-recorded' | 'interested' | 'second-viewing' | 'considering-offer' | 'offer-expected' | 'not-interested')
+    | null;
+  followUpRequired?: boolean | null;
+  feedback?: string | null;
+  vendorFeedback?: string | null;
+  followUpNotes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activities".
+ */
+export interface Activity {
+  id: string;
+  /**
+   * Machine-readable event type, for example viewing-status-changed.
+   */
+  type: string;
+  title: string;
+  description?: string | null;
+  severity: 'info' | 'success' | 'warning' | 'error';
+  entityType: 'property' | 'enquiry' | 'lead' | 'viewing' | 'offer' | 'buyer' | 'agent' | 'agency';
+  /**
+   * ID of the record associated with this activity.
+   */
+  entityId: string;
+  agency: string | Agency;
+  /**
+   * The dashboard user who caused the activity.
+   */
+  user?: (string | null) | User;
+  /**
+   * Structured information used by timelines, reports and analytics.
+   */
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-invitations".
+ */
+export interface UserInvitation {
+  id: string;
+  name: string;
+  email: string;
+  agency: string | Agency;
+  role: 'agency-owner' | 'agency-staff';
+  status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+  token: string;
+  expiresAt: string;
+  acceptedAt?: string | null;
+  acceptedBy?: (string | null) | User;
+  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -1365,6 +1496,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'valuation-leads';
         value: string | ValuationLead;
+      } | null)
+    | ({
+        relationTo: 'viewings';
+        value: string | Viewing;
+      } | null)
+    | ({
+        relationTo: 'activities';
+        value: string | Activity;
+      } | null)
+    | ({
+        relationTo: 'user-invitations';
+        value: string | UserInvitation;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1867,6 +2010,15 @@ export interface PropertiesSelect<T extends boolean = true> {
   longitude?: T;
   virtualTour?: T;
   youtubeVideo?: T;
+  marketingHeadline?: T;
+  seoTitle?: T;
+  seoDescription?: T;
+  socialImage?: T;
+  brochure?: T;
+  publishOnWebsite?: T;
+  publishToJamesEdition?: T;
+  publishToRightmove?: T;
+  publishToZoopla?: T;
   region?: T;
   town?: T;
   propertyType?: T;
@@ -1910,7 +2062,10 @@ export interface EnquiriesSelect<T extends boolean = true> {
  */
 export interface BuyersSelect<T extends boolean = true> {
   name?: T;
+  agency?: T;
+  lastActiveAt?: T;
   savedProperties?: T;
+  propertyEnquiries?: T;
   savedSearches?:
     | T
     | {
@@ -1990,6 +2145,67 @@ export interface ValuationLeadsSelect<T extends boolean = true> {
   followUpCompleted?: T;
   source?: T;
   assignedAgency?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "viewings_select".
+ */
+export interface ViewingsSelect<T extends boolean = true> {
+  dateTime?: T;
+  durationMinutes?: T;
+  status?: T;
+  property?: T;
+  agent?: T;
+  agency?: T;
+  buyer?: T;
+  enquiry?: T;
+  contactName?: T;
+  contactEmail?: T;
+  contactPhone?: T;
+  internalNotes?: T;
+  viewerRating?: T;
+  viewingOutcome?: T;
+  followUpRequired?: T;
+  feedback?: T;
+  vendorFeedback?: T;
+  followUpNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activities_select".
+ */
+export interface ActivitiesSelect<T extends boolean = true> {
+  type?: T;
+  title?: T;
+  description?: T;
+  severity?: T;
+  entityType?: T;
+  entityId?: T;
+  agency?: T;
+  user?: T;
+  metadata?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-invitations_select".
+ */
+export interface UserInvitationsSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  agency?: T;
+  role?: T;
+  status?: T;
+  token?: T;
+  expiresAt?: T;
+  acceptedAt?: T;
+  acceptedBy?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }

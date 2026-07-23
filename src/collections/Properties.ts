@@ -55,7 +55,10 @@ async function enforceListingLimit({ data, req, operation }: any) {
   })
 
   if (!canAgencyUsePlatform(agency)) {
-    throw new APIError(getAgencySubscriptionBlockReason(agency), 403)
+    throw new APIError(
+      getAgencySubscriptionBlockReason(agency) || 'Your subscription does not allow new listings.',
+      403,
+    )
   }
 
   const listingLimit = getListingLimit(agency)
@@ -201,6 +204,65 @@ export const Properties: CollectionConfig = {
     {
       name: 'youtubeVideo',
       type: 'text',
+    },
+    {
+      name: 'marketingHeadline',
+      type: 'text',
+      admin: {
+        description: 'Optional promotional headline used in marketing campaigns.',
+      },
+    },
+    {
+      name: 'seoTitle',
+      type: 'text',
+      maxLength: 60,
+      admin: {
+        description: 'Search engine title. Aim for 50–60 characters.',
+      },
+    },
+    {
+      name: 'seoDescription',
+      type: 'textarea',
+      maxLength: 160,
+      admin: {
+        description: 'Search engine description. Aim for 140–160 characters.',
+      },
+    },
+    {
+      name: 'socialImage',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description: 'Optional image used when sharing this property on social media.',
+      },
+    },
+    {
+      name: 'brochure',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description: 'Downloadable property brochure PDF.',
+      },
+    },
+    {
+      name: 'publishOnWebsite',
+      type: 'checkbox',
+      defaultValue: true,
+    },
+    {
+      name: 'publishToJamesEdition',
+      type: 'checkbox',
+      defaultValue: false,
+    },
+    {
+      name: 'publishToRightmove',
+      type: 'checkbox',
+      defaultValue: false,
+    },
+    {
+      name: 'publishToZoopla',
+      type: 'checkbox',
+      defaultValue: false,
     },
     {
       name: 'region',

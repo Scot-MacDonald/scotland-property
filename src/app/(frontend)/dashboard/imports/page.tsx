@@ -1,5 +1,5 @@
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -37,14 +37,14 @@ export default async function ImportsPage() {
     agencyName = agency?.name || null
   }
 
-  const where =
+  const where: Where | undefined =
     !isSuperAdmin && agencyName
       ? {
           agencyName: {
             equals: agencyName,
           },
         }
-      : {}
+      : undefined
 
   const importLogs = await payload.find({
     collection: 'import-logs',

@@ -71,7 +71,7 @@ export async function POST(req: Request) {
         name,
         email,
         password,
-        role: 'agency-admin',
+        role: 'agency-owner',
         agency: agency.id,
       },
       overrideAccess: true,

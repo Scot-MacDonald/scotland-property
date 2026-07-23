@@ -1,0 +1,6 @@
+export { DocumentsTab } from './DocumentsTab'
+export { HistoryTab } from './HistoryTab'
+export { LocationTab } from './LocationTab'
+export { MarketingTab } from './MarketingTab'
+export { MediaTab } from './MediaTab'
+export { PricingTab } from './PricingTab'

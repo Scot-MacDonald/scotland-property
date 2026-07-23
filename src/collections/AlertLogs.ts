@@ -1,5 +1,16 @@
 import type { CollectionConfig } from 'payload'
 
+const isSuperAdmin = (user: unknown) => {
+  return (
+    typeof user === 'object' &&
+    user !== null &&
+    'collection' in user &&
+    user.collection === 'users' &&
+    'role' in user &&
+    user.role === 'super-admin'
+  )
+}
+
 export const AlertLogs: CollectionConfig = {
   slug: 'alert-logs',
 
@@ -7,14 +18,14 @@ export const AlertLogs: CollectionConfig = {
     useAsTitle: 'buyerEmail',
     group: 'Buyer Activity',
     defaultColumns: ['buyerEmail', 'propertyTitle', 'savedSearchLabel', 'sentAt'],
-    hidden: ({ user }) => user?.role !== 'super-admin',
+    hidden: ({ user }) => !isSuperAdmin(user),
   },
 
   access: {
-    read: ({ req }) => req.user?.role === 'super-admin',
+    read: ({ req }) => isSuperAdmin(req.user),
     create: () => true,
     update: () => false,
-    delete: ({ req }) => req.user?.role === 'super-admin',
+    delete: ({ req }) => isSuperAdmin(req.user),
   },
 
   fields: [

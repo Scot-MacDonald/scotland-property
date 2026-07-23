@@ -3,6 +3,13 @@ import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+import { createPropertyActivities } from '@/lib/activity/createPropertyActivities'
+import { getChangedFields } from '@/lib/activity/getChangedFields'
+import type { Property } from '@/payload-types'
+
+type Payload = Awaited<ReturnType<typeof getPayload>>
+type PropertyStatus = NonNullable<Property['status']>
+
 function createSlug(value: string) {
   return value
     .toLowerCase()
@@ -18,22 +25,58 @@ function optionalString(value: FormDataEntryValue | null) {
 function optionalNumber(value: FormDataEntryValue | null) {
   const stringValue = String(value || '').trim()
   if (!stringValue) return undefined
-  return Number(stringValue)
+
+  const numberValue = Number(stringValue)
+  return Number.isFinite(numberValue) ? numberValue : undefined
 }
 
-async function uploadImage(payload: any, file: FormDataEntryValue | null, alt: string) {
+function optionalBoolean(value: FormDataEntryValue | null) {
+  if (value === null) return undefined
+
+  const stringValue = String(value).trim().toLowerCase()
+  if (stringValue === 'true') return true
+  if (stringValue === 'false') return false
+
+  return undefined
+}
+
+function getPropertyStatus(value: FormDataEntryValue | null): PropertyStatus | undefined {
+  if (value === null) return undefined
+
+  const status = String(value).trim()
+
+  if (status === 'for-sale' || status === 'reserved' || status === 'sold') {
+    return status
+  }
+
+  return undefined
+}
+
+function getRelationshipId(value: unknown) {
+  if (!value) return null
+  if (typeof value === 'string') return value
+
+  if (typeof value === 'object' && 'id' in value && typeof value.id === 'string') {
+    return value.id
+  }
+
+  return null
+}
+
+async function uploadFile(payload: Payload, file: FormDataEntryValue | null, alt: string) {
   if (!(file instanceof File) || file.size === 0) return undefined
 
   const buffer = Buffer.from(await file.arrayBuffer())
 
   const uploaded = await payload.create({
     collection: 'media',
+    overrideAccess: true,
     data: {
       alt,
     },
     file: {
       data: buffer,
-      mimetype: file.type,
+      mimetype: file.type || 'application/octet-stream',
       name: file.name,
       size: file.size,
     },
@@ -42,9 +85,25 @@ async function uploadImage(payload: any, file: FormDataEntryValue | null, alt: s
   return uploaded.id
 }
 
+async function uploadFiles(payload: Payload, files: FormDataEntryValue[], alt: string) {
+  const ids: string[] = []
+
+  for (const file of files) {
+    const uploadedId = await uploadFile(payload, file, alt)
+
+    if (uploadedId) {
+      ids.push(uploadedId)
+    }
+  }
+
+  return ids
+}
+
 export async function POST(req: Request) {
   try {
-    const payload = await getPayload({ config: configPromise })
+    const payload = await getPayload({
+      config: configPromise,
+    })
 
     const { user } = await payload.auth({
       headers: await headers(),
@@ -55,16 +114,10 @@ export async function POST(req: Request) {
     }
 
     const formData = await req.formData()
-
-    const id = String(formData.get('id') || '')
-    const title = String(formData.get('title') || '').trim()
+    const id = String(formData.get('id') || '').trim()
 
     if (!id) {
       return NextResponse.json({ error: 'Missing property ID.' }, { status: 400 })
-    }
-
-    if (!title) {
-      return NextResponse.json({ error: 'Property title is required.' }, { status: 400 })
     }
 
     const existingProperty = await payload.findByID({
@@ -74,72 +127,235 @@ export async function POST(req: Request) {
       overrideAccess: true,
     })
 
-    const userAsAny = user as any
-    const isSuperAdmin = userAsAny.role === 'super-admin'
-    const agencyId = typeof userAsAny.agency === 'object' ? userAsAny.agency?.id : userAsAny.agency
-
-    const propertyAgencyId =
-      typeof existingProperty.agency === 'object'
-        ? existingProperty.agency?.id
-        : existingProperty.agency
+    const isSuperAdmin = user.role === 'super-admin'
+    const agencyId = getRelationshipId(user.agency)
+    const propertyAgencyId = getRelationshipId(existingProperty.agency)
 
     if (!isSuperAdmin && agencyId !== propertyAgencyId) {
       return NextResponse.json({ error: 'Not authorised.' }, { status: 403 })
     }
 
-    const featuredImageId = await uploadImage(payload, formData.get('featuredImage'), title)
+    const data: Record<string, unknown> = {}
 
-    const galleryFiles = formData.getAll('gallery')
-    const newGalleryIds = []
+    if (formData.has('title')) {
+      const title = String(formData.get('title') || '').trim()
 
-    for (const file of galleryFiles) {
-      const uploadedId = await uploadImage(payload, file, title)
-      if (uploadedId) newGalleryIds.push(uploadedId)
+      if (!title) {
+        return NextResponse.json({ error: 'Property title is required.' }, { status: 400 })
+      }
+
+      data.title = title
+
+      if (!existingProperty.slug) {
+        data.slug = `${createSlug(title)}-${Date.now().toString().slice(-6)}`
+      }
     }
 
-    const existingGallery = Array.isArray(existingProperty.gallery)
-      ? existingProperty.gallery.map((item: any) => (typeof item === 'object' ? item.id : item))
-      : []
+    if (formData.has('reference')) {
+      data.reference = optionalString(formData.get('reference'))
+    }
+
+    if (formData.has('price')) {
+      data.price = optionalNumber(formData.get('price'))
+    }
+
+    if (formData.has('status')) {
+      data.status = getPropertyStatus(formData.get('status'))
+    }
+
+    if (formData.has('excerpt')) {
+      data.excerpt = optionalString(formData.get('excerpt'))
+    }
+
+    if (formData.has('bedrooms')) {
+      data.bedrooms = optionalNumber(formData.get('bedrooms'))
+    }
+
+    if (formData.has('bathrooms')) {
+      data.bathrooms = optionalNumber(formData.get('bathrooms'))
+    }
+
+    if (formData.has('internalArea')) {
+      data.internalArea = optionalNumber(formData.get('internalArea'))
+    }
+
+    if (formData.has('landArea')) {
+      data.landArea = optionalNumber(formData.get('landArea'))
+    }
+
+    if (formData.has('yearBuilt')) {
+      data.yearBuilt = optionalNumber(formData.get('yearBuilt'))
+    }
+
+    if (formData.has('energyRating')) {
+      data.energyRating = optionalString(formData.get('energyRating'))
+    }
+
+    if (formData.has('marketingHeadline')) {
+      data.marketingHeadline = optionalString(formData.get('marketingHeadline'))
+    }
+
+    if (formData.has('seoTitle')) {
+      data.seoTitle = optionalString(formData.get('seoTitle'))
+    }
+
+    if (formData.has('seoDescription')) {
+      data.seoDescription = optionalString(formData.get('seoDescription'))
+    }
+
+    if (formData.has('latitude')) {
+      data.latitude = optionalNumber(formData.get('latitude'))
+    }
+
+    if (formData.has('longitude')) {
+      data.longitude = optionalNumber(formData.get('longitude'))
+    }
+
+    if (formData.has('virtualTour')) {
+      data.virtualTour = optionalString(formData.get('virtualTour'))
+    }
+
+    if (formData.has('youtubeVideo')) {
+      data.youtubeVideo = optionalString(formData.get('youtubeVideo'))
+    }
+
+    if (formData.has('region')) {
+      data.region = optionalString(formData.get('region'))
+    }
+
+    if (formData.has('town')) {
+      data.town = optionalString(formData.get('town'))
+    }
+
+    if (formData.has('propertyType')) {
+      data.propertyType = optionalString(formData.get('propertyType'))
+    }
+
+    if (formData.has('agent')) {
+      data.agent = optionalString(formData.get('agent'))
+    }
+
+    if (formData.has('featured')) {
+      data.featured = optionalBoolean(formData.get('featured'))
+    }
+
+    if (formData.has('amenities')) {
+      data.amenities = formData.getAll('amenities').map(String).filter(Boolean)
+    }
+
+    if (formData.has('publishOnWebsite')) {
+      data.publishOnWebsite = optionalBoolean(formData.get('publishOnWebsite'))
+    }
+
+    if (formData.has('publishToJamesEdition')) {
+      data.publishToJamesEdition = optionalBoolean(formData.get('publishToJamesEdition'))
+    }
+
+    if (formData.has('publishToRightmove')) {
+      data.publishToRightmove = optionalBoolean(formData.get('publishToRightmove'))
+    }
+
+    if (formData.has('publishToZoopla')) {
+      data.publishToZoopla = optionalBoolean(formData.get('publishToZoopla'))
+    }
+
+    if (formData.has('featuredImageManaged')) {
+      const featuredImageId = optionalString(formData.get('featuredImageId'))
+      const uploadedFeaturedImageId = await uploadFile(
+        payload,
+        formData.get('featuredImage'),
+        existingProperty.title,
+      )
+
+      data.featuredImage = uploadedFeaturedImageId || featuredImageId || null
+    }
+
+    if (formData.has('socialImageManaged')) {
+      const socialImageId = optionalString(formData.get('socialImageId'))
+      const uploadedSocialImageId = await uploadFile(
+        payload,
+        formData.get('socialImage'),
+        `${existingProperty.title} social sharing image`,
+      )
+
+      data.socialImage = uploadedSocialImageId || socialImageId || null
+    }
+
+    if (formData.has('brochureManaged')) {
+      const brochureId = optionalString(formData.get('brochureId'))
+      const uploadedBrochureId = await uploadFile(
+        payload,
+        formData.get('brochure'),
+        `${existingProperty.title} brochure`,
+      )
+
+      data.brochure = uploadedBrochureId || brochureId || null
+    }
+
+    if (formData.has('galleryManaged')) {
+      const retainedGalleryIds = formData.getAll('galleryIds').map(String).filter(Boolean)
+      const uploadedGalleryIds = await uploadFiles(
+        payload,
+        formData.getAll('galleryFiles'),
+        existingProperty.title,
+      )
+
+      data.gallery = [...retainedGalleryIds, ...uploadedGalleryIds]
+    }
+
+    if (formData.has('floorPlansManaged')) {
+      const retainedFloorPlanIds = formData.getAll('floorPlanIds').map(String).filter(Boolean)
+      const uploadedFloorPlanIds = await uploadFiles(
+        payload,
+        formData.getAll('floorPlanFiles'),
+        `${existingProperty.title} floorplan`,
+      )
+
+      data.floorPlans = [...retainedFloorPlanIds, ...uploadedFloorPlanIds]
+    }
+
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: 'No property changes were submitted.' }, { status: 400 })
+    }
 
     await payload.update({
       collection: 'properties',
       id,
+      depth: 0,
       overrideAccess: true,
-      data: {
-        title,
-        slug: existingProperty.slug || `${createSlug(title)}-${Date.now().toString().slice(-6)}`,
-        price: optionalNumber(formData.get('price')),
-        status: optionalString(formData.get('status')) || 'for-sale',
-        excerpt: optionalString(formData.get('excerpt')),
-        bedrooms: optionalNumber(formData.get('bedrooms')),
-        bathrooms: optionalNumber(formData.get('bathrooms')),
-        internalArea: optionalNumber(formData.get('internalArea')),
-        landArea: optionalString(formData.get('landArea')),
-        latitude: optionalNumber(formData.get('latitude')),
-        longitude: optionalNumber(formData.get('longitude')),
-        region: optionalString(formData.get('region')),
-        town: optionalString(formData.get('town')),
-        propertyType: optionalString(formData.get('propertyType')),
-        agent: optionalString(formData.get('agent')),
-        amenities: formData.getAll('amenities').map(String).filter(Boolean),
-        featuredImage:
-          featuredImageId ||
-          (typeof existingProperty.featuredImage === 'object'
-            ? existingProperty.featuredImage?.id
-            : existingProperty.featuredImage),
-        gallery: [...existingGallery, ...newGalleryIds],
-      },
+      data,
     })
 
-    return NextResponse.json({ ok: true })
-  } catch (error: any) {
+    const updatedProperty = await payload.findByID({
+      collection: 'properties',
+      id,
+      depth: 1,
+      overrideAccess: true,
+    })
+
+    const activityAgencyId = getRelationshipId(updatedProperty.agency) || propertyAgencyId
+
+    if (activityAgencyId) {
+      const changedFields = getChangedFields(existingProperty, updatedProperty, Object.keys(data))
+
+      await createPropertyActivities({
+        previousProperty: existingProperty,
+        property: updatedProperty,
+        changedFields,
+        agencyId: activityAgencyId,
+        userId: user.id,
+      })
+    }
+
+    return NextResponse.json({
+      ok: true,
+      property: updatedProperty,
+    })
+  } catch (error: unknown) {
     console.error('Update property error:', error)
 
-    return NextResponse.json(
-      {
-        error: error?.message || 'Could not update property.',
-      },
-      { status: 500 },
-    )
+    const message = error instanceof Error ? error.message : 'Could not update property.'
+
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

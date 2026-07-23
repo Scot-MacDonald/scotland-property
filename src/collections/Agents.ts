@@ -1,20 +1,42 @@
 import type { CollectionConfig } from 'payload'
 import { authenticated } from '../access/authenticated'
 
-const isSuperAdmin = ({ req }: any) => req.user?.role === 'super-admin'
+const isPayloadUser = (
+  user: unknown,
+): user is {
+  collection: 'users'
+  role?: string | null
+  agency?: string | { id: string } | null
+} => {
+  return (
+    typeof user === 'object' && user !== null && 'collection' in user && user.collection === 'users'
+  )
+}
+
+const isSuperAdmin = ({ req }: any) => {
+  return isPayloadUser(req.user) && req.user.role === 'super-admin'
+}
 
 const agencyOnly = ({ req }: any) => {
-  if (req.user?.role === 'super-admin') return true
+  const user = req.user
 
-  if (req.user?.agency) {
-    return {
-      agency: {
-        equals: typeof req.user.agency === 'object' ? req.user.agency.id : req.user.agency,
-      },
-    }
+  if (!isPayloadUser(user)) {
+    return false
   }
 
-  return false
+  if (user.role === 'super-admin') {
+    return true
+  }
+
+  if (!user.agency) {
+    return false
+  }
+
+  return {
+    agency: {
+      equals: typeof user.agency === 'object' ? user.agency.id : user.agency,
+    },
+  }
 }
 
 export const Agents: CollectionConfig = {
@@ -61,13 +83,20 @@ export const Agents: CollectionConfig = {
       relationTo: 'agencies',
       required: true,
       defaultValue: ({ user }) => {
-        if (user?.role === 'super-admin') return undefined
-        if (!user?.agency) return undefined
+        if (!isPayloadUser(user)) {
+          return undefined
+        }
+
+        if (user.role === 'super-admin' || !user.agency) {
+          return undefined
+        }
 
         return typeof user.agency === 'object' ? user.agency.id : user.agency
       },
       admin: {
-        condition: (_, __, { user }) => user?.role === 'super-admin',
+        condition: (_, __, { user }) => {
+          return isPayloadUser(user) && user.role === 'super-admin'
+        },
       },
     },
 
