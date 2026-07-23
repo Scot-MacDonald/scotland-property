@@ -45,6 +45,9 @@ function getEntitySubtitle(entityType: ActivityEntityType) {
     case ActivityEntityTypes.VIEWING:
       return 'Viewing'
 
+    case ActivityEntityTypes.TASK:
+      return 'Task'
+
     case ActivityEntityTypes.ENQUIRY:
       return 'Enquiry'
 
@@ -109,6 +112,7 @@ async function addRelations({
   collection:
     | 'properties'
     | 'viewings'
+    | 'tasks'
     | 'enquiries'
     | 'valuation-leads'
     | 'buyers'
@@ -168,6 +172,14 @@ export async function getActivityRelationMap(
       entityType: ActivityEntityTypes.VIEWING,
       collection: 'viewings',
       entityIds: getUniqueEntityIds(activities, ActivityEntityTypes.VIEWING),
+    }),
+
+    addRelations({
+      payload,
+      relationMap,
+      entityType: ActivityEntityTypes.TASK,
+      collection: 'tasks',
+      entityIds: getUniqueEntityIds(activities, ActivityEntityTypes.TASK),
     }),
 
     addRelations({

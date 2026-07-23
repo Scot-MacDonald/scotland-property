@@ -105,6 +105,10 @@ export const Activities: CollectionConfig = {
           value: 'viewing',
         },
         {
+          label: 'Task',
+          value: 'task',
+        },
+        {
           label: 'Offer',
           value: 'offer',
         },

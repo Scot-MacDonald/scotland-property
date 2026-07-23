@@ -25,6 +25,9 @@ export function getActivityEntityTitle(
     case ActivityEntityTypes.VIEWING:
       return getStringValue(record, ['title', 'reference']) || 'Viewing'
 
+    case ActivityEntityTypes.TASK:
+      return getStringValue(record, ['title']) || 'Task'
+
     case ActivityEntityTypes.ENQUIRY:
       return getStringValue(record, ['name', 'email']) || 'Enquiry'
 

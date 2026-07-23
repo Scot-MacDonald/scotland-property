@@ -3,6 +3,7 @@ export const ActivityEntityTypes = {
   ENQUIRY: 'enquiry',
   LEAD: 'lead',
   VIEWING: 'viewing',
+  TASK: 'task',
   OFFER: 'offer',
   BUYER: 'buyer',
   AGENT: 'agent',

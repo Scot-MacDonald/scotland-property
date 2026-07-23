@@ -25,6 +25,7 @@ import { AlertLogs } from './collections/AlertLogs'
 import { ValuationLeads } from './collections/ValuationLeads'
 import { Viewings } from './collections/Viewings'
 import { Activities } from './collections/Activities'
+import { Tasks } from './collections/Tasks'
 
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -108,6 +109,7 @@ export default buildConfig({
     Viewings,
     Activities,
     UserInvitations,
+    Tasks,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

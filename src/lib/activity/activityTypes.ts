@@ -25,6 +25,15 @@ export const ActivityTypes = {
   VIEWING_COMPLETED: 'viewing-completed',
   VIEWING_CANCELLED: 'viewing-cancelled',
 
+  TASK_CREATED: 'task-created',
+  TASK_UPDATED: 'task-updated',
+  TASK_STATUS_CHANGED: 'task-status-changed',
+  TASK_ASSIGNED: 'task-assigned',
+  TASK_PRIORITY_CHANGED: 'task-priority-changed',
+  TASK_DUE_DATE_CHANGED: 'task-due-date-changed',
+  TASK_CHECKLIST_UPDATED: 'task-checklist-updated',
+  TASK_NOTES_UPDATED: 'task-notes-updated',
+
   OFFER_CREATED: 'offer-created',
   OFFER_UPDATED: 'offer-updated',
   OFFER_ACCEPTED: 'offer-accepted',

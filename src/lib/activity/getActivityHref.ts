@@ -13,6 +13,9 @@ export function getActivityHref({ entityType, entityId }: GetActivityHrefArgs): 
     case ActivityEntityTypes.VIEWING:
       return `/dashboard/viewings/${entityId}`
 
+    case ActivityEntityTypes.TASK:
+      return `/dashboard/tasks/${entityId}`
+
     case ActivityEntityTypes.ENQUIRY:
       return `/dashboard/enquiries/${entityId}`
 

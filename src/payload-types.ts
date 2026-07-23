@@ -89,6 +89,7 @@ export interface Config {
     viewings: Viewing;
     activities: Activity;
     'user-invitations': UserInvitation;
+    tasks: Task;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-kv': PayloadKv;
@@ -125,6 +126,7 @@ export interface Config {
     viewings: ViewingsSelect<false> | ViewingsSelect<true>;
     activities: ActivitiesSelect<false> | ActivitiesSelect<true>;
     'user-invitations': UserInvitationsSelect<false> | UserInvitationsSelect<true>;
+    tasks: TasksSelect<false> | TasksSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1248,7 +1250,7 @@ export interface Activity {
   title: string;
   description?: string | null;
   severity: 'info' | 'success' | 'warning' | 'error';
-  entityType: 'property' | 'enquiry' | 'lead' | 'viewing' | 'offer' | 'buyer' | 'agent' | 'agency';
+  entityType: 'property' | 'enquiry' | 'lead' | 'viewing' | 'task' | 'offer' | 'buyer' | 'agent' | 'agency';
   /**
    * ID of the record associated with this activity.
    */
@@ -1289,6 +1291,38 @@ export interface UserInvitation {
   acceptedAt?: string | null;
   acceptedBy?: (string | null) | User;
   createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tasks".
+ */
+export interface Task {
+  id: string;
+  title: string;
+  description?: string | null;
+  status: 'todo' | 'in-progress' | 'waiting' | 'completed' | 'cancelled';
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  dueAt?: string | null;
+  reminderAt?: string | null;
+  completedAt?: string | null;
+  agency?: (string | null) | Agency;
+  assignedAgent?: (string | null) | Agent;
+  createdBy?: (string | null) | User;
+  property?: (string | null) | Property;
+  lead?: (string | null) | ValuationLead;
+  enquiry?: (string | null) | Enquiry;
+  viewing?: (string | null) | Viewing;
+  buyer?: (string | null) | Buyer;
+  checklist?:
+    | {
+        label: string;
+        completed?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  internalNotes?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1508,6 +1542,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'user-invitations';
         value: string | UserInvitation;
+      } | null)
+    | ({
+        relationTo: 'tasks';
+        value: string | Task;
       } | null)
     | ({
         relationTo: 'forms';
@@ -2206,6 +2244,37 @@ export interface UserInvitationsSelect<T extends boolean = true> {
   acceptedAt?: T;
   acceptedBy?: T;
   createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tasks_select".
+ */
+export interface TasksSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  status?: T;
+  priority?: T;
+  dueAt?: T;
+  reminderAt?: T;
+  completedAt?: T;
+  agency?: T;
+  assignedAgent?: T;
+  createdBy?: T;
+  property?: T;
+  lead?: T;
+  enquiry?: T;
+  viewing?: T;
+  buyer?: T;
+  checklist?:
+    | T
+    | {
+        label?: T;
+        completed?: T;
+        id?: T;
+      };
+  internalNotes?: T;
   updatedAt?: T;
   createdAt?: T;
 }
