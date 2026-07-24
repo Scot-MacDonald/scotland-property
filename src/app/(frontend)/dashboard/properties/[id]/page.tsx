@@ -6,6 +6,7 @@ import {
   LocationTab,
   MarketingTab,
   MediaTab,
+  OffersTab,
   PricingTab,
   PropertyOverviewForm,
 } from '@/components/DashboardV2/Properties'
@@ -41,6 +42,7 @@ const propertyTabIds = [
   'media',
   'pricing',
   'marketing',
+  'offers',
   'documents',
   'history',
 ] as const
@@ -116,6 +118,11 @@ export default async function PropertyWorkspacePage({
       href: `/dashboard/properties/${id}?tab=marketing`,
     },
     {
+      id: 'offers',
+      label: 'Offers',
+      href: `/dashboard/properties/${id}?tab=offers`,
+    },
+    {
       id: 'documents',
       label: 'Documents',
       href: `/dashboard/properties/${id}?tab=documents`,
@@ -152,46 +159,62 @@ export default async function PropertyWorkspacePage({
     isSuperAdmin,
   })
 
-  const [regionsResult, townsResult, propertyTypesResult, agentsResult] = await Promise.all([
-    payload.find({
-      collection: 'regions',
-      depth: 0,
-      limit: 200,
-      sort: 'name',
-      overrideAccess: true,
-    }),
+  const [regionsResult, townsResult, propertyTypesResult, agentsResult, offersResult] =
+    await Promise.all([
+      payload.find({
+        collection: 'regions',
+        depth: 0,
+        limit: 200,
+        sort: 'name',
+        overrideAccess: true,
+      }),
 
-    payload.find({
-      collection: 'towns',
-      depth: 0,
-      limit: 500,
-      sort: 'name',
-      overrideAccess: true,
-    }),
+      payload.find({
+        collection: 'towns',
+        depth: 0,
+        limit: 500,
+        sort: 'name',
+        overrideAccess: true,
+      }),
 
-    payload.find({
-      collection: 'property-types',
-      depth: 0,
-      limit: 200,
-      sort: 'name',
-      overrideAccess: true,
-    }),
+      payload.find({
+        collection: 'property-types',
+        depth: 0,
+        limit: 200,
+        sort: 'name',
+        overrideAccess: true,
+      }),
 
-    payload.find({
-      collection: 'agents',
-      depth: 0,
-      limit: 200,
-      sort: 'name',
-      overrideAccess: true,
-      where: isSuperAdmin
-        ? undefined
-        : {
-            agency: {
-              equals: agencyId,
+      payload.find({
+        collection: 'agents',
+        depth: 0,
+        limit: 200,
+        sort: 'name',
+        overrideAccess: true,
+        where: isSuperAdmin
+          ? undefined
+          : {
+              agency: {
+                equals: agencyId,
+              },
             },
-          },
-    }),
-  ])
+      }),
+
+      activeTab === 'offers'
+        ? payload.find({
+            collection: 'offers',
+            depth: 2,
+            limit: 100,
+            sort: '-createdAt',
+            overrideAccess: true,
+            where: {
+              property: {
+                equals: property.id,
+              },
+            },
+          })
+        : Promise.resolve(null),
+    ])
 
   const regions = regionsResult.docs.map((region) => ({
     value: String(region.id),
@@ -212,6 +235,21 @@ export default async function PropertyWorkspacePage({
     value: String(agent.id),
     label: agent.name,
   }))
+
+  const offers =
+    offersResult?.docs.map((offer) => ({
+      id: String(offer.id),
+      reference: offer.reference,
+      amount: offer.amount,
+      currency: offer.currency,
+      status: offer.status,
+      confidence: offer.confidence,
+      submittedAt: offer.submittedAt,
+      expiresAt: offer.expiresAt,
+      createdAt: offer.createdAt,
+      buyerName: getRelationshipLabel(offer.buyer),
+      agentName: getRelationshipLabel(offer.agent),
+    })) || []
 
   return (
     <WorkspaceLayout
@@ -239,6 +277,7 @@ export default async function PropertyWorkspacePage({
               >
                 New offer
               </a>
+
               <a
                 href={`/property/${property.slug}`}
                 target="_blank"
@@ -324,6 +363,15 @@ export default async function PropertyWorkspacePage({
       ) : null}
 
       {activeTab === 'marketing' ? <MarketingTab property={property} /> : null}
+
+      {activeTab === 'offers' ? (
+        <OffersTab
+          propertyId={String(property.id)}
+          propertyTitle={property.title}
+          askingPrice={property.price}
+          offers={offers}
+        />
+      ) : null}
 
       {activeTab === 'documents' ? <DocumentsTab /> : null}
 
