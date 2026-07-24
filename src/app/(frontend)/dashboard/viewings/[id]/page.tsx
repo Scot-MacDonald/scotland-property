@@ -5,9 +5,12 @@ import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 
 import { Timeline } from '@/components/DashboardV2/Timeline'
-import { ViewingFeedbackForm } from '@/components/DashboardV2/Viewings/ViewingFeedbackForm'
-import { ViewingNotesForm } from '@/components/DashboardV2/Viewings/ViewingNotesForm'
-import { ViewingOverviewForm } from '@/components/DashboardV2/Viewings/ViewingOverviewForm'
+import {
+  ViewingFeedbackForm,
+  ViewingNotesForm,
+  ViewingOverviewForm,
+} from '@/components/DashboardV2/Viewings'
+
 import {
   WorkspaceHeader,
   WorkspaceLayout,

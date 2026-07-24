@@ -26,6 +26,7 @@ import { ValuationLeads } from './collections/ValuationLeads'
 import { Viewings } from './collections/Viewings'
 import { Activities } from './collections/Activities'
 import { Tasks } from './collections/Tasks'
+import { Offers } from './collections/Offers'
 
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -110,6 +111,7 @@ export default buildConfig({
     Activities,
     UserInvitations,
     Tasks,
+    Offers,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

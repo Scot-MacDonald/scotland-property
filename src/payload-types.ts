@@ -90,6 +90,7 @@ export interface Config {
     activities: Activity;
     'user-invitations': UserInvitation;
     tasks: Task;
+    offers: Offer;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-kv': PayloadKv;
@@ -127,6 +128,7 @@ export interface Config {
     activities: ActivitiesSelect<false> | ActivitiesSelect<true>;
     'user-invitations': UserInvitationsSelect<false> | UserInvitationsSelect<true>;
     tasks: TasksSelect<false> | TasksSelect<true>;
+    offers: OffersSelect<false> | OffersSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1328,6 +1330,38 @@ export interface Task {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "offers".
+ */
+export interface Offer {
+  id: string;
+  reference: string;
+  status: 'draft' | 'submitted' | 'negotiating' | 'accepted' | 'rejected' | 'withdrawn';
+  confidence: 'low' | 'medium' | 'high';
+  property: string | Property;
+  buyer: string | Buyer;
+  agency: string | Agency;
+  agent?: (string | null) | Agent;
+  viewing?: (string | null) | Viewing;
+  enquiry?: (string | null) | Enquiry;
+  amount: number;
+  currency: 'GBP';
+  submittedAt?: string | null;
+  expiresAt?: string | null;
+  /**
+   * Conditions attached to the offer, such as survey, finance or settlement requirements.
+   */
+  conditions?: string | null;
+  vendorResponse?: string | null;
+  buyerResponse?: string | null;
+  /**
+   * Private notes visible only to the agency.
+   */
+  internalNotes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
@@ -1546,6 +1580,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tasks';
         value: string | Task;
+      } | null)
+    | ({
+        relationTo: 'offers';
+        value: string | Offer;
       } | null)
     | ({
         relationTo: 'forms';
@@ -2274,6 +2312,31 @@ export interface TasksSelect<T extends boolean = true> {
         completed?: T;
         id?: T;
       };
+  internalNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "offers_select".
+ */
+export interface OffersSelect<T extends boolean = true> {
+  reference?: T;
+  status?: T;
+  confidence?: T;
+  property?: T;
+  buyer?: T;
+  agency?: T;
+  agent?: T;
+  viewing?: T;
+  enquiry?: T;
+  amount?: T;
+  currency?: T;
+  submittedAt?: T;
+  expiresAt?: T;
+  conditions?: T;
+  vendorResponse?: T;
+  buyerResponse?: T;
   internalNotes?: T;
   updatedAt?: T;
   createdAt?: T;

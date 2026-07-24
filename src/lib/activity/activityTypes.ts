@@ -36,8 +36,13 @@ export const ActivityTypes = {
 
   OFFER_CREATED: 'offer-created',
   OFFER_UPDATED: 'offer-updated',
+  OFFER_STATUS_CHANGED: 'offer-status-changed',
+  OFFER_AMOUNT_CHANGED: 'offer-amount-changed',
+  OFFER_NEGOTIATION_UPDATED: 'offer-negotiation-updated',
+  OFFER_NOTES_UPDATED: 'offer-notes-updated',
   OFFER_ACCEPTED: 'offer-accepted',
   OFFER_REJECTED: 'offer-rejected',
+  OFFER_WITHDRAWN: 'offer-withdrawn',
 
   BUYER_REGISTERED: 'buyer-registered',
 
