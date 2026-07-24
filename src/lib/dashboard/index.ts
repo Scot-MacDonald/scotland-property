@@ -13,6 +13,8 @@ export * from './getDashboardStats'
 export * from './getDashboardEnquiries'
 export * from './getDashboardUsers'
 export * from './getDashboardContext'
+export * from './getDashboardTasks'
+export * from './getWorkspaceContext'
 
 export {
   formatCurrency,

@@ -6,6 +6,7 @@ export type DashboardNavigationCounts = {
   leads?: number
   enquiries?: number
   viewings?: number
+  tasks?: number
 }
 
 type DashboardSidebarProps = {
@@ -21,6 +22,12 @@ export function DashboardSidebar({ counts = {} }: DashboardSidebarProps) {
     {
       label: 'Activity',
       href: '/dashboard/activity',
+    },
+    {
+      label: 'Tasks',
+      href: '/dashboard/tasks',
+      count: counts.tasks,
+      attention: Boolean(counts.tasks),
     },
     {
       label: 'Properties',

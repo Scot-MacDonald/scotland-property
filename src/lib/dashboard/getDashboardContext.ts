@@ -28,6 +28,7 @@ export type DashboardContext = {
     leads: number
     enquiries: number
     viewings: number
+    tasks: number
   }
 
   permissions: {
@@ -100,11 +101,30 @@ export async function getDashboardContext({
 
   const viewingsWhere: Where | undefined = agencyWhere || undefined
 
-  const viewingsResult = await payload.count({
-    collection: 'viewings',
-    where: viewingsWhere,
-    overrideAccess: true,
-  })
+  const tasksWhere: Where = {
+    and: [
+      ...(agencyWhere ? [agencyWhere] : []),
+      {
+        status: {
+          in: ['todo', 'in-progress', 'waiting'],
+        },
+      },
+    ],
+  }
+
+  const [viewingsResult, tasksResult] = await Promise.all([
+    payload.count({
+      collection: 'viewings',
+      where: viewingsWhere,
+      overrideAccess: true,
+    }),
+
+    payload.count({
+      collection: 'tasks',
+      where: tasksWhere,
+      overrideAccess: true,
+    }),
+  ])
 
   return {
     user,
@@ -119,6 +139,7 @@ export async function getDashboardContext({
       leads: stats.newLeads,
       enquiries: stats.newEnquiries,
       viewings: viewingsResult.totalDocs,
+      tasks: tasksResult.totalDocs,
     },
 
     permissions: {

@@ -1,7 +1,4 @@
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
-import { headers } from 'next/headers'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 
 import {
   DocumentsTab,
@@ -20,8 +17,14 @@ import {
   WorkspaceTabs,
   type WorkspaceTab,
 } from '@/components/DashboardV2/Workspace'
-
-import { formatDate, formatLabel, getRelationshipId, getRelationshipLabel } from '@/lib/dashboard'
+import {
+  assertWorkspaceOwnership,
+  formatDate,
+  formatLabel,
+  getRelationshipId,
+  getRelationshipLabel,
+  getWorkspaceContext,
+} from '@/lib/dashboard'
 
 type PropertyWorkspacePageProps = {
   params: Promise<{
@@ -124,26 +127,7 @@ export default async function PropertyWorkspacePage({
     },
   ]
 
-  const payload = await getPayload({
-    config: configPromise,
-  })
-
-  const requestHeaders = await headers()
-
-  const { user } = await payload.auth({
-    headers: requestHeaders,
-  })
-
-  if (!user || user.collection !== 'users') {
-    redirect('/login')
-  }
-
-  const agencyId = getRelationshipId(user.agency)
-  const isSuperAdmin = user.role === 'super-admin'
-
-  if (!isSuperAdmin && !agencyId) {
-    redirect('/dashboard')
-  }
+  const { payload, agencyId, isSuperAdmin } = await getWorkspaceContext()
 
   let property
 
@@ -162,11 +146,11 @@ export default async function PropertyWorkspacePage({
     notFound()
   }
 
-  const propertyAgencyId = getRelationshipId(property.agency)
-
-  if (!isSuperAdmin && propertyAgencyId !== agencyId) {
-    notFound()
-  }
+  assertWorkspaceOwnership({
+    recordAgency: property.agency,
+    agencyId,
+    isSuperAdmin,
+  })
 
   const [regionsResult, townsResult, propertyTypesResult, agentsResult] = await Promise.all([
     payload.find({

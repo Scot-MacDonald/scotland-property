@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { TaskChecklistForm, TaskHistoryTab, TaskNotesForm } from '@/components/DashboardV2/Tasks'
+import { TaskOverviewForm } from '@/components/DashboardV2/Tasks/TaskOverviewForm'
 
 import {
   WorkspaceHeader,
@@ -9,6 +11,7 @@ import {
   WorkspaceTabs,
   type WorkspaceTab,
 } from '@/components/DashboardV2/Workspace'
+
 import {
   assertWorkspaceOwnership,
   formatDate,
@@ -31,6 +34,18 @@ type TaskWorkspacePageProps = {
 const taskTabIds = ['overview', 'checklist', 'notes', 'history'] as const
 
 type TaskTabId = (typeof taskTabIds)[number]
+
+type TaskRelationship =
+  | string
+  | number
+  | {
+      id?: string | number
+      name?: string | null
+      title?: string | null
+      email?: string | null
+    }
+  | null
+  | undefined
 
 function isTaskTabId(value: string): value is TaskTabId {
   return taskTabIds.includes(value as TaskTabId)
@@ -77,18 +92,6 @@ function getPriorityClasses(priority: string | null | undefined) {
   }
 }
 
-type TaskRelationship =
-  | string
-  | number
-  | {
-      id?: string | number
-      name?: string | null
-      title?: string | null
-      email?: string | null
-    }
-  | null
-  | undefined
-
 function getRelatedRecord(task: {
   property?: TaskRelationship
   lead?: TaskRelationship
@@ -132,18 +135,6 @@ function getRelatedRecord(task: {
   }
 
   return null
-}
-
-function DetailRow({ label, value }: { label: string; value: string | number | null | undefined }) {
-  return (
-    <div className="border-b border-neutral-200 py-4 last:border-b-0">
-      <dt className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{label}</dt>
-
-      <dd className="mt-1 text-sm leading-6 text-neutral-900">
-        {value === null || value === undefined || value === '' ? '—' : value}
-      </dd>
-    </div>
-  )
 }
 
 export default async function TaskWorkspacePage({ params, searchParams }: TaskWorkspacePageProps) {
@@ -200,9 +191,29 @@ export default async function TaskWorkspacePage({ params, searchParams }: TaskWo
     isSuperAdmin,
   })
 
+  const agents = await payload.find({
+    collection: 'agents',
+    depth: 0,
+    limit: 100,
+    overrideAccess: true,
+    where: isSuperAdmin
+      ? undefined
+      : {
+          agency: {
+            equals: agencyId,
+          },
+        },
+  })
+
+  const agentOptions = agents.docs.map((agent) => ({
+    id: String(agent.id),
+    name: agent.name,
+  }))
+
   const relatedRecord = getRelatedRecord(task)
 
   const checklist = task.checklist || []
+
   const completedChecklistItems = checklist.filter((item) => item.completed).length
 
   let content
@@ -210,132 +221,42 @@ export default async function TaskWorkspacePage({ params, searchParams }: TaskWo
   switch (activeTab) {
     case 'checklist':
       content = (
-        <WorkspacePanel
-          title="Checklist"
-          description="Track the individual actions required to complete this task."
-        >
-          {checklist.length > 0 ? (
-            <div className="divide-y divide-neutral-200 border border-neutral-200">
-              {checklist.map((item, index) => (
-                <div
-                  key={item.id || `${item.label}-${index}`}
-                  className="flex items-start gap-3 px-4 py-4"
-                >
-                  <span
-                    aria-hidden="true"
-                    className={[
-                      'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border text-xs font-bold',
-                      item.completed
-                        ? 'border-emerald-600 bg-emerald-600 text-white'
-                        : 'border-neutral-300 bg-white text-transparent',
-                    ].join(' ')}
-                  >
-                    ✓
-                  </span>
-
-                  <span
-                    className={[
-                      'text-sm leading-6',
-                      item.completed ? 'text-neutral-500 line-through' : 'text-neutral-900',
-                    ].join(' ')}
-                  >
-                    {item.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="border border-dashed border-neutral-300 px-6 py-12 text-center">
-              <p className="text-sm font-medium text-neutral-900">No checklist items</p>
-
-              <p className="mt-1 text-sm text-neutral-500">
-                Checklist editing will be added in the next step.
-              </p>
-            </div>
-          )}
-        </WorkspacePanel>
+        <TaskChecklistForm
+          taskId={String(task.id)}
+          checklist={checklist.map((item) => ({
+            id: item.id,
+            label: item.label,
+            completed: item.completed,
+          }))}
+        />
       )
       break
 
     case 'notes':
-      content = (
-        <WorkspacePanel
-          title="Internal notes"
-          description="Private information visible only to the agency team."
-        >
-          <div className="min-h-40 whitespace-pre-wrap border border-neutral-200 bg-neutral-50 px-4 py-4 text-sm leading-7 text-neutral-800">
-            {task.internalNotes || 'No internal notes have been added.'}
-          </div>
-        </WorkspacePanel>
-      )
+      content = <TaskNotesForm taskId={String(task.id)} internalNotes={task.internalNotes} />
       break
-
     case 'history':
-      content = (
-        <WorkspacePanel
-          title="Task history"
-          description="Changes and activity associated with this task."
-        >
-          <div className="border border-dashed border-neutral-300 px-6 py-12 text-center">
-            <p className="text-sm font-medium text-neutral-900">History timeline coming next</p>
-
-            <p className="mt-1 text-sm text-neutral-500">
-              The task already creates activity records. This tab will display them.
-            </p>
-          </div>
-        </WorkspacePanel>
-      )
+      content = <TaskHistoryTab taskId={String(task.id)} />
       break
 
     case 'overview':
     default:
       content = (
-        <div className="space-y-6">
-          <WorkspacePanel
-            title="Task overview"
-            description="Core task information, assignment and scheduling."
-          >
-            <dl>
-              <DetailRow label="Title" value={task.title} />
-
-              <DetailRow label="Description" value={task.description} />
-
-              <div className="grid gap-x-8 md:grid-cols-2">
-                <DetailRow label="Status" value={formatLabel(task.status)} />
-
-                <DetailRow label="Priority" value={formatLabel(task.priority)} />
-
-                <DetailRow label="Due date" value={formatDateTime(task.dueAt)} />
-
-                <DetailRow label="Reminder" value={formatDateTime(task.reminderAt)} />
-
-                <DetailRow
-                  label="Assigned agent"
-                  value={getRelationshipLabel(task.assignedAgent)}
-                />
-
-                <DetailRow label="Created by" value={getRelationshipLabel(task.createdBy)} />
-              </div>
-            </dl>
-          </WorkspacePanel>
-
-          <WorkspacePanel
-            title="Related record"
-            description="The CRM record connected to this task."
-          >
-            {relatedRecord ? (
-              <dl className="grid gap-x-8 md:grid-cols-2">
-                <DetailRow label="Record type" value={relatedRecord.type} />
-
-                <DetailRow label="Record" value={relatedRecord.label} />
-              </dl>
-            ) : (
-              <p className="text-sm text-neutral-500">
-                This task is not connected to another CRM record.
-              </p>
-            )}
-          </WorkspacePanel>
-        </div>
+        <TaskOverviewForm
+          task={{
+            id: String(task.id),
+            title: task.title,
+            description: task.description,
+            status: task.status,
+            priority: task.priority,
+            dueAt: task.dueAt,
+            reminderAt: task.reminderAt,
+            assignedAgentId: task.assignedAgent
+              ? String(getRelationshipId(task.assignedAgent))
+              : null,
+          }}
+          agents={agentOptions}
+        />
       )
       break
   }
@@ -369,15 +290,6 @@ export default async function TaskWorkspacePage({ params, searchParams }: TaskWo
               </span>
             </div>
           }
-          actions={
-            <button
-              type="button"
-              disabled
-              className="inline-flex h-10 cursor-not-allowed items-center justify-center bg-neutral-950 px-4 text-sm font-semibold text-white opacity-50"
-            >
-              Save changes
-            </button>
-          }
         />
       }
       tabs={<WorkspaceTabs tabs={workspaceTabs} activeTab={activeTab} />}
@@ -402,6 +314,14 @@ export default async function TaskWorkspacePage({ params, searchParams }: TaskWo
             label="Checklist"
             value={`${completedChecklistItems} of ${checklist.length} completed`}
           />
+
+          {relatedRecord ? (
+            <>
+              <WorkspaceSidebarItem label="Related record" value={relatedRecord.type} />
+
+              <WorkspaceSidebarItem label="Record name" value={relatedRecord.label} />
+            </>
+          ) : null}
 
           <WorkspaceSidebarItem label="Created" value={formatDate(task.createdAt)} />
 

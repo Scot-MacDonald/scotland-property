@@ -8,5 +8,6 @@ export { WorkspaceStatusFooter } from './WorkspaceStatusFooter'
 export { WorkspaceUploadField } from './WorkspaceUploadField'
 export { WorkspaceSortableMediaCard, type WorkspaceMediaItem } from './WorkspaceSortableMediaCard'
 export { WorkspaceTimeline, type WorkspaceTimelineItem } from './WorkspaceTimeline'
+export { WorkspaceForm } from './WorkspaceForm'
 
 export type { WorkspaceTab } from './WorkspaceTabs'

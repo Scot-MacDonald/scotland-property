@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { TextField } from '@/components/DashboardV2/Fields'
-import { WorkspacePanel } from '@/components/DashboardV2/Workspace'
+import { WorkspaceForm, WorkspacePanel } from '@/components/DashboardV2/Workspace'
 
 type PropertyOverviewFormProps = {
   property: {
@@ -19,20 +19,20 @@ type PropertyOverviewFormProps = {
   }
 }
 
+type PropertyOverviewValues = {
+  title: string
+  reference: string
+  excerpt: string
+  bedrooms: string
+  bathrooms: string
+  internalArea: string
+  landArea: string
+}
+
 type SaveState = 'idle' | 'saving' | 'success' | 'error'
 
-export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
-  const router = useRouter()
-
-  const [title, setTitle] = useState(property.title)
-  const [reference, setReference] = useState(property.reference || '')
-  const [excerpt, setExcerpt] = useState(property.excerpt || '')
-  const [bedrooms, setBedrooms] = useState(property.bedrooms?.toString() || '')
-  const [bathrooms, setBathrooms] = useState(property.bathrooms?.toString() || '')
-  const [internalArea, setInternalArea] = useState(property.internalArea?.toString() || '')
-  const [landArea, setLandArea] = useState(property.landArea?.toString() || '')
-
-  const [savedValues, setSavedValues] = useState({
+function getInitialValues(property: PropertyOverviewFormProps['property']): PropertyOverviewValues {
+  return {
     title: property.title,
     reference: property.reference || '',
     excerpt: property.excerpt || '',
@@ -40,12 +40,27 @@ export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
     bathrooms: property.bathrooms?.toString() || '',
     internalArea: property.internalArea?.toString() || '',
     landArea: property.landArea?.toString() || '',
-  })
+  }
+}
 
+export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
+  const router = useRouter()
+
+  const initialValues = getInitialValues(property)
+
+  const [title, setTitle] = useState(initialValues.title)
+  const [reference, setReference] = useState(initialValues.reference)
+  const [excerpt, setExcerpt] = useState(initialValues.excerpt)
+  const [bedrooms, setBedrooms] = useState(initialValues.bedrooms)
+  const [bathrooms, setBathrooms] = useState(initialValues.bathrooms)
+  const [internalArea, setInternalArea] = useState(initialValues.internalArea)
+  const [landArea, setLandArea] = useState(initialValues.landArea)
+
+  const [savedValues, setSavedValues] = useState<PropertyOverviewValues>(initialValues)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [errorMessage, setErrorMessage] = useState('')
 
-  const currentValues = {
+  const currentValues: PropertyOverviewValues = {
     title,
     reference,
     excerpt,
@@ -64,6 +79,11 @@ export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
     currentValues.internalArea !== savedValues.internalArea ||
     currentValues.landArea !== savedValues.landArea
 
+  function clearSaveFeedback() {
+    setSaveState('idle')
+    setErrorMessage('')
+  }
+
   function resetForm() {
     setTitle(savedValues.title)
     setReference(savedValues.reference)
@@ -72,13 +92,11 @@ export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
     setBathrooms(savedValues.bathrooms)
     setInternalArea(savedValues.internalArea)
     setLandArea(savedValues.landArea)
-    setSaveState('idle')
-    setErrorMessage('')
+
+    clearSaveFeedback()
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
+  async function handleSave() {
     if (!title.trim()) {
       setSaveState('error')
       setErrorMessage('Property title is required.')
@@ -88,16 +106,26 @@ export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
     setSaveState('saving')
     setErrorMessage('')
 
+    const valuesToSave: PropertyOverviewValues = {
+      title: title.trim(),
+      reference: reference.trim(),
+      excerpt: excerpt.trim(),
+      bedrooms,
+      bathrooms,
+      internalArea,
+      landArea,
+    }
+
     const formData = new FormData()
 
     formData.set('id', property.id)
-    formData.set('title', title.trim())
-    formData.set('reference', reference.trim())
-    formData.set('excerpt', excerpt.trim())
-    formData.set('bedrooms', bedrooms)
-    formData.set('bathrooms', bathrooms)
-    formData.set('internalArea', internalArea)
-    formData.set('landArea', landArea)
+    formData.set('title', valuesToSave.title)
+    formData.set('reference', valuesToSave.reference)
+    formData.set('excerpt', valuesToSave.excerpt)
+    formData.set('bedrooms', valuesToSave.bedrooms)
+    formData.set('bathrooms', valuesToSave.bathrooms)
+    formData.set('internalArea', valuesToSave.internalArea)
+    formData.set('landArea', valuesToSave.landArea)
 
     try {
       const response = await fetch('/api/update-property', {
@@ -114,7 +142,10 @@ export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
         throw new Error(result.error || 'Could not update property.')
       }
 
-      setSavedValues(currentValues)
+      setTitle(valuesToSave.title)
+      setReference(valuesToSave.reference)
+      setExcerpt(valuesToSave.excerpt)
+      setSavedValues(valuesToSave)
       setSaveState('success')
 
       router.refresh()
@@ -129,7 +160,15 @@ export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <WorkspaceForm
+      hasChanges={hasChanges}
+      saving={saveState === 'saving'}
+      saved={saveState === 'success'}
+      error={saveState === 'error' ? errorMessage : null}
+      onSave={handleSave}
+      onDiscard={resetForm}
+      className="space-y-6"
+    >
       <WorkspacePanel
         title="Property overview"
         description="The primary information used across the listing and agency dashboard."
@@ -142,7 +181,7 @@ export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
               value={title}
               onChange={(event) => {
                 setTitle(event.target.value)
-                setSaveState('idle')
+                clearSaveFeedback()
               }}
               error={
                 saveState === 'error' && !title.trim() ? 'Property title is required.' : undefined
@@ -157,7 +196,7 @@ export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
             value={reference}
             onChange={(event) => {
               setReference(event.target.value)
-              setSaveState('idle')
+              clearSaveFeedback()
             }}
           />
         </div>
@@ -176,7 +215,7 @@ export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
             value={bedrooms}
             onChange={(event) => {
               setBedrooms(event.target.value)
-              setSaveState('idle')
+              clearSaveFeedback()
             }}
           />
 
@@ -188,7 +227,7 @@ export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
             value={bathrooms}
             onChange={(event) => {
               setBathrooms(event.target.value)
-              setSaveState('idle')
+              clearSaveFeedback()
             }}
           />
 
@@ -200,7 +239,7 @@ export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
             value={internalArea}
             onChange={(event) => {
               setInternalArea(event.target.value)
-              setSaveState('idle')
+              clearSaveFeedback()
             }}
             description="Enter the internal area in square feet."
           />
@@ -214,7 +253,7 @@ export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
             value={landArea}
             onChange={(event) => {
               setLandArea(event.target.value)
-              setSaveState('idle')
+              clearSaveFeedback()
             }}
             description="Enter the land area in acres."
           />
@@ -237,57 +276,12 @@ export function PropertyOverviewForm({ property }: PropertyOverviewFormProps) {
             value={excerpt}
             onChange={(event) => {
               setExcerpt(event.target.value)
-              setSaveState('idle')
+              clearSaveFeedback()
             }}
             className="mt-2 w-full resize-y border border-neutral-300 bg-white px-3 py-3 text-sm text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950"
           />
         </div>
       </WorkspacePanel>
-
-      {saveState === 'error' && errorMessage ? (
-        <div
-          role="alert"
-          className="border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"
-        >
-          {errorMessage}
-        </div>
-      ) : null}
-
-      {saveState === 'success' ? (
-        <div
-          role="status"
-          className="border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
-        >
-          Property saved successfully.
-        </div>
-      ) : null}
-
-      {hasChanges ? (
-        <div className="sticky bottom-4 z-20 flex flex-col gap-3 border border-neutral-300 bg-white p-4 shadow-lg sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-medium text-neutral-900">
-            {saveState === 'saving' ? 'Saving changes…' : 'You have unsaved changes.'}
-          </p>
-
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={resetForm}
-              disabled={saveState === 'saving'}
-              className="inline-flex min-h-10 items-center justify-center border border-neutral-300 bg-white px-4 text-sm font-semibold text-neutral-800 hover:border-neutral-950 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Discard
-            </button>
-
-            <button
-              type="submit"
-              disabled={saveState === 'saving' || !title.trim()}
-              className="inline-flex min-h-10 items-center justify-center bg-neutral-950 px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {saveState === 'saving' ? 'Saving…' : 'Save changes'}
-            </button>
-          </div>
-        </div>
-      ) : null}
-    </form>
+    </WorkspaceForm>
   )
 }
