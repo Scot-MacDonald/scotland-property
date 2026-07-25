@@ -1,7 +1,7 @@
 import configPromise from '@payload-config'
 import { getPayload, type Where } from 'payload'
 
-import type { ActivityEntityType } from '@/lib/activity'
+import { getActivityRelationMap, type ActivityEntityType } from '@/lib/activity'
 
 import { TimelineItem } from './TimelineItem'
 
@@ -152,6 +152,8 @@ export async function Timeline(props: TimelineProps) {
     )
   }
 
+  const relationMap = await getActivityRelationMap(payload, result.docs)
+
   const groupedActivities = result.docs.reduce<Record<string, typeof result.docs>>(
     (groups, activity) => {
       const group = getDateGroup(activity.createdAt)
@@ -173,16 +175,23 @@ export async function Timeline(props: TimelineProps) {
           </h2>
 
           <div>
-            {activities.map((activity, index) => (
-              <TimelineItem
-                key={activity.id}
-                title={activity.title}
-                description={activity.description}
-                createdAt={activity.createdAt}
-                userName={getRelationshipName(activity.user)}
-                isLast={index === activities.length - 1}
-              />
-            ))}
+            {activities.map((activity, index) => {
+              const relation = relationMap[`${activity.entityType}:${activity.entityId}`]
+
+              return (
+                <TimelineItem
+                  key={activity.id}
+                  title={activity.title}
+                  description={activity.description}
+                  createdAt={activity.createdAt}
+                  userName={getRelationshipName(activity.user)}
+                  entityType={activity.entityType}
+                  relation={relation}
+                  severity={activity.severity}
+                  isLast={index === activities.length - 1}
+                />
+              )
+            })}
           </div>
         </section>
       ))}

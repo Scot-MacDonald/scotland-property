@@ -118,6 +118,7 @@ async function addRelations({
     | 'buyers'
     | 'agents'
     | 'agencies'
+    | 'offers'
   entityIds: string[]
 }) {
   if (entityIds.length === 0) {
@@ -172,6 +173,14 @@ export async function getActivityRelationMap(
       entityType: ActivityEntityTypes.VIEWING,
       collection: 'viewings',
       entityIds: getUniqueEntityIds(activities, ActivityEntityTypes.VIEWING),
+    }),
+
+    addRelations({
+      payload,
+      relationMap,
+      entityType: ActivityEntityTypes.OFFER,
+      collection: 'offers',
+      entityIds: getUniqueEntityIds(activities, ActivityEntityTypes.OFFER),
     }),
 
     addRelations({
