@@ -1,15 +1,28 @@
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 
 import type { ActivityEntityType } from '@/lib/activity'
 
 import { TimelineItem } from './TimelineItem'
 
-type TimelineProps = {
+type TimelineEntity = {
   entityType: ActivityEntityType
   entityId: string
-  limit?: number
 }
+
+type TimelineProps =
+  | {
+      entityType: ActivityEntityType
+      entityId: string
+      entities?: never
+      limit?: number
+    }
+  | {
+      entityType?: never
+      entityId?: never
+      entities: TimelineEntity[]
+      limit?: number
+    }
 
 function getDateGroup(value: string) {
   const date = new Date(value)
@@ -56,10 +69,69 @@ function getRelationshipName(
   return value.name || value.email || null
 }
 
-export async function Timeline({ entityType, entityId, limit = 50 }: TimelineProps) {
+function createEntityCondition(entity: TimelineEntity): Where {
+  return {
+    and: [
+      {
+        entityType: {
+          equals: entity.entityType,
+        },
+      },
+      {
+        entityId: {
+          equals: entity.entityId,
+        },
+      },
+    ],
+  }
+}
+
+function getTimelineEntities(props: TimelineProps): TimelineEntity[] {
+  const entities =
+    'entities' in props && props.entities
+      ? props.entities
+      : [
+          {
+            entityType: props.entityType,
+            entityId: props.entityId,
+          },
+        ]
+
+  const uniqueEntities = new Map<string, TimelineEntity>()
+
+  for (const entity of entities) {
+    const key = `${entity.entityType}:${entity.entityId}`
+
+    uniqueEntities.set(key, entity)
+  }
+
+  return Array.from(uniqueEntities.values())
+}
+
+export async function Timeline(props: TimelineProps) {
+  const { limit = 50 } = props
+  const entities = getTimelineEntities(props)
+
+  if (entities.length === 0) {
+    return (
+      <div className="rounded-xl border border-neutral-200 bg-white px-6 py-10 text-center">
+        <p className="text-sm font-medium text-neutral-950">No activity yet</p>
+
+        <p className="mt-1 text-sm text-neutral-500">Updates to this record will appear here.</p>
+      </div>
+    )
+  }
+
   const payload = await getPayload({
     config: configPromise,
   })
+
+  const where: Where =
+    entities.length === 1
+      ? createEntityCondition(entities[0])
+      : {
+          or: entities.map(createEntityCondition),
+        }
 
   const result = await payload.find({
     collection: 'activities',
@@ -67,20 +139,7 @@ export async function Timeline({ entityType, entityId, limit = 50 }: TimelinePro
     limit,
     sort: '-createdAt',
     overrideAccess: true,
-    where: {
-      and: [
-        {
-          entityType: {
-            equals: entityType,
-          },
-        },
-        {
-          entityId: {
-            equals: entityId,
-          },
-        },
-      ],
-    },
+    where,
   })
 
   if (result.docs.length === 0) {
