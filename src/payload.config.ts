@@ -27,6 +27,7 @@ import { Viewings } from './collections/Viewings'
 import { Activities } from './collections/Activities'
 import { Tasks } from './collections/Tasks'
 import { Offers } from './collections/Offers'
+import { PropertyDocuments } from './collections/PropertyDocuments'
 
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -112,6 +113,7 @@ export default buildConfig({
     UserInvitations,
     Tasks,
     Offers,
+    PropertyDocuments,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

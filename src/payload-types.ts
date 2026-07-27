@@ -91,6 +91,7 @@ export interface Config {
     'user-invitations': UserInvitation;
     tasks: Task;
     offers: Offer;
+    'property-documents': PropertyDocument;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-kv': PayloadKv;
@@ -129,6 +130,7 @@ export interface Config {
     'user-invitations': UserInvitationsSelect<false> | UserInvitationsSelect<true>;
     tasks: TasksSelect<false> | TasksSelect<true>;
     offers: OffersSelect<false> | OffersSelect<true>;
+    'property-documents': PropertyDocumentsSelect<false> | PropertyDocumentsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1362,6 +1364,59 @@ export interface Offer {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "property-documents".
+ */
+export interface PropertyDocument {
+  id: string;
+  /**
+   * A clear name for the document, such as Property Brochure.
+   */
+  title: string;
+  property: string | Property;
+  /**
+   * Automatically inherited from the selected property.
+   */
+  agency: string | Agency;
+  /**
+   * The uploaded PDF, image or other document file.
+   */
+  file: string | Media;
+  category: 'marketing' | 'legal' | 'compliance' | 'internal';
+  documentType:
+    | 'brochure'
+    | 'floorplan'
+    | 'home-report'
+    | 'epc'
+    | 'planning'
+    | 'title-deed'
+    | 'lease'
+    | 'survey'
+    | 'valuation'
+    | 'vendor-contract'
+    | 'sales-memorandum'
+    | 'aml'
+    | 'identity'
+    | 'certificate'
+    | 'solicitor-correspondence'
+    | 'other';
+  /**
+   * Controls who may eventually access the document.
+   */
+  visibility: 'public' | 'agency' | 'admin';
+  version: number;
+  /**
+   * Automatically recorded when the document is created.
+   */
+  uploadedBy?: (string | null) | User;
+  /**
+   * Optional internal context or notes about this document.
+   */
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
@@ -1584,6 +1639,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'offers';
         value: string | Offer;
+      } | null)
+    | ({
+        relationTo: 'property-documents';
+        value: string | PropertyDocument;
       } | null)
     | ({
         relationTo: 'forms';
@@ -2338,6 +2397,24 @@ export interface OffersSelect<T extends boolean = true> {
   vendorResponse?: T;
   buyerResponse?: T;
   internalNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "property-documents_select".
+ */
+export interface PropertyDocumentsSelect<T extends boolean = true> {
+  title?: T;
+  property?: T;
+  agency?: T;
+  file?: T;
+  category?: T;
+  documentType?: T;
+  visibility?: T;
+  version?: T;
+  uploadedBy?: T;
+  description?: T;
   updatedAt?: T;
   createdAt?: T;
 }

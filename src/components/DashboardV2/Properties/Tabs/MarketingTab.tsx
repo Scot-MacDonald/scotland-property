@@ -8,6 +8,7 @@ import {
 } from '@/components/DashboardV2/Workspace'
 import type { Media, Property } from '@/payload-types'
 import { useWorkspaceForm } from '@/hooks/useWorkspaceForm'
+import { LaunchStatusPanel, type LaunchReadinessItem } from './LaunchStatusPanel'
 
 type MarketingMedia = {
   id: string
@@ -193,30 +194,36 @@ export function MarketingTab({ property }: MarketingTabProps) {
     brochure?.id !== savedBrochure?.id ||
     Boolean(newBrochure)
 
-  const readinessItems = [
+  const readinessItems: LaunchReadinessItem[] = [
     {
       label: 'Property title added',
       complete: Boolean(property.title.trim()),
+      requiredForLaunch: true,
     },
     {
       label: 'Property URL created',
       complete: Boolean(property.slug.trim()),
+      requiredForLaunch: true,
     },
     {
       label: 'Short listing summary added',
       complete: Boolean(property.excerpt?.trim()),
+      requiredForLaunch: true,
     },
     {
       label: 'Price added',
       complete: typeof property.price === 'number' && property.price > 0,
+      requiredForLaunch: true,
     },
     {
       label: 'Featured image added',
       complete: Boolean(property.featuredImage),
+      requiredForLaunch: true,
     },
     {
       label: 'Gallery images added',
       complete: Array.isArray(property.gallery) && property.gallery.length > 0,
+      requiredForLaunch: true,
     },
     {
       label: 'SEO title added',
@@ -329,6 +336,10 @@ export function MarketingTab({ property }: MarketingTabProps) {
 
   return (
     <div className="space-y-6">
+      <LaunchStatusPanel
+        readinessItems={readinessItems}
+        readinessPercentage={readinessPercentage}
+      />
       <WorkspacePanel
         title="Marketing copy"
         description="Control how the property is presented in campaigns and promotional material."

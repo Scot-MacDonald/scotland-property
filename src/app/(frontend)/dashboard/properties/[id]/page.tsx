@@ -159,62 +159,83 @@ export default async function PropertyWorkspacePage({
     isSuperAdmin,
   })
 
-  const [regionsResult, townsResult, propertyTypesResult, agentsResult, offersResult] =
-    await Promise.all([
-      payload.find({
-        collection: 'regions',
-        depth: 0,
-        limit: 200,
-        sort: 'name',
-        overrideAccess: true,
-      }),
+  const [
+    regionsResult,
+    townsResult,
+    propertyTypesResult,
+    agentsResult,
+    offersResult,
+    documentsResult,
+  ] = await Promise.all([
+    payload.find({
+      collection: 'regions',
+      depth: 0,
+      limit: 200,
+      sort: 'name',
+      overrideAccess: true,
+    }),
 
-      payload.find({
-        collection: 'towns',
-        depth: 0,
-        limit: 500,
-        sort: 'name',
-        overrideAccess: true,
-      }),
+    payload.find({
+      collection: 'towns',
+      depth: 0,
+      limit: 500,
+      sort: 'name',
+      overrideAccess: true,
+    }),
 
-      payload.find({
-        collection: 'property-types',
-        depth: 0,
-        limit: 200,
-        sort: 'name',
-        overrideAccess: true,
-      }),
+    payload.find({
+      collection: 'property-types',
+      depth: 0,
+      limit: 200,
+      sort: 'name',
+      overrideAccess: true,
+    }),
 
-      payload.find({
-        collection: 'agents',
-        depth: 0,
-        limit: 200,
-        sort: 'name',
-        overrideAccess: true,
-        where: isSuperAdmin
-          ? undefined
-          : {
-              agency: {
-                equals: agencyId,
-              },
+    payload.find({
+      collection: 'agents',
+      depth: 0,
+      limit: 200,
+      sort: 'name',
+      overrideAccess: true,
+      where: isSuperAdmin
+        ? undefined
+        : {
+            agency: {
+              equals: agencyId,
             },
-      }),
+          },
+    }),
 
-      activeTab === 'offers'
-        ? payload.find({
-            collection: 'offers',
-            depth: 2,
-            limit: 100,
-            sort: '-createdAt',
-            overrideAccess: true,
-            where: {
-              property: {
-                equals: property.id,
-              },
+    activeTab === 'offers'
+      ? payload.find({
+          collection: 'offers',
+          depth: 2,
+          limit: 100,
+          sort: '-createdAt',
+          overrideAccess: true,
+          where: {
+            property: {
+              equals: property.id,
             },
-          })
-        : Promise.resolve(null),
-    ])
+          },
+        })
+      : Promise.resolve(null),
+
+    activeTab === 'documents'
+      ? payload.find({
+          collection: 'property-documents',
+          depth: 2,
+          limit: 250,
+          sort: '-updatedAt',
+          overrideAccess: true,
+          where: {
+            property: {
+              equals: property.id,
+            },
+          },
+        })
+      : Promise.resolve(null),
+  ])
 
   const regions = regionsResult.docs.map((region) => ({
     value: String(region.id),
@@ -249,6 +270,27 @@ export default async function PropertyWorkspacePage({
       createdAt: offer.createdAt,
       buyerName: getRelationshipLabel(offer.buyer),
       agentName: getRelationshipLabel(offer.agent),
+    })) || []
+
+  const documents =
+    documentsResult?.docs.map((document) => ({
+      id: String(document.id),
+      title: document.title,
+      category: document.category,
+      documentType: document.documentType,
+      visibility: document.visibility,
+      version: document.version,
+      description: document.description,
+      updatedAt: document.updatedAt,
+      uploadedBy: getRelationshipLabel(document.uploadedBy),
+      file:
+        document.file && typeof document.file === 'object'
+          ? {
+              id: String(document.file.id),
+              filename: document.file.filename || document.title,
+              url: document.file.url || '',
+            }
+          : null,
     })) || []
 
   return (
@@ -373,9 +415,11 @@ export default async function PropertyWorkspacePage({
         />
       ) : null}
 
-      {activeTab === 'documents' ? <DocumentsTab /> : null}
+      {activeTab === 'documents' ? (
+        <DocumentsTab propertyId={String(property.id)} documents={documents} />
+      ) : null}
 
-      {activeTab === 'history' ? <HistoryTab propertyId={property.id} /> : null}
+      {activeTab === 'history' ? <HistoryTab propertyId={String(property.id)} /> : null}
     </WorkspaceLayout>
   )
 }
