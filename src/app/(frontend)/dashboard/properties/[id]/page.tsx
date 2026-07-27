@@ -27,6 +27,8 @@ import {
   getWorkspaceContext,
 } from '@/lib/dashboard'
 
+import { getPropertyDocuments } from '@/modules/property-documents/lib/getPropertyDocuments'
+
 type PropertyWorkspacePageProps = {
   params: Promise<{
     id: string
@@ -159,83 +161,62 @@ export default async function PropertyWorkspacePage({
     isSuperAdmin,
   })
 
-  const [
-    regionsResult,
-    townsResult,
-    propertyTypesResult,
-    agentsResult,
-    offersResult,
-    documentsResult,
-  ] = await Promise.all([
-    payload.find({
-      collection: 'regions',
-      depth: 0,
-      limit: 200,
-      sort: 'name',
-      overrideAccess: true,
-    }),
+  const [regionsResult, townsResult, propertyTypesResult, agentsResult, offersResult] =
+    await Promise.all([
+      payload.find({
+        collection: 'regions',
+        depth: 0,
+        limit: 200,
+        sort: 'name',
+        overrideAccess: true,
+      }),
 
-    payload.find({
-      collection: 'towns',
-      depth: 0,
-      limit: 500,
-      sort: 'name',
-      overrideAccess: true,
-    }),
+      payload.find({
+        collection: 'towns',
+        depth: 0,
+        limit: 500,
+        sort: 'name',
+        overrideAccess: true,
+      }),
 
-    payload.find({
-      collection: 'property-types',
-      depth: 0,
-      limit: 200,
-      sort: 'name',
-      overrideAccess: true,
-    }),
+      payload.find({
+        collection: 'property-types',
+        depth: 0,
+        limit: 200,
+        sort: 'name',
+        overrideAccess: true,
+      }),
 
-    payload.find({
-      collection: 'agents',
-      depth: 0,
-      limit: 200,
-      sort: 'name',
-      overrideAccess: true,
-      where: isSuperAdmin
-        ? undefined
-        : {
-            agency: {
-              equals: agencyId,
+      payload.find({
+        collection: 'agents',
+        depth: 0,
+        limit: 200,
+        sort: 'name',
+        overrideAccess: true,
+        where: isSuperAdmin
+          ? undefined
+          : {
+              agency: {
+                equals: agencyId,
+              },
             },
-          },
-    }),
+      }),
 
-    activeTab === 'offers'
-      ? payload.find({
-          collection: 'offers',
-          depth: 2,
-          limit: 100,
-          sort: '-createdAt',
-          overrideAccess: true,
-          where: {
-            property: {
-              equals: property.id,
+      activeTab === 'offers'
+        ? payload.find({
+            collection: 'offers',
+            depth: 2,
+            limit: 100,
+            sort: '-createdAt',
+            overrideAccess: true,
+            where: {
+              property: {
+                equals: property.id,
+              },
             },
-          },
-        })
-      : Promise.resolve(null),
-
-    activeTab === 'documents'
-      ? payload.find({
-          collection: 'property-documents',
-          depth: 2,
-          limit: 250,
-          sort: '-updatedAt',
-          overrideAccess: true,
-          where: {
-            property: {
-              equals: property.id,
-            },
-          },
-        })
-      : Promise.resolve(null),
-  ])
+          })
+        : Promise.resolve(null),
+    ])
 
   const regions = regionsResult.docs.map((region) => ({
     value: String(region.id),
@@ -273,25 +254,7 @@ export default async function PropertyWorkspacePage({
     })) || []
 
   const documents =
-    documentsResult?.docs.map((document) => ({
-      id: String(document.id),
-      title: document.title,
-      category: document.category,
-      documentType: document.documentType,
-      visibility: document.visibility,
-      version: document.version,
-      description: document.description,
-      updatedAt: document.updatedAt,
-      uploadedBy: getRelationshipLabel(document.uploadedBy),
-      file:
-        document.file && typeof document.file === 'object'
-          ? {
-              id: String(document.file.id),
-              filename: document.file.filename || document.title,
-              url: document.file.url || '',
-            }
-          : null,
-    })) || []
+    activeTab === 'documents' ? await getPropertyDocuments(payload, String(property.id)) : []
 
   return (
     <WorkspaceLayout

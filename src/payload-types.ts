@@ -92,6 +92,7 @@ export interface Config {
     tasks: Task;
     offers: Offer;
     'property-documents': PropertyDocument;
+    'property-document-versions': PropertyDocumentVersion;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-kv': PayloadKv;
@@ -131,6 +132,7 @@ export interface Config {
     tasks: TasksSelect<false> | TasksSelect<true>;
     offers: OffersSelect<false> | OffersSelect<true>;
     'property-documents': PropertyDocumentsSelect<false> | PropertyDocumentsSelect<true>;
+    'property-document-versions': PropertyDocumentVersionsSelect<false> | PropertyDocumentVersionsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1417,6 +1419,32 @@ export interface PropertyDocument {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "property-document-versions".
+ */
+export interface PropertyDocumentVersion {
+  id: string;
+  /**
+   * Automatically generated from the version number.
+   */
+  label: string;
+  document: string | PropertyDocument;
+  property: string | Property;
+  agency: string | Agency;
+  /**
+   * The file retained for this archived version.
+   */
+  file: string | Media;
+  version: number;
+  uploadedBy?: (string | null) | User;
+  /**
+   * Optional reason or context for the replacement.
+   */
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
@@ -1643,6 +1671,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'property-documents';
         value: string | PropertyDocument;
+      } | null)
+    | ({
+        relationTo: 'property-document-versions';
+        value: string | PropertyDocumentVersion;
       } | null)
     | ({
         relationTo: 'forms';
@@ -2415,6 +2447,22 @@ export interface PropertyDocumentsSelect<T extends boolean = true> {
   version?: T;
   uploadedBy?: T;
   description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "property-document-versions_select".
+ */
+export interface PropertyDocumentVersionsSelect<T extends boolean = true> {
+  label?: T;
+  document?: T;
+  property?: T;
+  agency?: T;
+  file?: T;
+  version?: T;
+  uploadedBy?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

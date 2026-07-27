@@ -19,7 +19,7 @@ export function WorkspacePanel({
 
   return (
     <section
-      className={['overflow-hidden border border-neutral-200 bg-white', className]
+      className={['overflow-visible  border border-neutral-200 bg-white', className]
         .filter(Boolean)
         .join(' ')}
     >

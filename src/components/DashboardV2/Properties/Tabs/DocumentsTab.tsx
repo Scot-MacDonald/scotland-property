@@ -1,4 +1,13 @@
+'use client'
+
+import { useState } from 'react'
+
 import { WorkspacePanel } from '@/components/DashboardV2/Workspace'
+import {
+  DocumentActions,
+  EditDocumentPanel,
+  UploadDocumentForm,
+} from '@/modules/property-documents'
 
 type PropertyDocumentFile = {
   id: string
@@ -83,10 +92,17 @@ function getVisibilityClasses(visibility: PropertyDocument['visibility']) {
 }
 
 export function DocumentsTab({ propertyId, documents }: DocumentsTabProps) {
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
+  const [editingDocument, setEditingDocument] = useState<PropertyDocument | null>(null)
+
   const groupedDocuments = categoryOrder.map((category) => ({
     category,
     documents: documents.filter((document) => document.category === category),
   }))
+
+  function handleUploadSuccess() {
+    setIsUploadOpen(false)
+  }
 
   return (
     <div className="space-y-6">
@@ -105,14 +121,28 @@ export function DocumentsTab({ propertyId, documents }: DocumentsTabProps) {
             </p>
           </div>
 
-          <a
-            href={`/dashboard/properties/${propertyId}?tab=documents&action=upload`}
+          <button
             className="inline-flex h-10 items-center justify-center bg-neutral-950 px-4 text-sm font-semibold text-white transition hover:bg-neutral-800"
+            onClick={() => setIsUploadOpen((current) => !current)}
+            type="button"
           >
-            Add document
-          </a>
+            {isUploadOpen ? 'Close upload' : 'Add document'}
+          </button>
         </div>
       </WorkspacePanel>
+
+      {isUploadOpen ? (
+        <WorkspacePanel
+          title="Upload document"
+          description="Add a new file to this property workspace."
+        >
+          <UploadDocumentForm
+            propertyId={propertyId}
+            onCancel={() => setIsUploadOpen(false)}
+            onSuccess={handleUploadSuccess}
+          />
+        </WorkspacePanel>
+      ) : null}
 
       {documents.length === 0 ? (
         <WorkspacePanel
@@ -176,22 +206,13 @@ export function DocumentsTab({ propertyId, documents }: DocumentsTabProps) {
                       ) : null}
                     </div>
 
-                    <div className="flex items-start gap-2">
-                      {document.file?.url ? (
-                        <a
-                          href={document.file.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex h-9 items-center justify-center border border-neutral-300 bg-white px-3 text-sm font-semibold text-neutral-800 transition hover:border-neutral-400 hover:bg-neutral-50"
-                        >
-                          Open file
-                        </a>
-                      ) : (
-                        <span className="inline-flex h-9 items-center justify-center border border-neutral-200 bg-neutral-50 px-3 text-sm text-neutral-400">
-                          File unavailable
-                        </span>
-                      )}
-                    </div>
+                    <DocumentActions
+                      documentId={document.id}
+                      fileUrl={document.file?.url || null}
+                      filename={document.file?.filename}
+                      onEdit={() => setEditingDocument(document)}
+                      title={document.title}
+                    />
                   </div>
                 ))}
               </div>
@@ -199,6 +220,9 @@ export function DocumentsTab({ propertyId, documents }: DocumentsTabProps) {
           )
         })
       )}
+      {editingDocument ? (
+        <EditDocumentPanel document={editingDocument} onClose={() => setEditingDocument(null)} />
+      ) : null}
     </div>
   )
 }

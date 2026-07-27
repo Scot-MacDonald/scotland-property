@@ -28,6 +28,7 @@ import { Activities } from './collections/Activities'
 import { Tasks } from './collections/Tasks'
 import { Offers } from './collections/Offers'
 import { PropertyDocuments } from './collections/PropertyDocuments'
+import { PropertyDocumentVersions } from './collections/PropertyDocumentVersions'
 
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -114,6 +115,7 @@ export default buildConfig({
     Tasks,
     Offers,
     PropertyDocuments,
+    PropertyDocumentVersions,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
