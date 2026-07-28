@@ -12,6 +12,7 @@ import type { Media, Property } from '@/payload-types'
 
 import { ListingUrlPanel } from '../Marketing/ListingUrlPanel'
 import { MarketingHealthPanel } from '../Marketing/MarketingHealthPanel'
+import { PublishingDestination } from '../Marketing/PublishingDestination'
 import { SocialPreviewPanel } from '../Marketing/SocialPreviewPanel'
 import { LaunchStatusPanel, type LaunchReadinessItem } from './LaunchStatusPanel'
 
@@ -66,61 +67,6 @@ function normaliseMedia(
   }
 }
 
-function ToggleRow({
-  checked,
-  description,
-  disabled = false,
-  label,
-  onChange,
-}: {
-  checked: boolean
-  description: string
-  disabled?: boolean
-  label: string
-  onChange: (checked: boolean) => void
-}) {
-  return (
-    <label
-      className={[
-        'flex items-start justify-between gap-6 border-b border-neutral-200 py-5 last:border-b-0',
-        disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
-      ].join(' ')}
-    >
-      <span>
-        <span className="block text-sm font-semibold text-neutral-950">{label}</span>
-
-        <span className="mt-1 block text-sm leading-6 text-neutral-600">{description}</span>
-      </span>
-
-      <span className="relative mt-0.5 shrink-0">
-        <input
-          checked={checked}
-          className="peer sr-only"
-          disabled={disabled}
-          type="checkbox"
-          onChange={(event) => onChange(event.target.checked)}
-        />
-
-        <span className="block h-6 w-11 border border-neutral-300 bg-neutral-200 transition peer-checked:border-neutral-950 peer-checked:bg-neutral-950" />
-
-        <span className="absolute left-1 top-1 h-4 w-4 bg-white transition peer-checked:translate-x-5" />
-      </span>
-    </label>
-  )
-}
-
-function CharacterCount({ current, recommended }: { current: number; recommended: number }) {
-  const isOver = current > recommended
-
-  return (
-    <span
-      className={['text-xs', isOver ? 'font-medium text-red-700' : 'text-neutral-500'].join(' ')}
-    >
-      {current}/{recommended}
-    </span>
-  )
-}
-
 export function MarketingTab({ property }: MarketingTabProps) {
   const initialSocialImage = normaliseMedia(property.socialImage, `${property.title} social image`)
 
@@ -159,6 +105,7 @@ export function MarketingTab({ property }: MarketingTabProps) {
   )
 
   const [marketingHeadline, setMarketingHeadline] = useState(savedMarketingHeadline)
+
   const [seoTitle, setSeoTitle] = useState(savedSeoTitle)
   const [seoDescription, setSeoDescription] = useState(savedSeoDescription)
   const [publishOnWebsite, setPublishOnWebsite] = useState(savedPublishOnWebsite)
@@ -180,6 +127,7 @@ export function MarketingTab({ property }: MarketingTabProps) {
   const [savedBrochure, setSavedBrochure] = useState<MarketingMedia | null>(initialBrochure)
 
   const [brochure, setBrochure] = useState<MarketingMedia | null>(initialBrochure)
+
   const [newBrochure, setNewBrochure] = useState<File | null>(null)
 
   const { isSaving, message, error, beginSave, finishSave, failSave, clearMessages } =
@@ -413,57 +361,131 @@ export function MarketingTab({ property }: MarketingTabProps) {
         title="Search appearance"
         description="Control how the listing appears in search engines and shared links."
       >
-        <div className="space-y-6">
-          <label className="block">
-            <span className="mb-2 flex items-center justify-between gap-4">
-              <span className="text-sm font-semibold text-neutral-950">SEO title</span>
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,0.85fr)_minmax(520px,1.15fr)]">
+          <div className="space-y-6">
+            <label className="block">
+              <span className="mb-2 flex items-center justify-between gap-4">
+                <span className="text-sm font-semibold text-neutral-950">SEO title</span>
 
-              <CharacterCount current={seoTitle.length} recommended={60} />
-            </span>
+                <span
+                  className={[
+                    'inline-flex min-w-14 justify-center border px-2.5 py-1 text-xs font-medium',
+                    seoTitle.length >= 55
+                      ? 'border-amber-200 bg-amber-50 text-amber-800'
+                      : 'border-neutral-200 bg-neutral-50 text-neutral-600',
+                  ].join(' ')}
+                >
+                  {seoTitle.length}/60
+                </span>
+              </span>
 
-            <input
-              className="w-full border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-950 outline-none transition focus:border-neutral-950"
-              maxLength={60}
-              placeholder={property.title}
-              type="text"
-              value={seoTitle}
-              onChange={(event) => {
-                beginEdit()
-                setSeoTitle(event.target.value)
-              }}
-            />
-          </label>
+              <input
+                className="w-full border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-950 outline-none transition focus:border-neutral-950"
+                maxLength={60}
+                placeholder={property.title}
+                type="text"
+                value={seoTitle}
+                onChange={(event) => {
+                  beginEdit()
+                  setSeoTitle(event.target.value)
+                }}
+              />
 
-          <label className="block">
-            <span className="mb-2 flex items-center justify-between gap-4">
-              <span className="text-sm font-semibold text-neutral-950">SEO description</span>
+              <span className="mt-2 block text-sm leading-6 text-neutral-500">
+                Used as the clickable headline in search engine results.
+              </span>
+            </label>
 
-              <CharacterCount current={seoDescription.length} recommended={160} />
-            </span>
+            <label className="block">
+              <span className="mb-2 flex items-center justify-between gap-4">
+                <span className="text-sm font-semibold text-neutral-950">SEO description</span>
 
-            <textarea
-              className="min-h-32 w-full resize-y border border-neutral-300 bg-white px-4 py-3 text-sm leading-6 text-neutral-950 outline-none transition focus:border-neutral-950"
-              maxLength={160}
-              placeholder="Describe the property in a concise and compelling way."
-              value={seoDescription}
-              onChange={(event) => {
-                beginEdit()
-                setSeoDescription(event.target.value)
-              }}
-            />
-          </label>
+                <span
+                  className={[
+                    'inline-flex min-w-16 justify-center border px-2.5 py-1 text-xs font-medium',
+                    seoDescription.length >= 150
+                      ? 'border-amber-200 bg-amber-50 text-amber-800'
+                      : 'border-neutral-200 bg-neutral-50 text-neutral-600',
+                  ].join(' ')}
+                >
+                  {seoDescription.length}/160
+                </span>
+              </span>
 
-          <div className="border border-neutral-200 bg-neutral-50 p-5">
-            <p className="truncate text-lg text-blue-800">{seoTitle || property.title}</p>
+              <textarea
+                className="min-h-36 w-full resize-y border border-neutral-300 bg-white px-4 py-3 text-sm leading-6 text-neutral-950 outline-none transition focus:border-neutral-950"
+                maxLength={160}
+                placeholder="Describe the property in a concise and compelling way."
+                value={seoDescription}
+                onChange={(event) => {
+                  beginEdit()
+                  setSeoDescription(event.target.value)
+                }}
+              />
 
-            <p className="mt-1 text-sm text-emerald-700">
-              scotlandluxuryestates.com/property/{property.slug}
-            </p>
+              <span className="mt-2 block text-sm leading-6 text-neutral-500">
+                Summarise the property clearly to encourage people to open the listing.
+              </span>
+            </label>
+          </div>
 
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-600">
-              {seoDescription ||
-                property.excerpt ||
-                'Add an SEO description to preview the property search result.'}
+          <div className="border border-neutral-200 bg-neutral-50 p-5 sm:p-6">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-neutral-950">Search preview</p>
+
+                <p className="mt-1 text-sm leading-6 text-neutral-500">
+                  An approximate preview of how this property may appear in search results.
+                </p>
+              </div>
+
+              <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Live preview
+              </span>
+            </div>
+
+            <div className="border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
+              <div className="flex items-center gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-500">
+                  <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="8.25" stroke="currentColor" strokeWidth="1.5" />
+
+                    <path
+                      d="M3.75 12h16.5M12 3.75c2.15 2.3 3.25 5.05 3.25 8.25S14.15 17.95 12 20.25M12 3.75C9.85 6.05 8.75 8.8 8.75 12S9.85 17.95 12 20.25"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeWidth="1.5"
+                    />
+                  </svg>
+                </span>
+
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-normal text-neutral-900">
+                    Scotland Luxury Estates
+                  </p>
+
+                  <p className="truncate text-xs text-neutral-600">www.scotlandluxuryestates.com</p>
+                </div>
+              </div>
+
+              <p className="mt-6 truncate text-[18px] leading-7 text-[#1a0dab]">
+                {seoTitle || property.title}
+              </p>
+
+              <p className="mt-1 truncate text-sm text-emerald-700">
+                scotlandluxuryestates.com › property › {property.slug}
+              </p>
+
+              <p className="mt-3 line-clamp-3 text-sm leading-6 text-neutral-600">
+                {seoDescription ||
+                  property.excerpt ||
+                  'Add an SEO description to preview the property search result.'}
+              </p>
+            </div>
+
+            <p className="mt-4 text-xs leading-5 text-neutral-500">
+              Search engines may adjust the title or description depending on the search query.
             </p>
           </div>
         </div>
@@ -607,44 +629,51 @@ export function MarketingTab({ property }: MarketingTabProps) {
       </WorkspacePanel>
 
       <WorkspacePanel
-        title="Publishing"
-        description="Choose where the listing is eligible to be published."
+        title="Publishing destinations"
+        description="Choose where this property is available and manage future portal distribution."
       >
-        <div>
-          <ToggleRow
+        <div className="grid gap-4">
+          <PublishingDestination
             checked={publishOnWebsite}
-            description="Show this listing on Scotland Luxury Estates."
+            description="Publish this property on the Scotland Luxury Estates website. Changes take effect after saving."
             label="Scotland Luxury Estates"
+            status={publishOnWebsite ? 'published' : 'not-published'}
             onChange={(checked) => {
               beginEdit()
               setPublishOnWebsite(checked)
             }}
           />
 
-          <ToggleRow
+          <PublishingDestination
             checked={publishToJamesEdition}
-            description="Mark this listing for JamesEdition export when the integration is enabled."
+            description="Prepare this property for international luxury listing distribution through JamesEdition."
+            disabled
             label="JamesEdition"
+            status="coming-soon"
             onChange={(checked) => {
               beginEdit()
               setPublishToJamesEdition(checked)
             }}
           />
 
-          <ToggleRow
+          <PublishingDestination
             checked={publishToRightmove}
-            description="Mark this listing for Rightmove export when the integration is enabled."
+            description="Prepare this property for distribution through the Rightmove property portal."
+            disabled
             label="Rightmove"
+            status="coming-soon"
             onChange={(checked) => {
               beginEdit()
               setPublishToRightmove(checked)
             }}
           />
 
-          <ToggleRow
+          <PublishingDestination
             checked={publishToZoopla}
-            description="Mark this listing for Zoopla export when the integration is enabled."
+            description="Prepare this property for distribution through the Zoopla property portal."
+            disabled
             label="Zoopla"
+            status="coming-soon"
             onChange={(checked) => {
               beginEdit()
               setPublishToZoopla(checked)
