@@ -576,6 +576,7 @@ export function MarketingTab({ property }: MarketingTabProps) {
               filename={brochure?.filename || null}
               inputRef={brochureInputRef}
               label="Property brochure"
+              previewType="document"
               previewUrl={null}
               onChoose={() => brochureInputRef.current?.click()}
               onDrop={(files) => {
