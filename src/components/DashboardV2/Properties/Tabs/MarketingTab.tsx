@@ -1,17 +1,19 @@
 'use client'
 
 import { useRef, useState } from 'react'
+
 import {
   WorkspacePanel,
   WorkspaceStatusFooter,
   WorkspaceUploadField,
 } from '@/components/DashboardV2/Workspace'
-import type { Media, Property } from '@/payload-types'
 import { useWorkspaceForm } from '@/hooks/useWorkspaceForm'
-import { LaunchStatusPanel, type LaunchReadinessItem } from './LaunchStatusPanel'
+import type { Media, Property } from '@/payload-types'
+
 import { ListingUrlPanel } from '../Marketing/ListingUrlPanel'
-import { SocialPreviewPanel } from '../Marketing/SocialPreviewPanel'
 import { MarketingHealthPanel } from '../Marketing/MarketingHealthPanel'
+import { SocialPreviewPanel } from '../Marketing/SocialPreviewPanel'
+import { LaunchStatusPanel, type LaunchReadinessItem } from './LaunchStatusPanel'
 
 type MarketingMedia = {
   id: string
@@ -119,27 +121,9 @@ function CharacterCount({ current, recommended }: { current: number; recommended
   )
 }
 
-function ChecklistItem({ complete, label }: { complete: boolean; label: string }) {
-  return (
-    <li className="flex items-center gap-3 py-2 text-sm">
-      <span
-        className={[
-          'inline-flex h-5 w-5 items-center justify-center border text-xs',
-          complete
-            ? 'border-emerald-700 bg-emerald-700 text-white'
-            : 'border-neutral-300 bg-white text-neutral-400',
-        ].join(' ')}
-      >
-        {complete ? '✓' : '–'}
-      </span>
-
-      <span className={complete ? 'text-neutral-800' : 'text-neutral-500'}>{label}</span>
-    </li>
-  )
-}
-
 export function MarketingTab({ property }: MarketingTabProps) {
   const initialSocialImage = normaliseMedia(property.socialImage, `${property.title} social image`)
+
   const initialBrochure = normaliseMedia(property.brochure, `${property.title} brochure`)
 
   const featuredImage = normaliseMedia(
@@ -153,17 +137,23 @@ export function MarketingTab({ property }: MarketingTabProps) {
   const [savedMarketingHeadline, setSavedMarketingHeadline] = useState(
     property.marketingHeadline || '',
   )
+
   const [savedSeoTitle, setSavedSeoTitle] = useState(property.seoTitle || '')
+
   const [savedSeoDescription, setSavedSeoDescription] = useState(property.seoDescription || '')
+
   const [savedPublishOnWebsite, setSavedPublishOnWebsite] = useState(
     property.publishOnWebsite ?? true,
   )
+
   const [savedPublishToJamesEdition, setSavedPublishToJamesEdition] = useState(
     property.publishToJamesEdition ?? false,
   )
+
   const [savedPublishToRightmove, setSavedPublishToRightmove] = useState(
     property.publishToRightmove ?? false,
   )
+
   const [savedPublishToZoopla, setSavedPublishToZoopla] = useState(
     property.publishToZoopla ?? false,
   )
@@ -172,17 +162,23 @@ export function MarketingTab({ property }: MarketingTabProps) {
   const [seoTitle, setSeoTitle] = useState(savedSeoTitle)
   const [seoDescription, setSeoDescription] = useState(savedSeoDescription)
   const [publishOnWebsite, setPublishOnWebsite] = useState(savedPublishOnWebsite)
+
   const [publishToJamesEdition, setPublishToJamesEdition] = useState(savedPublishToJamesEdition)
+
   const [publishToRightmove, setPublishToRightmove] = useState(savedPublishToRightmove)
+
   const [publishToZoopla, setPublishToZoopla] = useState(savedPublishToZoopla)
 
   const [savedSocialImage, setSavedSocialImage] = useState<MarketingMedia | null>(
     initialSocialImage,
   )
+
   const [socialImage, setSocialImage] = useState<MarketingMedia | null>(initialSocialImage)
+
   const [newSocialImage, setNewSocialImage] = useState<File | null>(null)
 
   const [savedBrochure, setSavedBrochure] = useState<MarketingMedia | null>(initialBrochure)
+
   const [brochure, setBrochure] = useState<MarketingMedia | null>(initialBrochure)
   const [newBrochure, setNewBrochure] = useState<File | null>(null)
 
@@ -252,6 +248,7 @@ export function MarketingTab({ property }: MarketingTabProps) {
   ]
 
   const completedItems = readinessItems.filter((item) => item.complete).length
+
   const readinessPercentage = Math.round((completedItems / readinessItems.length) * 100)
 
   function beginEdit() {
@@ -289,12 +286,24 @@ export function MarketingTab({ property }: MarketingTabProps) {
       formData.set('publishToZoopla', String(publishToZoopla))
 
       formData.set('socialImageManaged', 'true')
-      if (socialImage) formData.set('socialImageId', socialImage.id)
-      if (newSocialImage) formData.set('socialImage', newSocialImage)
+
+      if (socialImage) {
+        formData.set('socialImageId', socialImage.id)
+      }
+
+      if (newSocialImage) {
+        formData.set('socialImage', newSocialImage)
+      }
 
       formData.set('brochureManaged', 'true')
-      if (brochure) formData.set('brochureId', brochure.id)
-      if (newBrochure) formData.set('brochure', newBrochure)
+
+      if (brochure) {
+        formData.set('brochureId', brochure.id)
+      }
+
+      if (newBrochure) {
+        formData.set('brochure', newBrochure)
+      }
 
       const response = await fetch('/api/update-property', {
         method: 'POST',
@@ -323,6 +332,7 @@ export function MarketingTab({ property }: MarketingTabProps) {
           result.property.socialImage,
           `${result.property.title} social image`,
         )
+
         const nextBrochure = normaliseMedia(
           result.property.brochure,
           `${result.property.title} brochure`,
@@ -336,6 +346,7 @@ export function MarketingTab({ property }: MarketingTabProps) {
 
       setNewSocialImage(null)
       setNewBrochure(null)
+
       finishSave('Marketing settings saved successfully.')
     } catch (saveError) {
       failSave(saveError, 'Could not update property marketing.')
@@ -348,6 +359,7 @@ export function MarketingTab({ property }: MarketingTabProps) {
         readinessItems={readinessItems}
         readinessPercentage={readinessPercentage}
       />
+
       <ListingUrlPanel slug={property.slug} published={publishOnWebsite} />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.75fr)] xl:items-stretch">
@@ -461,12 +473,13 @@ export function MarketingTab({ property }: MarketingTabProps) {
         title="Marketing assets"
         description="Control the image used for social sharing and the downloadable property brochure."
       >
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-8 xl:grid-cols-2">
           <div>
             <div className="mb-3">
               <p className="text-sm font-semibold text-neutral-950">Social sharing image</p>
+
               <p className="mt-1 text-sm leading-6 text-neutral-500">
-                Recommended size: 1200 × 630 pixels. The featured image can be used as a fallback.
+                Upload a dedicated landscape image for social media and shared-link previews.
               </p>
             </div>
 
@@ -493,13 +506,44 @@ export function MarketingTab({ property }: MarketingTabProps) {
                 setNewSocialImage(null)
               }}
             />
+
+            <div className="mt-5 border-t border-neutral-200 pt-5">
+              <dl className="space-y-3 text-sm">
+                <div className="flex items-start justify-between gap-6">
+                  <dt className="text-neutral-500">Recommended size</dt>
+
+                  <dd className="text-right font-medium text-neutral-900">1200 × 630 px</dd>
+                </div>
+
+                <div className="flex items-start justify-between gap-6">
+                  <dt className="text-neutral-500">Formats</dt>
+
+                  <dd className="text-right font-medium text-neutral-900">JPG or PNG</dd>
+                </div>
+
+                <div className="flex items-start justify-between gap-6">
+                  <dt className="text-neutral-500">Used for</dt>
+
+                  <dd className="max-w-xs text-right font-medium text-neutral-900">
+                    Facebook, LinkedIn and WhatsApp
+                  </dd>
+                </div>
+
+                <div className="flex items-start justify-between gap-6">
+                  <dt className="text-neutral-500">Fallback</dt>
+
+                  <dd className="text-right font-medium text-neutral-900">Featured image</dd>
+                </div>
+              </dl>
+            </div>
           </div>
 
           <div>
             <div className="mb-3">
               <p className="text-sm font-semibold text-neutral-950">Property brochure</p>
+
               <p className="mt-1 text-sm leading-6 text-neutral-500">
-                Upload the final brochure as a PDF for buyers to download.
+                Upload the final property particulars as a PDF for buyers to download.
               </p>
             </div>
 
@@ -526,6 +570,38 @@ export function MarketingTab({ property }: MarketingTabProps) {
                 setNewBrochure(null)
               }}
             />
+
+            <div className="mt-5 border-t border-neutral-200 pt-5">
+              <dl className="space-y-3 text-sm">
+                <div className="flex items-start justify-between gap-6">
+                  <dt className="text-neutral-500">Current file</dt>
+
+                  <dd className="max-w-xs truncate text-right font-medium text-neutral-900">
+                    {newBrochure?.name || brochure?.filename || 'Not uploaded'}
+                  </dd>
+                </div>
+
+                <div className="flex items-start justify-between gap-6">
+                  <dt className="text-neutral-500">Format</dt>
+
+                  <dd className="text-right font-medium text-neutral-900">PDF document</dd>
+                </div>
+
+                <div className="flex items-start justify-between gap-6">
+                  <dt className="text-neutral-500">Visibility</dt>
+
+                  <dd className="text-right font-medium text-neutral-900">Public listing</dd>
+                </div>
+
+                <div className="flex items-start justify-between gap-6">
+                  <dt className="text-neutral-500">Purpose</dt>
+
+                  <dd className="max-w-xs text-right font-medium text-neutral-900">
+                    Downloadable property particulars
+                  </dd>
+                </div>
+              </dl>
+            </div>
           </div>
         </div>
       </WorkspacePanel>
