@@ -36,6 +36,21 @@ type CreateDocumentUpdatedActivityArgs = BaseDocumentActivityArgs & {
   updatedFields: string[]
 }
 
+function formatDocumentTitle(documentTitle: string) {
+  const trimmedTitle = documentTitle.trim()
+
+  return trimmedTitle || 'Untitled document'
+}
+
+function formatFieldName(field: string) {
+  const fieldNames: Record<string, string> = {
+    documentType: 'document type',
+    updatedAt: 'updated date',
+  }
+
+  return fieldNames[field] ?? field
+}
+
 export async function createDocumentUploadedActivity({
   propertyId,
   agencyId,
@@ -46,10 +61,12 @@ export async function createDocumentUploadedActivity({
   category,
   documentType,
 }: CreateDocumentUploadedActivityArgs) {
+  const title = formatDocumentTitle(documentTitle)
+
   return createActivity({
     type: ActivityTypes.DOCUMENT_UPLOADED,
     title: 'Document uploaded',
-    description: `${documentTitle} was uploaded as Version ${version}.`,
+    description: `${title} · Version ${version}`,
     severity: ActivitySeverities.SUCCESS,
     entityType: ActivityEntityTypes.PROPERTY,
     entityId: propertyId,
@@ -57,7 +74,7 @@ export async function createDocumentUploadedActivity({
     user: userId,
     metadata: {
       documentId,
-      documentTitle,
+      documentTitle: title,
       version,
       category,
       documentType,
@@ -74,10 +91,12 @@ export async function createDocumentReplacedActivity({
   previousVersion,
   currentVersion,
 }: CreateDocumentReplacedActivityArgs) {
+  const title = formatDocumentTitle(documentTitle)
+
   return createActivity({
     type: ActivityTypes.DOCUMENT_REPLACED,
     title: 'Document replaced',
-    description: `${documentTitle} was replaced. Version ${previousVersion} was archived and Version ${currentVersion} is now current.`,
+    description: `${title} · Version ${previousVersion} archived · Version ${currentVersion} now current`,
     severity: ActivitySeverities.SUCCESS,
     entityType: ActivityEntityTypes.PROPERTY,
     entityId: propertyId,
@@ -85,7 +104,7 @@ export async function createDocumentReplacedActivity({
     user: userId,
     metadata: {
       documentId,
-      documentTitle,
+      documentTitle: title,
       previousVersion,
       currentVersion,
     },
@@ -102,10 +121,12 @@ export async function createDocumentRestoredActivity({
   previousCurrentVersion,
   currentVersion,
 }: CreateDocumentRestoredActivityArgs) {
+  const title = formatDocumentTitle(documentTitle)
+
   return createActivity({
     type: ActivityTypes.DOCUMENT_RESTORED,
     title: 'Document restored',
-    description: `${documentTitle} Version ${restoredVersion} was restored. Version ${previousCurrentVersion} was archived and Version ${currentVersion} is now current.`,
+    description: `${title} · Version ${restoredVersion} restored · Version ${previousCurrentVersion} archived · Version ${currentVersion} now current`,
     severity: ActivitySeverities.SUCCESS,
     entityType: ActivityEntityTypes.PROPERTY,
     entityId: propertyId,
@@ -113,7 +134,7 @@ export async function createDocumentRestoredActivity({
     user: userId,
     metadata: {
       documentId,
-      documentTitle,
+      documentTitle: title,
       restoredVersion,
       previousCurrentVersion,
       currentVersion,
@@ -129,13 +150,12 @@ export async function createDocumentDeletedActivity({
   documentTitle,
   version,
 }: CreateDocumentDeletedActivityArgs) {
+  const title = formatDocumentTitle(documentTitle)
+
   return createActivity({
     type: ActivityTypes.DOCUMENT_DELETED,
     title: 'Document deleted',
-    description:
-      typeof version === 'number'
-        ? `${documentTitle} Version ${version} was deleted.`
-        : `${documentTitle} was deleted.`,
+    description: typeof version === 'number' ? `${title} · Version ${version}` : title,
     severity: ActivitySeverities.WARNING,
     entityType: ActivityEntityTypes.PROPERTY,
     entityId: propertyId,
@@ -143,7 +163,7 @@ export async function createDocumentDeletedActivity({
     user: userId,
     metadata: {
       documentId,
-      documentTitle,
+      documentTitle: title,
       version,
     },
   })
@@ -157,15 +177,22 @@ export async function createDocumentUpdatedActivity({
   documentTitle,
   updatedFields,
 }: CreateDocumentUpdatedActivityArgs) {
+  const title = formatDocumentTitle(documentTitle)
+  const formattedFields = updatedFields.map(formatFieldName)
+
   const fieldDescription =
-    updatedFields.length === 1
-      ? updatedFields[0]
-      : `${updatedFields.slice(0, -1).join(', ')} and ${updatedFields[updatedFields.length - 1]}`
+    formattedFields.length === 0
+      ? 'Document details'
+      : formattedFields.length === 1
+        ? formattedFields[0]
+        : `${formattedFields.slice(0, -1).join(', ')} and ${
+            formattedFields[formattedFields.length - 1]
+          }`
 
   return createActivity({
     type: ActivityTypes.DOCUMENT_UPDATED,
     title: 'Document updated',
-    description: `${documentTitle} was updated: ${fieldDescription}.`,
+    description: `${title} · Updated ${fieldDescription}`,
     severity: ActivitySeverities.INFO,
     entityType: ActivityEntityTypes.PROPERTY,
     entityId: propertyId,
@@ -173,7 +200,7 @@ export async function createDocumentUpdatedActivity({
     user: userId,
     metadata: {
       documentId,
-      documentTitle,
+      documentTitle: title,
       updatedFields,
     },
   })
