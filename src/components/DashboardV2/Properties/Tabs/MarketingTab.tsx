@@ -10,6 +10,8 @@ import type { Media, Property } from '@/payload-types'
 import { useWorkspaceForm } from '@/hooks/useWorkspaceForm'
 import { LaunchStatusPanel, type LaunchReadinessItem } from './LaunchStatusPanel'
 import { ListingUrlPanel } from '../Marketing/ListingUrlPanel'
+import { SocialPreviewPanel } from '../Marketing/SocialPreviewPanel'
+import { MarketingHealthPanel } from '../Marketing/MarketingHealthPanel'
 
 type MarketingMedia = {
   id: string
@@ -139,6 +141,11 @@ function ChecklistItem({ complete, label }: { complete: boolean; label: string }
 export function MarketingTab({ property }: MarketingTabProps) {
   const initialSocialImage = normaliseMedia(property.socialImage, `${property.title} social image`)
   const initialBrochure = normaliseMedia(property.brochure, `${property.title} brochure`)
+
+  const featuredImage = normaliseMedia(
+    property.featuredImage as string | Media | null | undefined,
+    `${property.title} featured image`,
+  )
 
   const socialImageInputRef = useRef<HTMLInputElement>(null)
   const brochureInputRef = useRef<HTMLInputElement>(null)
@@ -342,6 +349,27 @@ export function MarketingTab({ property }: MarketingTabProps) {
         readinessPercentage={readinessPercentage}
       />
       <ListingUrlPanel slug={property.slug} published={publishOnWebsite} />
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.75fr)] xl:items-stretch">
+        <SocialPreviewPanel
+          description={seoDescription || property.excerpt || ''}
+          fallbackImageUrl={featuredImage?.url}
+          imageFile={newSocialImage}
+          imageUrl={socialImage?.url}
+          slug={property.slug}
+          title={seoTitle || marketingHeadline || property.title}
+        />
+
+        <MarketingHealthPanel
+          seoTitle={seoTitle}
+          seoDescription={seoDescription}
+          featuredImage={featuredImage}
+          socialImage={socialImage}
+          brochure={brochure}
+          publishOnWebsite={publishOnWebsite}
+        />
+      </div>
+
       <WorkspacePanel
         title="Marketing copy"
         description="Control how the property is presented in campaigns and promotional material."
@@ -546,38 +574,6 @@ export function MarketingTab({ property }: MarketingTabProps) {
               setPublishToZoopla(checked)
             }}
           />
-        </div>
-      </WorkspacePanel>
-
-      <WorkspacePanel
-        title="Listing readiness"
-        description="Review the key information needed for a strong public listing."
-      >
-        <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
-          <div>
-            <p className="text-4xl font-semibold tracking-tight text-neutral-950">
-              {readinessPercentage}%
-            </p>
-
-            <p className="mt-2 text-sm text-neutral-500">
-              {completedItems} of {readinessItems.length} checks complete
-            </p>
-
-            <div className="mt-4 h-2 overflow-hidden bg-neutral-200">
-              <div
-                className="h-full bg-neutral-950 transition-all"
-                style={{
-                  width: `${readinessPercentage}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          <ul className="divide-y divide-neutral-200">
-            {readinessItems.map((item) => (
-              <ChecklistItem key={item.label} complete={item.complete} label={item.label} />
-            ))}
-          </ul>
         </div>
       </WorkspacePanel>
 
