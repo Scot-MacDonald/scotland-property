@@ -15,3 +15,5 @@ export {
   type ActivityRelation,
   type ActivityRelationMap,
 } from './getActivityRelationMap'
+
+export * from './createPropertyDocumentActivities'

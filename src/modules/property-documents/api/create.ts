@@ -3,6 +3,8 @@ import { requirePropertyAccess } from '@/lib/propertyWorkspace/requirePropertyAc
 import { workspaceSuccess } from '@/lib/propertyWorkspace/success'
 import { uploadMediaFile } from '@/lib/propertyWorkspace/uploadMedia'
 
+import { createDocumentUploadedActivity } from '@/lib/activity/createPropertyDocumentActivities'
+
 import type {
   DocumentCategory,
   DocumentVisibility,
@@ -100,6 +102,17 @@ export async function createPropertyDocument(request: Request) {
         version: input.version ?? 1,
         file: input.fileId!,
       },
+    })
+
+    await createDocumentUploadedActivity({
+      propertyId,
+      agencyId,
+      userId: user.id,
+      documentId: String(document.id),
+      documentTitle: document.title,
+      version: document.version,
+      category: document.category,
+      documentType: document.documentType,
     })
 
     return workspaceSuccess(

@@ -4,7 +4,7 @@ import { getPayload } from 'payload'
 import { workspaceError } from '@/lib/propertyWorkspace/error'
 import { requirePropertyAccess } from '@/lib/propertyWorkspace/requirePropertyAccess'
 import { workspaceSuccess } from '@/lib/propertyWorkspace/success'
-
+import { createDocumentUpdatedActivity } from '@/lib/activity/createPropertyDocumentActivities'
 import type { DocumentCategory, DocumentVisibility, PropertyDocumentType } from '../types'
 
 type UpdateDocumentBody = {
@@ -134,6 +134,19 @@ export async function POST(request: Request) {
         description: body.description?.trim() || null,
       },
     })
+
+    const agencyId = getRelationshipId(propertyDocument.agency)
+
+    if (agencyId) {
+      await createDocumentUpdatedActivity({
+        propertyId,
+        agencyId,
+        userId: String(user.id),
+        documentId,
+        documentTitle: updatedDocument.title,
+        updatedFields: ['title', 'category', 'documentType', 'visibility', 'description'],
+      })
+    }
 
     return workspaceSuccess({
       document: updatedDocument,

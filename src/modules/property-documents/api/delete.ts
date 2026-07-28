@@ -2,6 +2,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 
+import { createDocumentDeletedActivity } from '@/lib/activity/createPropertyDocumentActivities'
 import { requirePropertyAccess } from '@/lib/propertyWorkspace/requirePropertyAccess'
 import { workspaceError } from '@/lib/propertyWorkspace/error'
 import { workspaceSuccess } from '@/lib/propertyWorkspace/success'
@@ -60,12 +61,25 @@ export async function POST(request: Request) {
 
     await requirePropertyAccess(propertyId)
 
+    const agencyId = getRelationshipId(document.agency)
+
     await payload.delete({
       collection: 'property-documents',
       id: documentId,
       overrideAccess: true,
       user,
     })
+
+    if (agencyId) {
+      await createDocumentDeletedActivity({
+        propertyId,
+        agencyId,
+        userId: String(user.id),
+        documentId,
+        documentTitle: document.title,
+        version: typeof document.version === 'number' ? document.version : undefined,
+      })
+    }
 
     return workspaceSuccess({
       documentId,

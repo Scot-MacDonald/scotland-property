@@ -1,6 +1,6 @@
 import configPromise from '@payload-config'
 import { createLocalReq, getPayload } from 'payload'
-
+import { createDocumentRestoredActivity } from '@/lib/activity/createPropertyDocumentActivities'
 import { workspaceError } from '@/lib/propertyWorkspace/error'
 import { requirePropertyAccess } from '@/lib/propertyWorkspace/requirePropertyAccess'
 import { workspaceSuccess } from '@/lib/propertyWorkspace/success'
@@ -199,6 +199,17 @@ export async function restorePropertyDocument(request: Request) {
         version: nextVersion,
         uploadedBy: user.id,
       },
+    })
+
+    await createDocumentRestoredActivity({
+      propertyId,
+      agencyId,
+      userId: String(user.id),
+      documentId,
+      documentTitle: propertyDocument.title,
+      restoredVersion: restoredFromVersion ?? currentVersion,
+      previousCurrentVersion: currentVersion,
+      currentVersion: nextVersion,
     })
 
     const restoredVersionLabel = restoredFromVersion

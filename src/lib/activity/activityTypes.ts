@@ -49,8 +49,22 @@ export const ActivityTypes = {
   NOTE_ADDED: 'note-added',
 
   DOCUMENT_UPLOADED: 'document-uploaded',
+  DOCUMENT_REPLACED: 'document-replaced',
+  DOCUMENT_RESTORED: 'document-restored',
+  DOCUMENT_DELETED: 'document-deleted',
+  DOCUMENT_UPDATED: 'document-updated',
+
+  GALLERY_IMAGE_ADDED: 'gallery-image-added',
+  GALLERY_IMAGE_REMOVED: 'gallery-image-removed',
+  GALLERY_REORDERED: 'gallery-reordered',
+
+  FEATURED_IMAGE_UPDATED: 'featured-image-updated',
+  FLOOR_PLAN_ADDED: 'floor-plan-added',
+  FLOOR_PLAN_REMOVED: 'floor-plan-removed',
 
   PRICE_CHANGED: 'price-changed',
+  AGENT_CHANGED: 'agent-changed',
+  LOCATION_CHANGED: 'location-changed',
 } as const
 
 export type ActivityType = (typeof ActivityTypes)[keyof typeof ActivityTypes]

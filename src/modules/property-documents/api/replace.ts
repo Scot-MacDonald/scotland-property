@@ -4,6 +4,7 @@ import { createLocalReq, getPayload } from 'payload'
 import { workspaceError } from '@/lib/propertyWorkspace/error'
 import { requirePropertyAccess } from '@/lib/propertyWorkspace/requirePropertyAccess'
 import { workspaceSuccess } from '@/lib/propertyWorkspace/success'
+import { createDocumentReplacedActivity } from '@/lib/activity/createPropertyDocumentActivities'
 
 type RelationshipValue =
   | string
@@ -176,6 +177,16 @@ export async function replacePropertyDocument(request: Request) {
         version: nextVersion,
         uploadedBy: user.id,
       },
+    })
+
+    await createDocumentReplacedActivity({
+      propertyId,
+      agencyId,
+      userId: String(user.id),
+      documentId,
+      documentTitle: propertyDocument.title,
+      previousVersion: currentVersion,
+      currentVersion: nextVersion,
     })
 
     return workspaceSuccess({

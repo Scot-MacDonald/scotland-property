@@ -29,23 +29,29 @@ export async function createActivity({
   user,
   metadata,
 }: CreateActivityArgs) {
-  const payload = await getPayload({
-    config: configPromise,
-  })
+  try {
+    const payload = await getPayload({
+      config: configPromise,
+    })
 
-  return payload.create({
-    collection: 'activities',
-    overrideAccess: true,
-    data: {
-      type,
-      title,
-      description,
-      severity,
-      entityType,
-      entityId,
-      agency,
-      user,
-      metadata,
-    },
-  })
+    return await payload.create({
+      collection: 'activities',
+      overrideAccess: true,
+      data: {
+        type,
+        title,
+        description,
+        severity,
+        entityType,
+        entityId,
+        agency,
+        user,
+        metadata,
+      },
+    })
+  } catch (error) {
+    console.error('Failed to create activity:', error)
+
+    return null
+  }
 }
