@@ -9,6 +9,7 @@ import {
 import type { Media, Property } from '@/payload-types'
 import { useWorkspaceForm } from '@/hooks/useWorkspaceForm'
 import { LaunchStatusPanel, type LaunchReadinessItem } from './LaunchStatusPanel'
+import { ListingUrlPanel } from '../Marketing/ListingUrlPanel'
 
 type MarketingMedia = {
   id: string
@@ -340,6 +341,7 @@ export function MarketingTab({ property }: MarketingTabProps) {
         readinessItems={readinessItems}
         readinessPercentage={readinessPercentage}
       />
+      <ListingUrlPanel slug={property.slug} published={publishOnWebsite} />
       <WorkspacePanel
         title="Marketing copy"
         description="Control how the property is presented in campaigns and promotional material."
