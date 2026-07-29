@@ -34,7 +34,7 @@ export function DashboardAgentCard({
             href={href}
             className="mt-5 inline-flex border border-black/10 px-4 py-2 text-sm transition hover:border-black"
           >
-            Edit Agent
+            Open Agent
           </Link>
         </div>
       </div>

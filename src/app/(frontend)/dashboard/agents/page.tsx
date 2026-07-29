@@ -83,7 +83,7 @@ export default async function DashboardV2AgentsPage() {
                 role={agent.jobTitle || undefined}
                 email={agent.email || undefined}
                 phone={agent.phone || undefined}
-                href="/dashboard/agents"
+                href={`/dashboard/agents/${agent.id}`}
               />
             ))}
           </div>
