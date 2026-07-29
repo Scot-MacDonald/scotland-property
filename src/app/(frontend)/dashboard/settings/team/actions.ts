@@ -7,6 +7,8 @@ import { revalidatePath } from 'next/cache'
 
 import { cancelInvitation, createInvitation, type InvitationRole } from '@/lib/invitations'
 
+import type { User } from '@/payload-types'
+
 export type TeamActionResult =
   | {
       success: true
@@ -38,7 +40,7 @@ async function getAuthenticatedDashboardUser() {
 
   return {
     payload,
-    user: user as any,
+    user: user as User,
   }
 }
 
@@ -72,7 +74,7 @@ export async function createTeamInvitationAction({
     return result
   }
 
-  revalidatePath('/dashboard/settings/team')
+  revalidatePath('/dashboard/settings')
 
   return {
     success: true,
@@ -105,7 +107,7 @@ export async function cancelTeamInvitationAction({
     return result
   }
 
-  revalidatePath('/dashboard/settings/team')
+  revalidatePath('/dashboard/settings')
 
   return {
     success: true,

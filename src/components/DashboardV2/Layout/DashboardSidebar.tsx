@@ -77,7 +77,7 @@ export function DashboardSidebar({ counts = {} }: DashboardSidebarProps) {
     },
     {
       label: 'Team',
-      href: '/dashboard/settings/team',
+      href: '/dashboard/settings?tab=team',
     },
     {
       label: 'Settings',

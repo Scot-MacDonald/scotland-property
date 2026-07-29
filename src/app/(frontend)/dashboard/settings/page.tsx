@@ -1,152 +1,292 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
-import Link from 'next/link'
 import { headers } from 'next/headers'
-import { redirect } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
-export default async function DashboardSettingsPage() {
-  const payload = await getPayload({ config: configPromise })
-  const requestHeaders = await headers()
+import { DashboardPendingInvitationCard } from '@/components/DashboardV2/Cards/DashboardPendingInvitationCard'
+import { DashboardUserCard } from '@/components/DashboardV2/Cards/DashboardUserCard'
+import { InviteTeamMemberForm } from '@/components/DashboardV2/Cards/InviteTeamMemberForm'
+import { getDashboardUsers } from '@/lib/dashboard'
+import { getDashboardInvitations } from '@/lib/invitations'
 
-  const { user } = await payload.auth({ headers: requestHeaders })
+import {
+  AgencyBrandingForm,
+  AgencyContactForm,
+  AgencyCRMForm,
+  AgencyOverviewForm,
+} from '@/components/DashboardV2/Agency'
+import {
+  WorkspaceHeader,
+  WorkspaceLayout,
+  WorkspaceSidebar,
+  WorkspaceSidebarItem,
+  WorkspaceTabs,
+  type WorkspaceTab,
+} from '@/components/DashboardV2/Workspace'
+import { formatDate } from '@/lib/dashboard'
 
-  if (!user) redirect('/admin/login')
-  if (user.collection !== 'users') redirect('/login')
+type AgencySettingsPageProps = {
+  searchParams: Promise<{
+    tab?: string
+  }>
+}
 
-  const userAsAny = user as any
-  const isSuperAdmin = userAsAny.role === 'super-admin'
-  const agencyId = typeof userAsAny.agency === 'object' ? userAsAny.agency?.id : userAsAny.agency
+const agencyTabIds = ['overview', 'branding', 'contact', 'crm', 'team', 'history'] as const
+type AgencyTabId = (typeof agencyTabIds)[number]
 
-  const agencies = await payload.find({
-    collection: 'agencies',
-    depth: 2,
-    limit: 1,
-    where:
-      !isSuperAdmin && agencyId
-        ? {
-            id: {
-              equals: agencyId,
-            },
-          }
-        : undefined,
-    overrideAccess: true,
+function isAgencyTabId(value: string): value is AgencyTabId {
+  return agencyTabIds.includes(value as AgencyTabId)
+}
+
+function formatLabel(value?: string | null) {
+  if (!value) return 'Not set'
+
+  return value
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function formatRole(role: string) {
+  if (role === 'agency-owner') return 'Agency Owner'
+  if (role === 'agency-staff') return 'Agency Staff'
+  if (role === 'super-admin') return 'Super Admin'
+
+  return role
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+export default async function AgencySettingsPage({ searchParams }: AgencySettingsPageProps) {
+  const { tab = 'overview' } = await searchParams
+  const activeTab: AgencyTabId = isAgencyTabId(tab) ? tab : 'overview'
+
+  const payload = await getPayload({
+    config: configPromise,
   })
 
-  const agency = agencies.docs[0] as any
+  const { user } = await payload.auth({
+    headers: await headers(),
+  })
 
-  if (!agency) redirect('/dashboard')
+  if (!user) {
+    redirect('/login')
+  }
+
+  if (user.collection !== 'users') {
+    redirect('/login')
+  }
+
+  const isSuperAdmin = user.role === 'super-admin'
+  const userAgencyId = typeof user.agency === 'object' ? user.agency?.id : user.agency
+
+  let agency
+
+  if (userAgencyId) {
+    agency = await payload.findByID({
+      collection: 'agencies',
+      id: userAgencyId,
+      depth: 2,
+      overrideAccess: true,
+    })
+  } else if (isSuperAdmin) {
+    const result = await payload.find({
+      collection: 'agencies',
+      depth: 2,
+      limit: 1,
+      overrideAccess: true,
+      sort: '-updatedAt',
+    })
+
+    agency = result.docs[0]
+  }
+
+  if (!agency) {
+    notFound()
+  }
+
+  const [teamUsers, invitations] = await Promise.all([
+    getDashboardUsers({
+      payload,
+      user,
+    }),
+
+    getDashboardInvitations({
+      payload,
+      user,
+    }),
+  ])
+
+  const pendingInvitations = invitations.filter((invitation) => invitation.status === 'pending')
+
+  const canManageTeam = isSuperAdmin || user.role === 'agency-owner'
+
+  const workspaceTabs: WorkspaceTab[] = [
+    {
+      id: 'overview',
+      label: 'Overview',
+      href: '/dashboard/settings',
+    },
+    {
+      id: 'branding',
+      label: 'Branding',
+      href: '/dashboard/settings?tab=branding',
+    },
+    {
+      id: 'contact',
+      label: 'Contact',
+      href: '/dashboard/settings?tab=contact',
+    },
+    {
+      id: 'crm',
+      label: 'CRM',
+      href: '/dashboard/settings?tab=crm',
+    },
+    {
+      id: 'team',
+      label: 'Team',
+      href: '/dashboard/settings?tab=team',
+    },
+    {
+      id: 'history',
+      label: 'History',
+      href: '/dashboard/settings?tab=history',
+    },
+  ]
 
   return (
-    <main className="min-h-screen bg-[#f7f6f2]">
-      <div className="mx-auto w-full max-w-[1280px] px-4 py-16 md:px-8">
-        <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-sm uppercase tracking-[0.25em] text-muted-foreground">
-              Agency Settings
-            </p>
+    <WorkspaceLayout
+      header={
+        <WorkspaceHeader
+          backHref="/dashboard"
+          backLabel="Dashboard"
+          eyebrow="Agency workspace"
+          title={agency.name}
+          actions={
+            agency.slug ? (
+              <a
+                className="inline-flex h-10 items-center justify-center border border-neutral-300 bg-white px-4 text-sm font-semibold text-neutral-800 transition hover:border-neutral-400 hover:bg-neutral-50"
+                href={`/agency/${agency.slug}`}
+                rel="noreferrer"
+                target="_blank"
+              >
+                View profile
+              </a>
+            ) : null
+          }
+        />
+      }
+      tabs={<WorkspaceTabs tabs={workspaceTabs} activeTab={activeTab} />}
+      sidebar={
+        <WorkspaceSidebar title="Agency details">
+          <WorkspaceSidebarItem label="Subscription" value={formatLabel(agency.subscriptionPlan)} />
 
-            <h1 className="mt-2 text-5xl font-medium tracking-tight">Settings</h1>
+          <WorkspaceSidebarItem label="Status" value={formatLabel(agency.subscriptionStatus)} />
 
-            <p className="mt-4 max-w-2xl text-muted-foreground">
-              Manage your agency profile, contact details, CRM feed and coverage.
-            </p>
-          </div>
+          <WorkspaceSidebarItem label="Featured" value={agency.featured ? 'Yes' : 'No'} />
 
-          <div className="flex gap-3">
-            <Link href="/dashboard" className="border bg-white px-4 py-2 text-sm">
-              Back
-            </Link>
+          <WorkspaceSidebarItem label="CRM" value={agency.crm?.enabled ? 'Enabled' : 'Disabled'} />
 
-            <Link href="/dashboard/settings/edit" className="bg-black px-4 py-2 text-sm text-white">
-              Edit Settings
-            </Link>
-          </div>
-        </div>
+          <WorkspaceSidebarItem label="Created" value={formatDate(agency.createdAt)} />
 
-        <section className="grid gap-4 lg:grid-cols-2">
-          <SettingsPanel title="Agency Details">
-            <SettingRow label="Agency Name" value={agency.name} />
-            <SettingRow label="Email" value={agency.email} />
-            <SettingRow label="Phone" value={agency.phone} />
-            <SettingRow label="Website" value={agency.website} />
-          </SettingsPanel>
+          <WorkspaceSidebarItem label="Last updated" value={formatDate(agency.updatedAt)} />
+        </WorkspaceSidebar>
+      }
+    >
+      {activeTab === 'overview' ? <AgencyOverviewForm agency={agency} /> : null}
 
-          <SettingsPanel title="Subscription">
-            <SettingRow label="Plan" value={agency.subscriptionPlan || 'starter'} />
-            <SettingRow label="Status" value={agency.subscriptionStatus || 'trial'} />
-            <SettingRow
-              label="Trial Ends"
-              value={
-                agency.trialEndsAt
-                  ? new Date(agency.trialEndsAt).toLocaleDateString('en-GB')
-                  : 'Not set'
-              }
-            />
-            <SettingRow label="Stripe Customer" value={agency.stripeCustomerId} />
-          </SettingsPanel>
+      {activeTab === 'branding' ? <AgencyBrandingForm agency={agency} /> : null}
 
-          <SettingsPanel title="Office Address">
-            <SettingRow label="Street" value={agency.address?.street} />
-            <SettingRow label="Town / City" value={agency.address?.city} />
-            <SettingRow label="Postcode" value={agency.address?.postcode} />
-            <SettingRow label="Country" value={agency.address?.country} />
-          </SettingsPanel>
+      {activeTab === 'contact' ? <AgencyContactForm agency={agency} /> : null}
 
-          <SettingsPanel title="CRM Feed">
-            <SettingRow label="Enabled" value={agency.crm?.enabled ? 'Yes' : 'No'} />
-            <SettingRow label="Type" value={agency.crm?.type} />
-            <SettingRow label="Feed URL" value={agency.crm?.feedUrl} />
-          </SettingsPanel>
+      {activeTab === 'crm' ? <AgencyCRMForm agency={agency} /> : null}
 
-          <SettingsPanel title="Coverage">
-            {agency.coveragePostcodes?.length ? (
-              <div className="flex flex-wrap gap-2">
-                {agency.coveragePostcodes.map((item: any, index: number) => (
-                  <span key={index} className="border bg-white px-3 py-2 text-sm">
-                    {item.postcode}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground">No coverage postcodes set.</p>
-            )}
-          </SettingsPanel>
+      {activeTab === 'team' ? (
+        <div className="space-y-6">
+          {canManageTeam ? <InviteTeamMemberForm /> : null}
 
-          <SettingsPanel title="Public Profile">
-            <SettingRow label="Slug" value={agency.slug} />
-            <SettingRow label="Featured" value={agency.featured ? 'Yes' : 'No'} />
+          <section className="border border-neutral-200 bg-white">
+            <div className="border-b border-neutral-200 px-6 py-5">
+              <h2 className="text-lg font-semibold text-neutral-950">Team members</h2>
 
-            <div className="mt-6">
-              <Link href={`/agency/${agency.slug}`} className="border bg-white px-4 py-2 text-sm">
-                View Public Agency Page
-              </Link>
+              <p className="mt-1 text-sm leading-6 text-neutral-600">
+                Users who currently have access to this agency workspace.
+              </p>
             </div>
-          </SettingsPanel>
-        </section>
-      </div>
-    </main>
-  )
-}
 
-function SettingsPanel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="border bg-white p-8">
-      <h2 className="text-2xl font-medium">{title}</h2>
+            <div className="p-6">
+              {teamUsers.length === 0 ? (
+                <div className="border border-dashed border-neutral-300 px-6 py-10 text-center">
+                  <p className="text-sm font-medium text-neutral-950">No team members found</p>
 
-      <div className="mt-6 space-y-4">{children}</div>
-    </section>
-  )
-}
+                  <p className="mt-1 text-sm text-neutral-600">
+                    Invite your first team member to give them access.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {teamUsers.map((member) => (
+                    <DashboardUserCard
+                      key={member.id}
+                      name={member.name}
+                      email={member.email}
+                      role={formatRole(member.role)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
 
-function SettingRow({ label, value }: { label: string; value?: any }) {
-  const displayValue =
-    value && typeof value === 'object' ? Object.values(value).filter(Boolean).join(', ') : value
+          <section className="border border-neutral-200 bg-white">
+            <div className="border-b border-neutral-200 px-6 py-5">
+              <h2 className="text-lg font-semibold text-neutral-950">Pending invitations</h2>
 
-  return (
-    <div className="border-b pb-4 last:border-b-0 last:pb-0">
-      <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
+              <p className="mt-1 text-sm leading-6 text-neutral-600">
+                Invitations that have been sent but not yet accepted.
+              </p>
+            </div>
 
-      <p className="mt-2 break-words font-medium">{displayValue || 'Not set'}</p>
-    </div>
+            <div className="p-6">
+              {pendingInvitations.length === 0 ? (
+                <div className="border border-dashed border-neutral-300 px-6 py-10 text-center">
+                  <p className="text-sm font-medium text-neutral-950">No pending invitations</p>
+
+                  <p className="mt-1 text-sm text-neutral-600">
+                    Outstanding invitations will appear here.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {pendingInvitations.map((invitation) => (
+                    <DashboardPendingInvitationCard
+                      key={invitation.id}
+                      id={invitation.id}
+                      name={invitation.name}
+                      email={invitation.email}
+                      role={invitation.role}
+                      status={invitation.status}
+                      expiresAt={invitation.expiresAt}
+                      canManage={canManageTeam}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {activeTab === 'history' ? (
+        <div className="border border-neutral-200 bg-white px-6 py-12 text-center">
+          <h2 className="text-lg font-semibold text-neutral-950">Agency history</h2>
+
+          <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-neutral-600">
+            Changes, imports and other activity connected to this agency will appear here.
+          </p>
+        </div>
+      ) : null}
+    </WorkspaceLayout>
   )
 }
