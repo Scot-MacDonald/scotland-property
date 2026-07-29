@@ -1,15 +1,5 @@
 import Link from 'next/link'
-import {
-  BadgePoundSterling,
-  Building2,
-  Eye,
-  Home,
-  Mail,
-  Phone,
-  User,
-  Users,
-  type LucideIcon,
-} from 'lucide-react'
+import { BadgePoundSterling, Building2, Eye, Home, Mail, Phone, User, Users } from 'lucide-react'
 
 import type { ActivityRelation } from '@/lib/activity'
 import type { Activity } from '@/payload-types'
@@ -34,6 +24,22 @@ type RelationshipValue =
   | null
   | undefined
 
+type EntityIconProps = {
+  entityType?: string | null
+}
+
+const hiddenDescriptions = new Set([
+  'Viewer feedback was updated.',
+  'Internal viewing notes were updated.',
+  'Viewer notes were updated.',
+  'Property was updated.',
+  'Viewing was updated.',
+  'Enquiry was updated.',
+  'Valuation lead was updated.',
+  'Buyer was updated.',
+  'Agent was updated.',
+])
+
 function getActorName(user: RelationshipValue) {
   if (!user || typeof user !== 'object') {
     return null
@@ -42,35 +48,45 @@ function getActorName(user: RelationshipValue) {
   return user.name || user.email || null
 }
 
-function getEntityIcon(entityType?: string | null): LucideIcon {
+function EntityIcon({ entityType }: EntityIconProps) {
+  const className = 'h-5 w-5 text-neutral-700'
+
   switch (entityType) {
     case 'property':
-      return Home
+      return <Home aria-hidden="true" className={className} />
 
     case 'viewing':
-      return Eye
+      return <Eye aria-hidden="true" className={className} />
 
     case 'offer':
-      return BadgePoundSterling
+      return <BadgePoundSterling aria-hidden="true" className={className} />
 
     case 'lead':
-      return Phone
+      return <Phone aria-hidden="true" className={className} />
 
     case 'enquiry':
-      return Mail
+      return <Mail aria-hidden="true" className={className} />
 
     case 'buyer':
-      return User
+      return <User aria-hidden="true" className={className} />
 
     case 'agent':
-      return Users
+      return <Users aria-hidden="true" className={className} />
 
     case 'agency':
-      return Building2
-
     default:
-      return Building2
+      return <Building2 aria-hidden="true" className={className} />
   }
+}
+
+function shouldShowDescription(activity: Activity) {
+  const description = activity.description?.trim()
+
+  if (!description) {
+    return false
+  }
+
+  return !hiddenDescriptions.has(description)
 }
 
 function formatRelativeTime(value: string) {
@@ -121,35 +137,12 @@ function ActivityCardContent({
   activity: Activity
   relation?: ActivityRelation
 }) {
-  const Icon = getEntityIcon(activity.entityType)
   const actorName = getActorName(activity.user as RelationshipValue)
-
-  function shouldShowDescription(activity: Activity) {
-    const description = activity.description?.trim()
-
-    if (!description) {
-      return false
-    }
-
-    const hiddenDescriptions = new Set([
-      'Viewer feedback was updated.',
-      'Internal viewing notes were updated.',
-      'Viewer notes were updated.',
-      'Property was updated.',
-      'Viewing was updated.',
-      'Enquiry was updated.',
-      'Valuation lead was updated.',
-      'Buyer was updated.',
-      'Agent was updated.',
-    ])
-
-    return !hiddenDescriptions.has(description)
-  }
 
   return (
     <>
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-100">
-        <Icon aria-hidden="true" className="h-5 w-5 text-neutral-700" />
+        <EntityIcon entityType={activity.entityType} />
       </div>
 
       <div className="min-w-0 flex-1">
