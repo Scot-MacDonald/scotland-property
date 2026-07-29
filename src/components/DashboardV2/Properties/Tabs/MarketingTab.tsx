@@ -11,7 +11,6 @@ import { useWorkspaceForm } from '@/hooks/useWorkspaceForm'
 import type { Media, Property } from '@/payload-types'
 
 import { ListingUrlPanel } from '../Marketing/ListingUrlPanel'
-import { MarketingHealthPanel } from '../Marketing/MarketingHealthPanel'
 import { PublishingDestination } from '../Marketing/PublishingDestination'
 import { SocialPreviewPanel } from '../Marketing/SocialPreviewPanel'
 import { LaunchStatusPanel, type LaunchReadinessItem } from './LaunchStatusPanel'
@@ -318,15 +317,6 @@ export function MarketingTab({ property }: MarketingTabProps) {
           imageUrl={socialImage?.url}
           slug={property.slug}
           title={seoTitle || marketingHeadline || property.title}
-        />
-
-        <MarketingHealthPanel
-          seoTitle={seoTitle}
-          seoDescription={seoDescription}
-          featuredImage={featuredImage}
-          socialImage={socialImage}
-          brochure={brochure}
-          publishOnWebsite={publishOnWebsite}
         />
       </div>
 
