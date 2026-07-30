@@ -72,7 +72,7 @@ export function SavedPropertiesList() {
         <h2 className="text-2xl font-medium">No saved properties yet</h2>
 
         <p className="mt-3 text-muted-foreground">
-          Browse properties and click "Save" to add them here.
+          Browse properties and click &quot;save&quot; to add them here.
         </p>
 
         <Link href="/properties" className="mt-6 inline-block bg-black px-6 py-3 text-white">

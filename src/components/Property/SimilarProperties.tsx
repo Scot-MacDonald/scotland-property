@@ -18,7 +18,7 @@ export function SimilarProperties({ properties, regionName }: Props) {
         <h2 className="text-4xl font-medium tracking-tight">More Exceptional Homes</h2>
 
         <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-          A curated selection of exceptional homes from Scotland's leading estate agencies.
+          A curated selection of exceptional homes from Scotland&apos;s leading estate agencies.
         </p>
       </div>
 

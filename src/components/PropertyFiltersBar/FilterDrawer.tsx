@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+
 import { PriceSlider } from '@/components/Search/PriceSlider'
 
 type Option = {
@@ -24,6 +25,8 @@ type Props = {
   propertyTypes?: Option[]
   amenities?: Option[]
 }
+
+type DrawerContentProps = Omit<Props, 'open'>
 
 type DraftFilters = {
   type?: string
@@ -67,8 +70,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-export function FilterDrawer({
-  open,
+function FilterDrawerContent({
   onClose,
   priceHistogram,
   currentRegion,
@@ -82,37 +84,22 @@ export function FilterDrawer({
   towns,
   propertyTypes,
   amenities,
-}: Props) {
-  const [draft, setDraft] = useState<DraftFilters>({})
+}: DrawerContentProps) {
+  const [draft, setDraft] = useState<DraftFilters>(() => ({
+    type: currentType,
+    minPrice: currentMinPrice,
+    maxPrice: currentMaxPrice,
+    bedrooms: currentBedrooms,
+    region: currentRegion,
+    town: currentTown,
+    amenities: currentAmenities,
+  }))
 
   useEffect(() => {
-    if (!open) return
-
-    setDraft({
-      type: currentType,
-      minPrice: currentMinPrice,
-      maxPrice: currentMaxPrice,
-      bedrooms: currentBedrooms,
-      region: currentRegion,
-      town: currentTown,
-      amenities: currentAmenities,
-    })
-  }, [
-    open,
-    currentType,
-    currentMinPrice,
-    currentMaxPrice,
-    currentBedrooms,
-    currentRegion,
-    currentTown,
-    currentAmenities,
-  ])
-
-  useEffect(() => {
-    if (!open) return
-
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') {
+        onClose()
+      }
     }
 
     document.addEventListener('keydown', handleKeyDown)
@@ -120,9 +107,7 @@ export function FilterDrawer({
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [open, onClose])
-
-  if (!open) return null
+  }, [onClose])
 
   function updateDraft(key: keyof DraftFilters, value?: string) {
     setDraft((current) => ({
@@ -163,6 +148,7 @@ export function FilterDrawer({
     })
 
     const queryString = params.toString()
+
     window.location.href = queryString ? `/properties?${queryString}` : '/properties'
   }
 
@@ -202,7 +188,7 @@ export function FilterDrawer({
 
         <div className="mx-auto max-w-5xl px-5 pb-32">
           <Section title="Property type">
-            <Chip active={!draft.type} onClick={() => updateDraft('type', undefined)}>
+            <Chip active={!draft.type} onClick={() => updateDraft('type')}>
               Any type
             </Chip>
 
@@ -250,7 +236,7 @@ export function FilterDrawer({
           </Section>
 
           <Section title="Region">
-            <Chip active={!draft.region} onClick={() => updateDraft('region', undefined)}>
+            <Chip active={!draft.region} onClick={() => updateDraft('region')}>
               Any region
             </Chip>
 
@@ -266,7 +252,7 @@ export function FilterDrawer({
           </Section>
 
           <Section title="Town">
-            <Chip active={!draft.town} onClick={() => updateDraft('town', undefined)}>
+            <Chip active={!draft.town} onClick={() => updateDraft('town')}>
               Any town
             </Chip>
 
@@ -282,7 +268,7 @@ export function FilterDrawer({
           </Section>
 
           <Section title="Amenities">
-            <Chip active={!draft.amenities} onClick={() => updateDraft('amenities', undefined)}>
+            <Chip active={!draft.amenities} onClick={() => updateDraft('amenities')}>
               Any amenity
             </Chip>
 
@@ -316,4 +302,12 @@ export function FilterDrawer({
       </div>
     </div>
   )
+}
+
+export function FilterDrawer({ open, ...props }: Props) {
+  if (!open) {
+    return null
+  }
+
+  return <FilterDrawerContent {...props} />
 }

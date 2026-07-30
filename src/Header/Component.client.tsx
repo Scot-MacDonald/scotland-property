@@ -22,23 +22,19 @@ interface HeaderClientProps {
 }
 
 export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
-  const [theme, setTheme] = useState<string | null>(null)
+  const { headerTheme, setHeaderTheme } = useHeaderTheme()
+
+  const theme = headerTheme
+
   const [isBuyerLoggedIn, setIsBuyerLoggedIn] = useState(false)
   const [loadingAuth, setLoadingAuth] = useState(true)
 
-  const { headerTheme, setHeaderTheme } = useHeaderTheme()
   const pathname = usePathname()
   const router = useRouter()
 
   useEffect(() => {
     setHeaderTheme(null)
   }, [pathname, setHeaderTheme])
-
-  useEffect(() => {
-    if (headerTheme && headerTheme !== theme) {
-      setTheme(headerTheme)
-    }
-  }, [headerTheme, theme])
 
   useEffect(() => {
     async function checkBuyer() {

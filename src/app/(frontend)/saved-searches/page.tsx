@@ -9,7 +9,7 @@ export default function SavedSearchesPage() {
         <h1 className="mt-2 text-5xl font-medium tracking-tight">Property alerts</h1>
 
         <p className="mt-4 max-w-2xl text-muted-foreground">
-          Manage searches you'd like to revisit or receive alerts for.
+          Manage searches You&apos;re like to revisit or receive alerts for.
         </p>
       </div>
 

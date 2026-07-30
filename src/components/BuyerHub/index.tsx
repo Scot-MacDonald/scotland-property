@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
+
 import { RecentlyViewedPreview } from '../RecentlyViewedPreview'
 import { SavedPropertiesPreview } from '../SavedPropertiesPreview'
 
@@ -10,13 +11,35 @@ type Props = {
   savedSearchesCount: number
 }
 
-export function BuyerHub({ savedPropertiesCount, savedSearchesCount }: Props) {
-  const [recentlyViewed, setRecentlyViewed] = useState(0)
+function subscribeToRecentlyViewed(callback: () => void) {
+  window.addEventListener('storage', callback)
 
-  useEffect(() => {
-    const viewed = JSON.parse(localStorage.getItem('recentlyViewedProperties') || '[]')
-    setRecentlyViewed(viewed.length)
-  }, [])
+  return () => {
+    window.removeEventListener('storage', callback)
+  }
+}
+
+function getRecentlyViewedCount() {
+  try {
+    const storedValue = window.localStorage.getItem('recentlyViewedProperties')
+    const viewed: unknown = JSON.parse(storedValue || '[]')
+
+    return Array.isArray(viewed) ? viewed.length : 0
+  } catch {
+    return 0
+  }
+}
+
+function getServerRecentlyViewedCount() {
+  return 0
+}
+
+export function BuyerHub({ savedPropertiesCount, savedSearchesCount }: Props) {
+  const recentlyViewed = useSyncExternalStore(
+    subscribeToRecentlyViewed,
+    getRecentlyViewedCount,
+    getServerRecentlyViewedCount,
+  )
 
   return (
     <>

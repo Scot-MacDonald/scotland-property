@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 export function BuyerSignupForm() {
   const [loading, setLoading] = useState(false)
@@ -54,9 +55,9 @@ export function BuyerSignupForm() {
         <p className="mt-3 text-muted-foreground">
           Your buyer account has been created. You can now log in.
         </p>
-        <a href="/login" className="mt-6 inline-block bg-black px-6 py-3 text-white">
+        <Link href="/login" className="mt-6 inline-block bg-black px-6 py-3 text-white">
           Go to login
-        </a>
+        </Link>
       </div>
     )
   }

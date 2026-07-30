@@ -3,7 +3,7 @@
 import { DndContext, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/core'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { CSSProperties, useEffect, useState } from 'react'
+import { CSSProperties, useState } from 'react'
 
 const statuses = [
   {
@@ -68,22 +68,7 @@ type Enquiry = {
 
 export function EnquiryPipelineBoard({ initialEnquiries }: { initialEnquiries: Enquiry[] }) {
   const router = useRouter()
-  const [mounted, setMounted] = useState(false)
   const [enquiries, setEnquiries] = useState(initialEnquiries)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return (
-      <div className="overflow-x-auto">
-        <div className="grid min-w-[1800px] gap-4 xl:grid-cols-7">
-          <div className="border p-6 text-sm text-muted-foreground">Loading pipeline...</div>
-        </div>
-      </div>
-    )
-  }
 
   async function handleDragEnd(event: DragEndEvent) {
     const enquiryId = String(event.active.id)
