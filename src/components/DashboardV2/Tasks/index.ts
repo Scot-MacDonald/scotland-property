@@ -1,3 +1,5 @@
 export { TaskChecklistForm } from './TaskChecklistForm'
 export { TaskNotesForm } from './TaskNotesForm'
 export { TaskHistoryTab } from './TaskHistoryTab'
+export { NewTaskModal } from './NewTaskModal'
+export { PropertyTasksPanel } from './PropertyTasksPanel'

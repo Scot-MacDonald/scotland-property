@@ -281,6 +281,7 @@ export async function getDashboardTasks({
   priority = '',
   assignedAgent = '',
   due = '',
+  property = '',
 }: {
   payload: Payload
   user: DashboardUser
@@ -291,6 +292,7 @@ export async function getDashboardTasks({
   priority?: string
   assignedAgent?: string
   due?: DashboardTaskDueFilter
+  property?: string
 }): Promise<DashboardTasksResult> {
   const isSuperAdmin = user.role === 'super-admin'
   const agencyId = getAgencyId(user)
@@ -316,6 +318,7 @@ export async function getDashboardTasks({
   }
 
   const trimmedQuery = query.trim()
+  const trimmedProperty = property.trim()
 
   if (trimmedQuery) {
     conditions.push({
@@ -363,6 +366,14 @@ export async function getDashboardTasks({
     })
   }
 
+  if (trimmedProperty) {
+    conditions.push({
+      property: {
+        equals: trimmedProperty,
+      },
+    })
+  }
+
   conditions.push(...getDueDateConditions(due))
 
   const where: Where | undefined =
@@ -373,7 +384,6 @@ export async function getDashboardTasks({
       : undefined
 
   const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : 20
-
   const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1
 
   const result = await payload.find({

@@ -10,6 +10,7 @@ import {
   PricingTab,
   PropertyOverviewForm,
 } from '@/components/DashboardV2/Properties'
+import { PropertyTasksPanel } from '@/components/DashboardV2/Tasks'
 import {
   WorkspaceHeader,
   WorkspaceLayout,
@@ -26,7 +27,6 @@ import {
   getRelationshipLabel,
   getWorkspaceContext,
 } from '@/lib/dashboard'
-
 import { getPropertyDocuments } from '@/modules/property-documents/lib/getPropertyDocuments'
 
 type PropertyWorkspacePageProps = {
@@ -161,7 +161,7 @@ export default async function PropertyWorkspacePage({
     isSuperAdmin,
   })
 
-  const [regionsResult, townsResult, propertyTypesResult, agentsResult, offersResult] =
+  const [regionsResult, townsResult, propertyTypesResult, agentsResult, offersResult, tasksResult] =
     await Promise.all([
       payload.find({
         collection: 'regions',
@@ -216,6 +216,19 @@ export default async function PropertyWorkspacePage({
             },
           })
         : Promise.resolve(null),
+
+      payload.find({
+        collection: 'tasks',
+        depth: 1,
+        limit: 50,
+        sort: 'dueAt',
+        overrideAccess: true,
+        where: {
+          property: {
+            equals: property.id,
+          },
+        },
+      }),
     ])
 
   const regions = regionsResult.docs.map((region) => ({
@@ -252,6 +265,15 @@ export default async function PropertyWorkspacePage({
       buyerName: getRelationshipLabel(offer.buyer),
       agentName: getRelationshipLabel(offer.agent),
     })) || []
+
+  const tasks = tasksResult.docs.map((task) => ({
+    id: String(task.id),
+    title: task.title,
+    status: task.status,
+    priority: task.priority,
+    dueAt: task.dueAt,
+    assignedAgent: getRelationshipLabel(task.assignedAgent),
+  }))
 
   const documents =
     activeTab === 'documents' ? await getPropertyDocuments(payload, String(property.id)) : []
@@ -305,22 +327,30 @@ export default async function PropertyWorkspacePage({
       }
       tabs={<WorkspaceTabs tabs={workspaceTabs} activeTab={activeTab} />}
       sidebar={
-        <WorkspaceSidebar title="Property details">
-          <WorkspaceSidebarItem label="Status" value={formatLabel(property.status)} />
+        <div className="space-y-6">
+          <WorkspaceSidebar title="Property details">
+            <WorkspaceSidebarItem label="Status" value={formatLabel(property.status)} />
 
-          <WorkspaceSidebarItem label="Agency" value={getRelationshipLabel(property.agency)} />
+            <WorkspaceSidebarItem label="Agency" value={getRelationshipLabel(property.agency)} />
 
-          <WorkspaceSidebarItem
-            label="Assigned agent"
-            value={getRelationshipLabel(property.agent)}
+            <WorkspaceSidebarItem
+              label="Assigned agent"
+              value={getRelationshipLabel(property.agent)}
+            />
+
+            <WorkspaceSidebarItem label="Featured" value={property.featured ? 'Yes' : 'No'} />
+
+            <WorkspaceSidebarItem label="Created" value={formatDate(property.createdAt)} />
+
+            <WorkspaceSidebarItem label="Last updated" value={formatDate(property.updatedAt)} />
+          </WorkspaceSidebar>
+          <PropertyTasksPanel
+            propertyId={String(property.id)}
+            propertyTitle={property.title}
+            tasks={tasks}
+            agents={agents}
           />
-
-          <WorkspaceSidebarItem label="Featured" value={property.featured ? 'Yes' : 'No'} />
-
-          <WorkspaceSidebarItem label="Created" value={formatDate(property.createdAt)} />
-
-          <WorkspaceSidebarItem label="Last updated" value={formatDate(property.updatedAt)} />
-        </WorkspaceSidebar>
+        </div>
       }
     >
       {activeTab === 'overview' ? (

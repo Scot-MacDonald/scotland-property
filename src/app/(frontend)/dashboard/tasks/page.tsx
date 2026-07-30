@@ -1,5 +1,6 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
+import type { Where } from 'payload'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -9,6 +10,7 @@ import { DashboardCollection } from '@/components/DashboardV2/Collection/Dashboa
 import { DashboardHeader } from '@/components/DashboardV2/Layout/DashboardHeader'
 import { DashboardLayout } from '@/components/DashboardV2/Layout/DashboardLayout'
 import { DashboardWorkspace } from '@/components/DashboardV2/Layout/DashboardWorkspace'
+import { getAgencyId } from '@/lib/dashboard/getAgencyId'
 import { getDashboardContext } from '@/lib/dashboard/getDashboardContext'
 import {
   getDashboardTasks,
@@ -21,6 +23,7 @@ type TaskSearchParams = {
   status?: string
   priority?: string
   due?: string
+  property?: string
   page?: string
 }
 
@@ -130,12 +133,14 @@ function createPageHref({
   status,
   priority,
   due,
+  property,
   page,
 }: {
   query: string
   status: string
   priority: string
   due: string
+  property: string
   page: number
 }) {
   const params = new URLSearchParams()
@@ -144,6 +149,7 @@ function createPageHref({
   if (status) params.set('status', status)
   if (priority) params.set('priority', priority)
   if (due) params.set('due', due)
+  if (property) params.set('property', property)
   if (page > 1) params.set('page', String(page))
 
   const search = params.toString()
@@ -167,6 +173,7 @@ export default async function DashboardTasksPage({
     status = '',
     priority = '',
     due: dueValue = '',
+    property = '',
     page: pageValue = '1',
   } = await searchParams
 
@@ -179,12 +186,39 @@ export default async function DashboardTasksPage({
   }
 
   const dashboardUser = user as any
+  const isSuperAdmin = dashboardUser.role === 'super-admin'
+  const agencyId = getAgencyId(dashboardUser)
 
   const parsedPage = Number.parseInt(pageValue, 10)
   const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1
   const due = normaliseDueFilter(dueValue)
+  const propertyId = property.trim()
 
-  const [dashboard, tasks] = await Promise.all([
+  const propertyWhere: Where | undefined =
+    propertyId && !isSuperAdmin
+      ? {
+          and: [
+            {
+              id: {
+                equals: propertyId,
+              },
+            },
+            {
+              agency: {
+                equals: agencyId || '__no-agency__',
+              },
+            },
+          ],
+        }
+      : propertyId
+        ? {
+            id: {
+              equals: propertyId,
+            },
+          }
+        : undefined
+
+  const [dashboard, tasks, propertyResult] = await Promise.all([
     getDashboardContext({
       payload,
       user: dashboardUser,
@@ -199,7 +233,18 @@ export default async function DashboardTasksPage({
       status,
       priority,
       due,
+      property: propertyId,
     }),
+
+    propertyWhere
+      ? payload.find({
+          collection: 'properties',
+          depth: 0,
+          limit: 1,
+          where: propertyWhere,
+          overrideAccess: true,
+        })
+      : Promise.resolve(null),
   ])
 
   const agencyName =
@@ -207,14 +252,31 @@ export default async function DashboardTasksPage({
     (typeof dashboardUser.name === 'string' ? dashboardUser.name : null) ||
     'Your Agency'
 
-  const filtersActive = Boolean(q || status || priority || due)
+  const filteredProperty = propertyResult?.docs[0] ?? null
+
+  const filteredPropertyTitle =
+    filteredProperty && typeof filteredProperty.title === 'string'
+      ? filteredProperty.title
+      : 'Selected property'
+
+  const filtersActive = Boolean(q || status || priority || due || propertyId)
+
+  const clearFiltersHref = propertyId
+    ? `/dashboard/tasks?property=${encodeURIComponent(propertyId)}`
+    : '/dashboard/tasks'
 
   return (
     <DashboardLayout agencyName={agencyName} navigationCounts={dashboard.navigationCounts}>
       <DashboardHeader
         eyebrow="Work Management"
         title="Tasks"
-        description={`${tasks.totalDocs} ${tasks.totalDocs === 1 ? 'task' : 'tasks'} found.`}
+        description={
+          propertyId
+            ? `${tasks.totalDocs} ${
+                tasks.totalDocs === 1 ? 'task' : 'tasks'
+              } found for ${filteredPropertyTitle}.`
+            : `${tasks.totalDocs} ${tasks.totalDocs === 1 ? 'task' : 'tasks'} found.`
+        }
         actions={[
           {
             label: 'Overview',
@@ -225,10 +287,42 @@ export default async function DashboardTasksPage({
       />
 
       <DashboardWorkspace>
+        {propertyId ? (
+          <div className="mb-4 flex flex-col gap-3 border border-black/10 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/40">
+                Property filter
+              </p>
+
+              <p className="mt-1 text-sm font-medium text-black">{filteredPropertyTitle}</p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {filteredProperty ? (
+                <Link
+                  href={`/dashboard/properties/${filteredProperty.id}`}
+                  className="inline-flex min-h-10 items-center justify-center border border-black/10 px-4 text-xs font-semibold uppercase tracking-[0.14em] hover:border-black"
+                >
+                  View property
+                </Link>
+              ) : null}
+
+              <Link
+                href="/dashboard/tasks"
+                className="inline-flex min-h-10 items-center justify-center border border-black/10 px-4 text-xs font-semibold uppercase tracking-[0.14em] hover:border-black"
+              >
+                Show all tasks
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
         <form
           method="GET"
           className="mb-8 grid gap-3 border border-black/10 bg-white p-4 lg:grid-cols-[minmax(240px,1fr)_repeat(3,minmax(160px,auto))_auto_auto]"
         >
+          {propertyId ? <input type="hidden" name="property" value={propertyId} /> : null}
+
           <input
             type="search"
             name="q"
@@ -283,7 +377,7 @@ export default async function DashboardTasksPage({
 
           {filtersActive ? (
             <Link
-              href="/dashboard/tasks"
+              href={clearFiltersHref}
               className="inline-flex min-h-11 items-center justify-center border border-black/10 px-5 text-sm uppercase tracking-[0.16em]"
             >
               Clear
@@ -343,6 +437,7 @@ export default async function DashboardTasksPage({
                     status,
                     priority,
                     due,
+                    property: propertyId,
                     page: tasks.page - 1,
                   })}
                   className="border border-black/10 px-4 py-2 text-sm hover:border-black"
@@ -362,6 +457,7 @@ export default async function DashboardTasksPage({
                     status,
                     priority,
                     due,
+                    property: propertyId,
                     page: tasks.page + 1,
                   })}
                   className="border border-black/10 px-4 py-2 text-sm hover:border-black"

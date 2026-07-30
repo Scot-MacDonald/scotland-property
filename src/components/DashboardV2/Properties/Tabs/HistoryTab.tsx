@@ -18,7 +18,7 @@ export async function HistoryTab({ propertyId }: HistoryTabProps) {
     config: configPromise,
   })
 
-  const [offersResult, viewingsResult, enquiriesResult] = await Promise.all([
+  const [offersResult, viewingsResult, enquiriesResult, tasksResult] = await Promise.all([
     payload.find({
       collection: 'offers',
       depth: 0,
@@ -57,6 +57,19 @@ export async function HistoryTab({ propertyId }: HistoryTabProps) {
         },
       },
     }),
+
+    payload.find({
+      collection: 'tasks',
+      depth: 0,
+      limit: 500,
+      pagination: false,
+      overrideAccess: true,
+      where: {
+        property: {
+          equals: propertyId,
+        },
+      },
+    }),
   ])
 
   const entities: TimelineEntity[] = [
@@ -79,6 +92,11 @@ export async function HistoryTab({ propertyId }: HistoryTabProps) {
       entityType: ActivityEntityTypes.ENQUIRY,
       entityId: String(enquiry.id),
     })),
+
+    ...tasksResult.docs.map((task) => ({
+      entityType: ActivityEntityTypes.TASK,
+      entityId: String(task.id),
+    })),
   ]
 
   return (
@@ -87,8 +105,8 @@ export async function HistoryTab({ propertyId }: HistoryTabProps) {
         <h2 className="text-lg font-semibold text-neutral-950">Property timeline</h2>
 
         <p className="mt-1 text-sm text-neutral-500">
-          Property updates, enquiries, viewings and offers are shown together in chronological
-          order.
+          Property updates, enquiries, viewings, offers and tasks are shown together in
+          chronological order.
         </p>
       </div>
 
