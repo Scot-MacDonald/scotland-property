@@ -3,6 +3,8 @@ import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+import { createTaskActivities } from '@/lib/activity/createTaskActivities'
+
 const relationshipFields = {
   property: 'property',
   lead: 'lead',
@@ -336,6 +338,15 @@ export async function POST(request: Request) {
         createdBy: String(user.id),
         [relationshipField]: relationshipId,
       },
+    })
+
+    await createTaskActivities({
+      task,
+      previousTask: null,
+      changedFields: [],
+      agencyId: relatedAgencyId,
+      userId: String(user.id),
+      operation: 'create',
     })
 
     return NextResponse.json({

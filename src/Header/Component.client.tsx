@@ -24,13 +24,16 @@ interface HeaderClientProps {
 export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   const { headerTheme, setHeaderTheme } = useHeaderTheme()
 
-  const theme = headerTheme
-
+  const [mounted, setMounted] = useState(false)
   const [isBuyerLoggedIn, setIsBuyerLoggedIn] = useState(false)
   const [loadingAuth, setLoadingAuth] = useState(true)
 
   const pathname = usePathname()
   const router = useRouter()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     setHeaderTheme(null)
@@ -66,6 +69,8 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
     router.push('/')
     router.refresh()
   }
+
+  const theme = mounted ? headerTheme : null
 
   return (
     <header className="relative z-20" {...(theme ? { 'data-theme': theme } : {})}>

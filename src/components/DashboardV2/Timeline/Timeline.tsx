@@ -24,13 +24,20 @@ type TimelineProps =
       limit?: number
     }
 
+function getStartOfDay(value: Date) {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate())
+}
+
 function getDateGroup(value: string) {
   const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Earlier'
+  }
+
   const today = new Date()
-
-  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-
-  const activityStart = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const todayStart = getStartOfDay(today)
+  const activityStart = getStartOfDay(date)
 
   const differenceInDays = Math.round(
     (todayStart.getTime() - activityStart.getTime()) / (1000 * 60 * 60 * 24),
@@ -44,10 +51,13 @@ function getDateGroup(value: string) {
     return 'Yesterday'
   }
 
+  const isCurrentYear = date.getFullYear() === today.getFullYear()
+
   return new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long',
     day: 'numeric',
     month: 'long',
-    year: 'numeric',
+    ...(isCurrentYear ? {} : { year: 'numeric' as const }),
   }).format(date)
 }
 
@@ -114,7 +124,7 @@ export async function Timeline(props: TimelineProps) {
 
   if (entities.length === 0) {
     return (
-      <div className="rounded-xl border border-neutral-200 bg-white px-6 py-10 text-center">
+      <div className="border border-neutral-200 bg-white px-6 py-10 text-center">
         <p className="text-sm font-medium text-neutral-950">No activity yet</p>
 
         <p className="mt-1 text-sm text-neutral-500">Updates to this record will appear here.</p>
@@ -144,7 +154,7 @@ export async function Timeline(props: TimelineProps) {
 
   if (result.docs.length === 0) {
     return (
-      <div className="rounded-xl border border-neutral-200 bg-white px-6 py-10 text-center">
+      <div className="border border-neutral-200 bg-white px-6 py-10 text-center">
         <p className="text-sm font-medium text-neutral-950">No activity yet</p>
 
         <p className="mt-1 text-sm text-neutral-500">Updates to this record will appear here.</p>
@@ -167,7 +177,7 @@ export async function Timeline(props: TimelineProps) {
   )
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-9">
       {Object.entries(groupedActivities).map(([group, activities]) => (
         <section key={group}>
           <h2 className="mb-5 text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">
@@ -188,6 +198,7 @@ export async function Timeline(props: TimelineProps) {
                   entityType={activity.entityType}
                   relation={relation}
                   severity={activity.severity}
+                  metadata={activity.metadata}
                   isLast={index === activities.length - 1}
                 />
               )
