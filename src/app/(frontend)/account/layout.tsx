@@ -23,9 +23,24 @@ export default async function AccountLayout({ children }: AccountLayoutProps) {
     redirect('/login')
   }
 
-  const savedPropertiesCount = Array.isArray(user.savedProperties) ? user.savedProperties.length : 0
+  const buyer = await payload.findByID({
+    collection: 'buyers',
+    id: user.id,
+    depth: 0,
+    overrideAccess: true,
+  })
 
-  const savedSearchesCount = Array.isArray(user.savedSearches) ? user.savedSearches.length : 0
+  const savedPropertiesCount = Array.isArray(buyer.savedProperties)
+    ? buyer.savedProperties.length
+    : 0
+
+  const savedSearchesCount = Array.isArray(buyer.savedSearches)
+    ? buyer.savedSearches.length
+    : 0
+
+  const recentlyViewedCount = Array.isArray(buyer.recentlyViewed)
+    ? buyer.recentlyViewed.length
+    : 0
 
   return (
     <>
@@ -38,11 +53,12 @@ export default async function AccountLayout({ children }: AccountLayoutProps) {
       `}</style>
 
       <BuyerWorkspaceLayout
-        buyerName={user.name}
-        buyerEmail={user.email}
+        buyerName={buyer.name}
+        buyerEmail={buyer.email}
         navigationCounts={{
           savedProperties: savedPropertiesCount,
           savedSearches: savedSearchesCount,
+          recentlyViewed: recentlyViewedCount,
         }}
       >
         {children}
