@@ -82,6 +82,28 @@ export const Buyers: CollectionConfig = {
     },
 
     {
+      name: 'recentlyViewed',
+      type: 'array',
+      maxRows: 25,
+      admin: {
+        description: 'The most recent properties viewed by this buyer.',
+      },
+      fields: [
+        {
+          name: 'property',
+          type: 'relationship',
+          relationTo: 'properties',
+          required: true,
+        },
+        {
+          name: 'viewedAt',
+          type: 'date',
+          required: true,
+        },
+      ],
+    },
+
+    {
       name: 'propertyEnquiries',
       type: 'relationship',
       relationTo: 'enquiries',

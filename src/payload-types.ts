@@ -1106,6 +1106,16 @@ export interface Buyer {
   lastActiveAt?: string | null;
   savedProperties?: (string | Property)[] | null;
   /**
+   * The most recent properties viewed by this buyer.
+   */
+  recentlyViewed?:
+    | {
+        property: string | Property;
+        viewedAt: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * Property enquiries submitted by this buyer.
    */
   propertyEnquiries?: (string | Enquiry)[] | null;
@@ -2232,6 +2242,13 @@ export interface BuyersSelect<T extends boolean = true> {
   agency?: T;
   lastActiveAt?: T;
   savedProperties?: T;
+  recentlyViewed?:
+    | T
+    | {
+        property?: T;
+        viewedAt?: T;
+        id?: T;
+      };
   propertyEnquiries?: T;
   savedSearches?:
     | T

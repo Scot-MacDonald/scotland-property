@@ -8,6 +8,7 @@ import { BuyerOverviewForm } from '@/components/DashboardV2/Buyers'
 import { DashboardEnquiryCard } from '@/components/DashboardV2/Cards/DashboardEnquiryCard'
 import { DashboardPropertyCard } from '@/components/DashboardV2/Cards/DashboardPropertyCard'
 import { DashboardEmptyState } from '@/components/DashboardV2/Shared/DashboardEmptyState'
+import { TimelineView } from '@/components/DashboardV2/Timeline/TimelineView'
 import {
   WorkspaceHeader,
   WorkspaceLayout,
@@ -15,9 +16,9 @@ import {
   WorkspaceSidebar,
   WorkspaceSidebarItem,
   WorkspaceTabs,
-  WorkspaceTimeline,
   type WorkspaceTab,
 } from '@/components/DashboardV2/Workspace'
+import { getActivityRelationMap } from '@/lib/activity'
 import {
   formatDate,
   formatDateTime,
@@ -219,6 +220,33 @@ export default async function BuyerWorkspacePage({
 
   const buyerTitle = buyer.name || buyer.email || 'Unnamed buyer'
 
+  const activitiesResult =
+    activeTab === 'history'
+      ? await payload.find({
+          collection: 'activities',
+          depth: 1,
+          limit: 100,
+          pagination: false,
+          sort: '-createdAt',
+          overrideAccess: true,
+          where: {
+            entityType: {
+              equals: 'buyer',
+            },
+            entityId: {
+              equals: String(buyer.id),
+            },
+          },
+        })
+      : null
+
+  const activities = activitiesResult?.docs || []
+
+  const activityRelationMap =
+    activeTab === 'history' && activities.length > 0
+      ? await getActivityRelationMap(payload, activities)
+      : {}
+
   return (
     <WorkspaceLayout
       header={
@@ -406,33 +434,14 @@ export default async function BuyerWorkspacePage({
       {activeTab === 'history' ? (
         <WorkspacePanel
           title="History"
-          description="Account and engagement history for this buyer."
+          description="Account and engagement activity for this buyer."
         >
-          <WorkspaceTimeline
-            items={[
-              ...(buyer.lastActiveAt
-                ? [
-                    {
-                      id: 'last-active',
-                      title: 'Buyer last active',
-                      date: buyer.lastActiveAt,
-                      description: 'The buyer used the property platform.',
-                    },
-                  ]
-                : []),
-              {
-                id: 'updated',
-                title: 'Buyer record updated',
-                date: buyer.updatedAt,
-                description: 'The buyer profile was changed.',
-              },
-              {
-                id: 'created',
-                title: 'Buyer account created',
-                date: buyer.createdAt,
-                description: 'The buyer registered an account.',
-              },
-            ]}
+          <TimelineView
+            activities={activities}
+            relationMap={activityRelationMap}
+            compact
+            emptyTitle="No buyer activity yet"
+            emptyDescription="Updates and CRM activity associated with this buyer will appear here."
           />
         </WorkspacePanel>
       ) : null}

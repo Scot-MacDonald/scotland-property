@@ -3,6 +3,8 @@ import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+import { ActivityTypes, createActivity } from '@/lib/activity'
+
 function getRelationshipId(value: unknown) {
   if (!value) return null
 
@@ -15,6 +17,20 @@ function getRelationshipId(value: unknown) {
   }
 
   return null
+}
+
+function getNullableString(value: unknown) {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const trimmedValue = value.trim()
+
+  return trimmedValue || null
+}
+
+function getBuyerDisplayName(buyer: { name?: string | null; email?: string | null }) {
+  return buyer.name?.trim() || buyer.email?.trim() || 'Buyer'
 }
 
 export async function POST(req: Request) {
@@ -78,10 +94,27 @@ export async function POST(req: Request) {
     }
 
     const data: Record<string, unknown> = {}
+    const changedFields: string[] = []
+    const changes: Record<
+      string,
+      {
+        from: unknown
+        to: unknown
+      }
+    > = {}
 
     if ('name' in body) {
-      const name = String(body.name || '').trim()
-      data.name = name || null
+      const name = getNullableString(body.name)
+      const existingName = getNullableString(existingBuyer.name)
+
+      if (name !== existingName) {
+        data.name = name
+        changedFields.push('name')
+        changes.name = {
+          from: existingName,
+          to: name,
+        }
+      }
     }
 
     if ('email' in body) {
@@ -99,11 +132,28 @@ export async function POST(req: Request) {
         )
       }
 
-      data.email = email
+      if (email !== existingBuyer.email) {
+        data.email = email
+        changedFields.push('email')
+        changes.email = {
+          from: existingBuyer.email,
+          to: email,
+        }
+      }
     }
 
     if ('alertsEnabled' in body) {
-      data.alertsEnabled = Boolean(body.alertsEnabled)
+      const alertsEnabled = Boolean(body.alertsEnabled)
+      const existingAlertsEnabled = Boolean(existingBuyer.alertsEnabled)
+
+      if (alertsEnabled !== existingAlertsEnabled) {
+        data.alertsEnabled = alertsEnabled
+        changedFields.push('alerts')
+        changes.alertsEnabled = {
+          from: existingAlertsEnabled,
+          to: alertsEnabled,
+        }
+      }
     }
 
     if (Object.keys(data).length === 0) {
@@ -125,6 +175,27 @@ export async function POST(req: Request) {
       overrideAccess: true,
       data,
     })
+
+    if (buyerAgencyId) {
+      const buyerName = getBuyerDisplayName(updatedBuyer)
+
+      await createActivity({
+        type: ActivityTypes.BUYER_UPDATED,
+        title: 'Buyer profile updated',
+        description: `${buyerName}'s ${changedFields.join(', ')} ${
+          changedFields.length === 1 ? 'was' : 'were'
+        } updated.`,
+        severity: 'info',
+        entityType: 'buyer',
+        entityId: String(updatedBuyer.id),
+        agency: buyerAgencyId,
+        user: String(user.id),
+        metadata: {
+          changedFields,
+          changes,
+        },
+      })
+    }
 
     return NextResponse.json({
       ok: true,

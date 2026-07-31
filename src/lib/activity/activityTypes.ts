@@ -45,6 +45,10 @@ export const ActivityTypes = {
   OFFER_WITHDRAWN: 'offer-withdrawn',
 
   BUYER_REGISTERED: 'buyer-registered',
+  BUYER_UPDATED: 'buyer-updated',
+  BUYER_PROPERTY_VIEWED: 'buyer-property-viewed',
+  BUYER_PROPERTY_SAVED: 'buyer-property-saved',
+  BUYER_PROPERTY_REMOVED: 'buyer-property-removed',
 
   NOTE_ADDED: 'note-added',
 
