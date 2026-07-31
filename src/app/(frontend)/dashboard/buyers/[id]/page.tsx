@@ -1,16 +1,13 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { headers } from 'next/headers'
+import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
+
 import { BuyerOverviewForm } from '@/components/DashboardV2/Buyers'
-
-import {
-  formatDate,
-  formatDateTime,
-  getRelationshipId,
-  getRelationshipLabel,
-} from '@/lib/dashboard'
-
+import { DashboardEnquiryCard } from '@/components/DashboardV2/Cards/DashboardEnquiryCard'
+import { DashboardPropertyCard } from '@/components/DashboardV2/Cards/DashboardPropertyCard'
+import { DashboardEmptyState } from '@/components/DashboardV2/Shared/DashboardEmptyState'
 import {
   WorkspaceHeader,
   WorkspaceLayout,
@@ -21,6 +18,12 @@ import {
   WorkspaceTimeline,
   type WorkspaceTab,
 } from '@/components/DashboardV2/Workspace'
+import {
+  formatDate,
+  formatDateTime,
+  getRelationshipId,
+  getRelationshipLabel,
+} from '@/lib/dashboard'
 
 type BuyerWorkspacePageProps = {
   params: Promise<{
@@ -43,6 +46,90 @@ type BuyerTabId = (typeof buyerTabIds)[number]
 
 function isBuyerTabId(value: string): value is BuyerTabId {
   return buyerTabIds.includes(value as BuyerTabId)
+}
+
+function formatPrice(value: number | null | undefined) {
+  if (!value) {
+    return 'Price on request'
+  }
+
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+function formatStatus(value: string | null | undefined) {
+  if (!value) {
+    return 'Draft'
+  }
+
+  return value.replaceAll('-', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function getMediaUrl(
+  value:
+    | string
+    | number
+    | {
+        url?: string | null
+      }
+    | null
+    | undefined,
+) {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  return value.url || null
+}
+
+function getLocationLabel(
+  town:
+    | string
+    | number
+    | {
+        name?: string | null
+        title?: string | null
+      }
+    | null
+    | undefined,
+  region:
+    | string
+    | number
+    | {
+        name?: string | null
+        title?: string | null
+      }
+    | null
+    | undefined,
+) {
+  const townLabel =
+    typeof town === 'object' && town !== null ? town.name || town.title || null : null
+
+  const regionLabel =
+    typeof region === 'object' && region !== null ? region.name || region.title || null : null
+
+  return [townLabel, regionLabel].filter(Boolean).join(' • ') || 'Scotland'
+}
+
+function getSavedSearchHref(queryString: string) {
+  const value = queryString.trim()
+
+  if (!value) {
+    return '/properties'
+  }
+
+  if (value.startsWith('/properties')) {
+    return value
+  }
+
+  if (value.startsWith('?')) {
+    return `/properties${value}`
+  }
+
+  return `/properties?${value}`
 }
 
 export default async function BuyerWorkspacePage({
@@ -130,6 +217,8 @@ export default async function BuyerWorkspacePage({
 
   const savedSearches = Array.isArray(buyer.savedSearches) ? buyer.savedSearches : []
 
+  const buyerTitle = buyer.name || buyer.email || 'Unnamed buyer'
+
   return (
     <WorkspaceLayout
       header={
@@ -137,7 +226,7 @@ export default async function BuyerWorkspacePage({
           backHref="/dashboard/buyers"
           backLabel="Buyers"
           eyebrow="Buyer"
-          title={buyer.name || buyer.email || 'Unnamed buyer'}
+          title={buyerTitle}
         />
       }
       tabs={<WorkspaceTabs tabs={workspaceTabs} activeTab={activeTab} />}
@@ -150,6 +239,8 @@ export default async function BuyerWorkspacePage({
           <WorkspaceSidebarItem label="Alerts enabled" value={buyer.alertsEnabled ? 'Yes' : 'No'} />
 
           <WorkspaceSidebarItem label="Saved properties" value={String(savedProperties.length)} />
+
+          <WorkspaceSidebarItem label="Enquiries" value={String(propertyEnquiries.length)} />
 
           <WorkspaceSidebarItem label="Saved searches" value={String(savedSearches.length)} />
 
@@ -172,128 +263,151 @@ export default async function BuyerWorkspacePage({
         />
       ) : null}
 
-      {savedProperties.map((property) => {
-        if (typeof property !== 'object' || property === null) {
-          return null
-        }
+      {activeTab === 'saved-properties' ? (
+        <WorkspacePanel
+          title="Saved Properties"
+          description="Properties this buyer has saved to their account."
+        >
+          {savedProperties.length > 0 ? (
+            <div className="space-y-5">
+              {savedProperties.map((property) => {
+                if (typeof property !== 'object' || property === null) {
+                  return null
+                }
 
-        return (
-          <div
-            key={String(property.id)}
-            className="flex items-center justify-between border border-neutral-200 bg-white p-5 transition hover:border-neutral-300"
-          >
-            <div className="min-w-0">
-              <p className="text-lg font-semibold text-neutral-950">{property.title}</p>
-
-              <p className="mt-1 text-sm text-neutral-500">
-                {property.price
-                  ? new Intl.NumberFormat('en-GB', {
-                      style: 'currency',
-                      currency: 'GBP',
-                      maximumFractionDigits: 0,
-                    }).format(property.price)
-                  : 'Price on application'}
-              </p>
+                return (
+                  <DashboardPropertyCard
+                    key={String(property.id)}
+                    title={property.title || 'Untitled property'}
+                    location={getLocationLabel(property.town, property.region)}
+                    price={formatPrice(property.price)}
+                    status={formatStatus(property.status)}
+                    reference={property.reference || property.slug || String(property.id)}
+                    bedrooms={property.bedrooms || 0}
+                    bathrooms={property.bathrooms || 0}
+                    image={getMediaUrl(property.featuredImage)}
+                    featured={Boolean(property.featured)}
+                    href={`/dashboard/properties/${property.id}`}
+                    viewHref={property.slug ? `/property/${property.slug}` : '/properties'}
+                  />
+                )
+              })}
             </div>
+          ) : (
+            <DashboardEmptyState
+              title="No saved properties"
+              description="Properties saved by this buyer will appear here."
+            />
+          )}
+        </WorkspacePanel>
+      ) : null}
 
-            <div className="flex gap-3">
-              <a
-                href={`/dashboard/properties/${property.id}`}
-                className="border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:bg-neutral-50"
-              >
-                Workspace
-              </a>
+      {activeTab === 'enquiries' ? (
+        <WorkspacePanel title="Enquiries" description="Property enquiries submitted by this buyer.">
+          {propertyEnquiries.length > 0 ? (
+            <div className="space-y-5">
+              {propertyEnquiries.map((enquiry) => {
+                if (typeof enquiry !== 'object' || enquiry === null) {
+                  return null
+                }
 
-              {property.slug ? (
-                <a
-                  href={`/property/${property.slug}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="bg-neutral-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800"
-                >
-                  Listing
-                </a>
-              ) : null}
+                const property =
+                  typeof enquiry.property === 'object' && enquiry.property !== null
+                    ? enquiry.property
+                    : null
+
+                return (
+                  <DashboardEnquiryCard
+                    key={String(enquiry.id)}
+                    id={String(enquiry.id)}
+                    name={enquiry.name || buyer.name || 'Unnamed buyer'}
+                    email={enquiry.email || buyer.email}
+                    phone={enquiry.phone}
+                    message={enquiry.message}
+                    status={enquiry.status || 'new'}
+                    createdAt={enquiry.createdAt}
+                    property={
+                      property
+                        ? {
+                            id: String(property.id),
+                            title: property.title || 'Untitled property',
+                            slug: property.slug || null,
+                          }
+                        : null
+                    }
+                  />
+                )
+              })}
             </div>
-          </div>
-        )
-      })}
-
-      {propertyEnquiries.map((enquiry) => {
-        if (typeof enquiry !== 'object' || enquiry === null) {
-          return null
-        }
-
-        const property =
-          typeof enquiry.property === 'object' && enquiry.property !== null
-            ? enquiry.property
-            : null
-
-        return (
-          <div
-            key={String(enquiry.id)}
-            className="flex items-center justify-between border border-neutral-200 bg-white p-5 transition hover:border-neutral-300"
-          >
-            <div className="min-w-0">
-              <p className="text-lg font-semibold text-neutral-950">
-                {property?.title || 'Unknown Property'}
-              </p>
-
-              <p className="mt-1 text-sm text-neutral-500">Buyer enquiry</p>
-
-              <p className="mt-3 inline-flex border border-neutral-300 bg-neutral-50 px-2 py-1 text-xs font-medium uppercase tracking-wide text-neutral-700">
-                {String(enquiry.status || 'new')
-                  .replace(/-/g, ' ')
-                  .replace(/\b\w/g, (letter) => letter.toUpperCase())}
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <a
-                href={`/dashboard/enquiries/${enquiry.id}`}
-                className="border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:bg-neutral-50"
-              >
-                Open
-              </a>
-
-              {property?.slug ? (
-                <a
-                  href={`/property/${property.slug}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="bg-neutral-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800"
-                >
-                  Listing
-                </a>
-              ) : null}
-            </div>
-          </div>
-        )
-      })}
+          ) : (
+            <DashboardEmptyState
+              title="No enquiries"
+              description="Property enquiries submitted by this buyer will appear here."
+            />
+          )}
+        </WorkspacePanel>
+      ) : null}
 
       {activeTab === 'saved-searches' ? (
-        <WorkspacePanel title="Saved Searches" description="Searches saved by this buyer.">
+        <WorkspacePanel title="Saved Searches" description="Property searches saved by this buyer.">
           {savedSearches.length > 0 ? (
-            <div className="space-y-4">
+            <div className="divide-y divide-neutral-200 border border-neutral-200 bg-white">
               {savedSearches.map((search, index) => (
                 <div
                   key={search.id || `${search.label}-${index}`}
-                  className="border border-neutral-200 bg-white p-4"
+                  className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <p className="font-medium text-neutral-950">{search.label}</p>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-neutral-950">
+                      {search.label || 'Saved search'}
+                    </p>
 
-                  <p className="mt-1 break-all text-sm text-neutral-500">{search.queryString}</p>
+                    <p className="mt-2 break-all text-sm leading-6 text-neutral-500">
+                      {search.queryString}
+                    </p>
+
+                    <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-neutral-400">
+                      Saved {formatDate(search.createdAt)}
+                    </p>
+                  </div>
+
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    <span
+                      className={[
+                        'inline-flex min-h-10 items-center border px-4 text-xs font-semibold uppercase tracking-[0.12em]',
+                        buyer.alertsEnabled
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                          : 'border-neutral-300 bg-neutral-100 text-neutral-600',
+                      ].join(' ')}
+                    >
+                      {buyer.alertsEnabled ? 'Alerts enabled' : 'Alerts disabled'}
+                    </span>
+
+                    <Link
+                      href={getSavedSearchHref(search.queryString)}
+                      target="_blank"
+                      className="inline-flex min-h-10 items-center justify-center bg-neutral-950 px-4 text-xs font-semibold uppercase tracking-[0.12em] text-white transition-colors hover:bg-neutral-800"
+                    >
+                      Run search
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-neutral-600">This buyer has no saved searches.</p>
+            <DashboardEmptyState
+              title="No saved searches"
+              description="Searches saved by this buyer will appear here."
+            />
           )}
         </WorkspacePanel>
       ) : null}
 
       {activeTab === 'history' ? (
-        <WorkspacePanel title="History" description="Recent activity for this buyer.">
+        <WorkspacePanel
+          title="History"
+          description="Account and engagement history for this buyer."
+        >
           <WorkspaceTimeline
             items={[
               ...(buyer.lastActiveAt
