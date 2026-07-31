@@ -17,6 +17,7 @@ type TimelineItemProps = {
   severity?: ActivitySeverity | null
   metadata?: unknown
   isLast?: boolean
+  compact?: boolean
 }
 
 type ActivityMetadata = {
@@ -40,6 +41,12 @@ function formatActivityTime(value: string) {
 
   if (differenceInMinutes >= 1 && differenceInMinutes < 60) {
     return `${differenceInMinutes} min ago`
+  }
+
+  if (differenceInMinutes >= 60 && differenceInMinutes < 24 * 60) {
+    const hours = Math.floor(differenceInMinutes / 60)
+
+    return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`
   }
 
   return new Intl.DateTimeFormat('en-GB', {
@@ -157,20 +164,35 @@ export function TimelineItem({
   severity,
   metadata,
   isLast = false,
+  compact = false,
 }: TimelineItemProps) {
   const entityLabel = relation?.subtitle || formatEntityType(entityType)
   const priority = entityType === ActivityEntityTypes.TASK ? getPriority(metadata) : null
   const formattedDescription = formatDescription(description)
 
   return (
-    <div className="relative grid grid-cols-[20px_minmax(0,1fr)] gap-4 pb-8 last:pb-0">
+    <div
+      className={[
+        'relative grid grid-cols-[20px_minmax(0,1fr)] gap-4 last:pb-0',
+        compact ? 'pb-5' : 'pb-8',
+      ].join(' ')}
+    >
       <div className="relative flex justify-center">
         <span
-          className={`relative z-10 mt-1.5 h-2.5 w-2.5 rounded-full ${getDotClassName(severity)}`}
+          className={[
+            'relative z-10 rounded-full',
+            compact ? 'mt-1.5 h-2 w-2' : 'mt-1.5 h-2.5 w-2.5',
+            getDotClassName(severity),
+          ].join(' ')}
         />
 
         {!isLast ? (
-          <span className="absolute bottom-0 left-1/2 top-4 w-px -translate-x-1/2 bg-neutral-200" />
+          <span
+            className={[
+              'absolute bottom-0 left-1/2 w-px -translate-x-1/2 bg-neutral-200',
+              compact ? 'top-3.5' : 'top-4',
+            ].join(' ')}
+          />
         ) : null}
       </div>
 
@@ -206,22 +228,51 @@ export function TimelineItem({
           </time>
         </div>
 
-        {formattedDescription ? (
-          <p className="mt-2 text-sm leading-6 text-neutral-600">{formattedDescription}</p>
+        {relation?.title ? (
+          <p
+            className={[
+              'font-medium text-neutral-800',
+              compact ? 'mt-1 text-xs' : 'mt-2 text-sm',
+            ].join(' ')}
+          >
+            {relation.title}
+          </p>
         ) : null}
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-          {userName ? <p className="text-xs text-neutral-500">{userName}</p> : null}
+        {formattedDescription ? (
+          <p
+            className={[
+              'text-neutral-600',
+              compact ? 'mt-1 text-sm leading-5' : 'mt-2 text-sm leading-6',
+            ].join(' ')}
+          >
+            {formattedDescription}
+          </p>
+        ) : null}
 
-          {relation?.href && entityType !== ActivityEntityTypes.PROPERTY ? (
-            <Link
-              href={relation.href}
-              className="text-xs font-semibold text-neutral-950 underline-offset-4 hover:underline"
-            >
-              Open {entityLabel.toLowerCase()} →
-            </Link>
-          ) : null}
-        </div>
+        {!compact && (userName || relation?.href) ? (
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+            {userName ? <p className="text-xs text-neutral-500">{userName}</p> : null}
+
+            {relation?.href ? (
+              <Link
+                href={relation.href}
+                className="text-xs font-semibold text-neutral-950 underline-offset-4 hover:underline"
+              >
+                Open {entityLabel.toLowerCase()} →
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
+
+        {compact && relation?.href ? (
+          <Link
+            href={relation.href}
+            className="mt-2 inline-flex text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-700 underline-offset-4 hover:text-neutral-950 hover:underline"
+          >
+            Open {entityLabel.toLowerCase()} →
+          </Link>
+        ) : null}
       </div>
     </div>
   )
