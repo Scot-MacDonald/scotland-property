@@ -5,9 +5,36 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 import { BuyerQuickActions, BuyerStatCard } from '@/components/BuyerWorkspace/Dashboard'
-import { BuyerWorkspacePanel, BuyerWorkspaceSectionTitle } from '@/components/BuyerWorkspace/Shared'
-import { RecentlyViewedPreview } from '@/components/RecentlyViewedPreview'
+import {
+  RecentlyViewedPreview,
+  type RecentlyViewedProperty,
+} from '@/components/BuyerWorkspace/RecentlyViewed'
+import {
+  BuyerWorkspacePanel,
+  BuyerWorkspaceSectionTitle,
+} from '@/components/BuyerWorkspace/Shared'
 import { SavedPropertiesPreview } from '@/components/SavedPropertiesPreview'
+
+function getRelationshipId(value: unknown): string | null {
+  if (!value) {
+    return null
+  }
+
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (typeof value === 'object' && 'id' in value && typeof value.id === 'string') {
+    return value.id
+  }
+
+  return null
+}
+
+type RecentlyViewedEntry = {
+  property?: unknown
+  viewedAt?: string | null
+}
 
 export default async function AccountPage() {
   const payload = await getPayload({
@@ -22,17 +49,93 @@ export default async function AccountPage() {
     redirect('/login')
   }
 
-  const savedPropertiesCount = Array.isArray(user.savedProperties) ? user.savedProperties.length : 0
+  const buyer = await payload.findByID({
+    collection: 'buyers',
+    id: user.id,
+    depth: 0,
+    overrideAccess: true,
+  })
 
-  const savedSearchesCount = Array.isArray(user.savedSearches) ? user.savedSearches.length : 0
+  const savedPropertiesCount = Array.isArray(buyer.savedProperties)
+    ? buyer.savedProperties.length
+    : 0
+
+  const savedSearchesCount = Array.isArray(buyer.savedSearches)
+    ? buyer.savedSearches.length
+    : 0
+
+  const recentlyViewedEntries = Array.isArray(buyer.recentlyViewed)
+    ? (buyer.recentlyViewed as RecentlyViewedEntry[])
+        .map((entry) => {
+          const propertyId = getRelationshipId(entry.property)
+
+          if (!propertyId || !entry.viewedAt) {
+            return null
+          }
+
+          return {
+            propertyId,
+            viewedAt: entry.viewedAt,
+          }
+        })
+        .filter(
+          (
+            entry,
+          ): entry is {
+            propertyId: string
+            viewedAt: string
+          } => Boolean(entry),
+        )
+        .slice(0, 3)
+    : []
+
+  let recentlyViewedProperties: RecentlyViewedProperty[] = []
+
+  if (recentlyViewedEntries.length > 0) {
+    const result = await payload.find({
+      collection: 'properties',
+      depth: 2,
+      limit: recentlyViewedEntries.length,
+      overrideAccess: true,
+      pagination: false,
+      where: {
+        or: recentlyViewedEntries.map((entry) => ({
+          id: {
+            equals: entry.propertyId,
+          },
+        })),
+      },
+    })
+
+    const propertiesById = new Map(
+      result.docs.map((property) => [String(property.id), property]),
+    )
+
+    recentlyViewedProperties = recentlyViewedEntries
+      .map((entry) => {
+        const property = propertiesById.get(entry.propertyId)
+
+        if (!property) {
+          return null
+        }
+
+        return {
+          ...property,
+          viewedAt: entry.viewedAt,
+        } as unknown as RecentlyViewedProperty
+      })
+      .filter((property): property is RecentlyViewedProperty => Boolean(property))
+  }
 
   return (
     <div className="space-y-14">
       <header className="border-b border-black/10 pb-10">
-        <p className="text-xs uppercase tracking-[0.3em] text-black/40">My Property Hub</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-black/40">
+          My Property Hub
+        </p>
 
         <h1 className="mt-4 max-w-4xl text-4xl font-medium tracking-tight md:text-6xl">
-          Welcome back{user.name ? `, ${user.name}` : ''}
+          Welcome back{buyer.name ? `, ${buyer.name}` : ''}
         </h1>
 
         <p className="mt-5 max-w-2xl text-base leading-7 text-black/55">
@@ -115,7 +218,7 @@ export default async function AccountPage() {
         />
 
         <div className="p-6">
-          <RecentlyViewedPreview />
+          <RecentlyViewedPreview properties={recentlyViewedProperties} />
         </div>
       </BuyerWorkspacePanel>
     </div>

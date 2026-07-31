@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import { PropertyCardSlider } from '@/components/PropertyCardSlider'
+import { formatRelativeViewedTime } from '@/lib/date/formatRelativeViewedTime'
 
 import type {
   RecentlyViewedLocation,
@@ -57,58 +58,6 @@ function getStatusLabel(status: RecentlyViewedProperty['status']) {
   }
 }
 
-function formatViewedAt(value: string) {
-  const viewedAt = new Date(value)
-
-  if (Number.isNaN(viewedAt.getTime())) {
-    return 'Viewed recently'
-  }
-
-  const difference = Date.now() - viewedAt.getTime()
-  const minute = 60 * 1000
-  const hour = 60 * minute
-  const day = 24 * hour
-  const week = 7 * day
-
-  if (difference < minute) {
-    return 'Viewed just now'
-  }
-
-  if (difference < hour) {
-    const minutes = Math.floor(difference / minute)
-
-    return `Viewed ${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`
-  }
-
-  if (difference < day) {
-    const hours = Math.floor(difference / hour)
-
-    return `Viewed ${hours} ${hours === 1 ? 'hour' : 'hours'} ago`
-  }
-
-  if (difference < 2 * day) {
-    return 'Viewed yesterday'
-  }
-
-  if (difference < week) {
-    const days = Math.floor(difference / day)
-
-    return `Viewed ${days} days ago`
-  }
-
-  if (difference < 5 * week) {
-    const weeks = Math.floor(difference / week)
-
-    return `Viewed ${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`
-  }
-
-  return `Viewed ${new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(viewedAt)}`
-}
-
 export function RecentlyViewedCard({ property }: RecentlyViewedCardProps) {
   const title = property.title?.trim() || property.reference?.trim() || 'Untitled property'
 
@@ -162,8 +111,11 @@ export function RecentlyViewedCard({ property }: RecentlyViewedCardProps) {
 
       <div className="flex flex-1 flex-col p-5 md:p-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-black/40">
-            {formatViewedAt(property.viewedAt)}
+          <p
+            className="text-xs uppercase tracking-[0.2em] text-black/40"
+            suppressHydrationWarning
+          >
+            {formatRelativeViewedTime(property.viewedAt)}
           </p>
 
           <p className="mt-4 text-2xl font-medium tracking-tight">

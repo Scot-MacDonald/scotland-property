@@ -1,4 +1,5 @@
 export { RecentlyViewedCard } from './RecentlyViewedCard'
 export { RecentlyViewedEmptyState } from './RecentlyViewedEmptyState'
 export { RecentlyViewedGrid } from './RecentlyViewedGrid'
+export { RecentlyViewedPreview } from './RecentlyViewedPreview'
 export type { RecentlyViewedProperty } from './types'
