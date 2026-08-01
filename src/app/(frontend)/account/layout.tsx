@@ -23,24 +23,52 @@ export default async function AccountLayout({ children }: AccountLayoutProps) {
     redirect('/login')
   }
 
-  const buyer = await payload.findByID({
-    collection: 'buyers',
-    id: user.id,
-    depth: 0,
-    overrideAccess: true,
-  })
+  const [buyer, viewingsResult, offersResult] = await Promise.all([
+    payload.findByID({
+      collection: 'buyers',
+      id: user.id,
+      depth: 0,
+      overrideAccess: true,
+    }),
+
+    payload.find({
+      collection: 'viewings',
+      depth: 0,
+      limit: 0,
+      pagination: true,
+      overrideAccess: true,
+      where: {
+        buyer: {
+          equals: String(user.id),
+        },
+      },
+    }),
+
+    payload.find({
+      collection: 'offers',
+      depth: 0,
+      limit: 0,
+      pagination: true,
+      overrideAccess: true,
+      where: {
+        buyer: {
+          equals: String(user.id),
+        },
+      },
+    }),
+  ])
 
   const savedPropertiesCount = Array.isArray(buyer.savedProperties)
     ? buyer.savedProperties.length
     : 0
 
-  const savedSearchesCount = Array.isArray(buyer.savedSearches)
-    ? buyer.savedSearches.length
-    : 0
+  const savedSearchesCount = Array.isArray(buyer.savedSearches) ? buyer.savedSearches.length : 0
 
-  const recentlyViewedCount = Array.isArray(buyer.recentlyViewed)
-    ? buyer.recentlyViewed.length
-    : 0
+  const recentlyViewedCount = Array.isArray(buyer.recentlyViewed) ? buyer.recentlyViewed.length : 0
+
+  const viewingsCount = viewingsResult.totalDocs
+
+  const offersCount = offersResult.totalDocs
 
   return (
     <>
@@ -59,6 +87,8 @@ export default async function AccountLayout({ children }: AccountLayoutProps) {
           savedProperties: savedPropertiesCount,
           savedSearches: savedSearchesCount,
           recentlyViewed: recentlyViewedCount,
+          viewings: viewingsCount,
+          offers: offersCount,
         }}
       >
         {children}
