@@ -23,10 +23,7 @@ function getRelationshipId(value: unknown): string | null {
   return null
 }
 
-function getPropertyTitle(property: {
-  title?: string | null
-  reference?: string | null
-}): string {
+function getPropertyTitle(property: { title?: string | null; reference?: string | null }): string {
   return property.title?.trim() || property.reference?.trim() || 'Untitled property'
 }
 
@@ -161,24 +158,25 @@ export async function POST(req: Request) {
 
     const buyerAgencyId = getRelationshipId(updatedBuyer.agency)
 
-    if (buyerAgencyId) {
-      const propertyTitle = getPropertyTitle(property)
+    const propertyTitle = getPropertyTitle(property)
 
-      await createActivity({
-        type: ActivityTypes.BUYER_PROPERTY_VIEWED,
-        title: 'Property viewed',
-        description: `${propertyTitle} was viewed by the buyer.`,
-        severity: 'info',
-        entityType: 'buyer',
-        entityId: String(updatedBuyer.id),
-        agency: buyerAgencyId,
-        metadata: {
-          propertyId: String(property.id),
-          propertyTitle,
-          action: 'viewed',
-        },
-      })
-    }
+    await createActivity({
+      type: ActivityTypes.BUYER_PROPERTY_VIEWED,
+      title: 'Property viewed',
+      description: `${propertyTitle} was viewed by the buyer.`,
+      severity: 'info',
+      entityType: 'buyer',
+      entityId: String(updatedBuyer.id),
+
+      buyer: String(updatedBuyer.id),
+      agency: buyerAgencyId || undefined,
+
+      metadata: {
+        propertyId: String(property.id),
+        propertyTitle,
+        action: 'viewed',
+      },
+    })
 
     return NextResponse.json({
       ok: true,

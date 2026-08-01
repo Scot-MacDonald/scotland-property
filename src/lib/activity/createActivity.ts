@@ -1,5 +1,5 @@
-import { getPayload } from 'payload'
 import configPromise from '@payload-config'
+import { getPayload } from 'payload'
 
 import type { ActivityEntityType } from './activityEntityTypes'
 import type { ActivityType } from './activityTypes'
@@ -13,7 +13,8 @@ export type CreateActivityArgs = {
   severity?: ActivitySeverity
   entityType: ActivityEntityType
   entityId: string
-  agency: string
+  buyer?: string
+  agency?: string
   user?: string
   metadata?: Record<string, unknown>
 }
@@ -25,6 +26,7 @@ export async function createActivity({
   severity = 'info',
   entityType,
   entityId,
+  buyer,
   agency,
   user,
   metadata,
@@ -44,6 +46,7 @@ export async function createActivity({
         severity,
         entityType,
         entityId,
+        buyer,
         agency,
         user,
         metadata,

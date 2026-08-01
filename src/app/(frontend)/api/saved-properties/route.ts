@@ -118,24 +118,29 @@ export async function PATCH(req: Request) {
     const propertyTitle = getPropertyTitle(property)
     const saved = !isSaved
 
-    if (buyerAgencyId) {
-      await createActivity({
-        type: saved ? ActivityTypes.BUYER_PROPERTY_SAVED : ActivityTypes.BUYER_PROPERTY_REMOVED,
-        title: saved ? 'Property saved' : 'Saved property removed',
-        description: saved
-          ? `${propertyTitle} was added to the buyer's saved properties.`
-          : `${propertyTitle} was removed from the buyer's saved properties.`,
-        severity: saved ? 'success' : 'info',
-        entityType: 'buyer',
-        entityId: String(updatedBuyer.id),
-        agency: buyerAgencyId,
-        metadata: {
-          propertyId: String(property.id),
-          propertyTitle,
-          action: saved ? 'saved' : 'removed',
-        },
-      })
-    }
+    await createActivity({
+      type: saved ? ActivityTypes.BUYER_PROPERTY_SAVED : ActivityTypes.BUYER_PROPERTY_REMOVED,
+
+      title: saved ? 'Property saved' : 'Saved property removed',
+
+      description: saved
+        ? `${propertyTitle} was added to the buyer's saved properties.`
+        : `${propertyTitle} was removed from the buyer's saved properties.`,
+
+      severity: saved ? 'success' : 'info',
+
+      entityType: 'buyer',
+      entityId: String(updatedBuyer.id),
+
+      buyer: String(updatedBuyer.id),
+      agency: buyerAgencyId || undefined,
+
+      metadata: {
+        propertyId: String(property.id),
+        propertyTitle,
+        action: saved ? 'saved' : 'removed',
+      },
+    })
 
     return NextResponse.json({
       ok: true,

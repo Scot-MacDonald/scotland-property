@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 
 import { ActivityTypes, createActivity } from '@/lib/activity'
 
-function getRelationshipId(value: unknown) {
+function getRelationshipId(value: unknown): string | null {
   if (!value) return null
 
   if (typeof value === 'string') {
@@ -24,13 +24,7 @@ function getNullableString(value: unknown) {
     return null
   }
 
-  const trimmedValue = value.trim()
-
-  return trimmedValue || null
-}
-
-function getBuyerDisplayName(buyer: { name?: string | null; email?: string | null }) {
-  return buyer.name?.trim() || buyer.email?.trim() || 'Buyer'
+  return value.trim() || null
 }
 
 export async function POST(req: Request) {
@@ -43,11 +37,11 @@ export async function POST(req: Request) {
       headers: await headers(),
     })
 
-    if (!user || user.collection !== 'users') {
+    if (!user || user.collection !== 'buyers') {
       return NextResponse.json(
         {
           ok: false,
-          error: 'Not authorised.',
+          error: 'You must be logged in as a buyer.',
         },
         {
           status: 401,
@@ -56,42 +50,13 @@ export async function POST(req: Request) {
     }
 
     const body = (await req.json()) as Record<string, unknown>
-    const buyerId = String(body.buyerId || '').trim()
-
-    if (!buyerId) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: 'Missing buyer ID.',
-        },
-        {
-          status: 400,
-        },
-      )
-    }
 
     const existingBuyer = await payload.findByID({
       collection: 'buyers',
-      id: buyerId,
+      id: user.id,
       depth: 0,
       overrideAccess: true,
     })
-
-    const isSuperAdmin = user.role === 'super-admin'
-    const agencyId = getRelationshipId(user.agency)
-    const buyerAgencyId = getRelationshipId(existingBuyer.agency)
-
-    if (!isSuperAdmin && agencyId !== buyerAgencyId) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: 'Not authorised.',
-        },
-        {
-          status: 403,
-        },
-      )
-    }
 
     const data: Record<string, unknown> = {}
     const changedFields: string[] = []
@@ -118,7 +83,9 @@ export async function POST(req: Request) {
     }
 
     if ('email' in body) {
-      const email = String(body.email || '').trim()
+      const email = String(body.email || '')
+        .trim()
+        .toLowerCase()
 
       if (!email) {
         return NextResponse.json(
@@ -132,7 +99,7 @@ export async function POST(req: Request) {
         )
       }
 
-      if (email !== existingBuyer.email) {
+      if (email !== existingBuyer.email.toLowerCase()) {
         data.email = email
         changedFields.push('email')
         changes.email = {
@@ -157,42 +124,62 @@ export async function POST(req: Request) {
     }
 
     if (Object.keys(data).length === 0) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: 'No buyer changes were submitted.',
-        },
-        {
-          status: 400,
-        },
-      )
+      return NextResponse.json({
+        ok: true,
+        unchanged: true,
+        buyer: existingBuyer,
+      })
     }
 
     const updatedBuyer = await payload.update({
       collection: 'buyers',
-      id: buyerId,
+      id: user.id,
       depth: 1,
       overrideAccess: true,
-      data,
+      data: {
+        ...data,
+        lastActiveAt: new Date().toISOString(),
+      },
     })
 
-    const buyerName = getBuyerDisplayName(updatedBuyer)
+    const buyerAgencyId = getRelationshipId(updatedBuyer.agency)
+
+    const changedLabels = changedFields.map((field) => {
+      switch (field) {
+        case 'name':
+          return 'name'
+
+        case 'email':
+          return 'email address'
+
+        case 'alerts':
+          return 'property alerts'
+
+        default:
+          return field
+      }
+    })
+
+    const description =
+      changedLabels.length === 1
+        ? `Your ${changedLabels[0]} ${
+            changedLabels[0] === 'property alerts' ? 'were' : 'was'
+          } updated.`
+        : `Your ${changedLabels.join(', ')} were updated.`
 
     await createActivity({
       type: ActivityTypes.BUYER_UPDATED,
-      title: 'Buyer profile updated',
-      description: `${buyerName}'s ${changedFields.join(', ')} ${
-        changedFields.length === 1 ? 'was' : 'were'
-      } updated.`,
+      title: 'Profile updated',
+      description,
       severity: 'info',
       entityType: 'buyer',
       entityId: String(updatedBuyer.id),
       buyer: String(updatedBuyer.id),
       agency: buyerAgencyId || undefined,
-      user: String(user.id),
       metadata: {
         changedFields,
         changes,
+        source: 'buyer-profile',
       },
     })
 
@@ -201,9 +188,9 @@ export async function POST(req: Request) {
       buyer: updatedBuyer,
     })
   } catch (error: unknown) {
-    console.error('Update buyer error:', error)
+    console.error('Update buyer profile error:', error)
 
-    const message = error instanceof Error ? error.message : 'Could not update buyer.'
+    const message = error instanceof Error ? error.message : 'Could not update your profile.'
 
     return NextResponse.json(
       {
