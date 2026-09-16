@@ -130,7 +130,7 @@ export default async function BuyerViewingsPage() {
     })
     .filter((viewing): viewing is BuyerViewing => Boolean(viewing))
 
-  const now = Date.now()
+  const now = new Date().getTime()
 
   const upcomingViewings = viewings
     .filter(

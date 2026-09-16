@@ -3,8 +3,7 @@
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
-
+import React, { useEffect, useState, useSyncExternalStore } from 'react'
 import type { Header } from '@/payload-types'
 
 import { Logo } from '@/components/Logo/Logo'
@@ -24,16 +23,17 @@ interface HeaderClientProps {
 export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   const { headerTheme, setHeaderTheme } = useHeaderTheme()
 
-  const [mounted, setMounted] = useState(false)
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  )
+
   const [isBuyerLoggedIn, setIsBuyerLoggedIn] = useState(false)
   const [loadingAuth, setLoadingAuth] = useState(true)
 
   const pathname = usePathname()
   const router = useRouter()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   useEffect(() => {
     setHeaderTheme(null)
