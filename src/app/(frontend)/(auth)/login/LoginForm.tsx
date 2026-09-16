@@ -2,6 +2,7 @@
 
 import type { FormEvent } from 'react'
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { loginAction } from './actions'
@@ -33,9 +34,7 @@ export function LoginForm() {
         return
       }
 
-      // Future 2FA challenge goes here before the final redirect.
-      router.replace('/dashboard')
-
+      router.replace('/account')
       router.refresh()
     } catch {
       setError('Unable to sign in. Please try again.')
@@ -75,13 +74,6 @@ export function LoginForm() {
           >
             Password
           </label>
-
-          <label
-            htmlFor="password"
-            className="block text-xs uppercase tracking-[0.2em] text-black/50"
-          >
-            Password
-          </label>
         </div>
 
         <input
@@ -97,11 +89,11 @@ export function LoginForm() {
         />
       </div>
 
-      {error && (
+      {error ? (
         <div role="alert" className="border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
-      )}
+      ) : null}
 
       <button
         type="submit"
@@ -110,6 +102,13 @@ export function LoginForm() {
       >
         {isSubmitting ? 'Signing in…' : 'Sign in'}
       </button>
+
+      <p className="text-center text-sm text-black/50">
+        Don&apos;t have a buyer account?{' '}
+        <Link href="/register" className="font-medium text-black underline underline-offset-4">
+          Create an account
+        </Link>
+      </p>
     </form>
   )
 }

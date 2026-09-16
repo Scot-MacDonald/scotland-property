@@ -39,13 +39,15 @@ export function AgencyLoginForm() {
 
     const role = data?.user?.role
 
-    if (role !== 'agency-admin' && role !== 'agent' && role !== 'super-admin') {
+    const allowedRoles = new Set(['agency-owner', 'agency-staff', 'super-admin'])
+
+    if (typeof role !== 'string' || !allowedRoles.has(role)) {
       setStatus('error')
       setError('This login is only for agency users.')
       return
     }
 
-    router.push('/agency/account')
+    router.push('/dashboard')
     router.refresh()
   }
 

@@ -1,7 +1,10 @@
 import { redirect } from 'next/navigation'
 
 import { OfferCreateForm } from '@/components/DashboardV2/Offers'
-import { getRelationshipId, getWorkspaceContext } from '@/lib/dashboard'
+import { DashboardHeader } from '@/components/DashboardV2/Layout/DashboardHeader'
+import { DashboardLayout } from '@/components/DashboardV2/Layout/DashboardLayout'
+import { DashboardWorkspace } from '@/components/DashboardV2/Layout/DashboardWorkspace'
+import { getDashboardContext, getRelationshipId, getWorkspaceContext } from '@/lib/dashboard'
 
 type NewOfferPageProps = {
   searchParams: Promise<{
@@ -12,7 +15,7 @@ type NewOfferPageProps = {
 export default async function NewOfferPage({ searchParams }: NewOfferPageProps) {
   const { property: requestedPropertyId } = await searchParams
 
-  const { payload, agencyId, isSuperAdmin } = await getWorkspaceContext()
+  const { payload, user, agencyId, isSuperAdmin } = await getWorkspaceContext()
 
   if (!isSuperAdmin && !agencyId) {
     redirect('/dashboard')
@@ -26,7 +29,12 @@ export default async function NewOfferPage({ searchParams }: NewOfferPageProps) 
         },
       }
 
-  const [propertyResult, buyerResult, agentResult] = await Promise.all([
+  const [dashboard, propertyResult, buyerResult, agentResult] = await Promise.all([
+    getDashboardContext({
+      payload,
+      user,
+    }),
+
     payload.find({
       collection: 'properties',
       depth: 0,
@@ -97,30 +105,32 @@ export default async function NewOfferPage({ searchParams }: NewOfferPageProps) 
       ? String(selectedProperty.id)
       : undefined
 
+  const agencyName =
+    dashboard.agency?.name || (typeof user.name === 'string' ? user.name : null) || 'Your Agency'
+
   return (
-    <main className="min-h-screen bg-[#f4f2ed]">
-      <div className="mx-auto max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
-        <div className="mb-10 border-b border-black/10 pb-8">
-          <p className="text-xs uppercase tracking-[0.24em] text-black/45">Offers</p>
+    <DashboardLayout agencyName={agencyName} navigationCounts={dashboard.navigationCounts}>
+      <DashboardHeader
+        eyebrow="Offers"
+        title="Create offer"
+        description="Record a buyer’s offer, assign an agent and begin the negotiation workflow."
+        actions={[
+          {
+            label: 'Back to offers',
+            href: '/dashboard/offers',
+            variant: 'secondary',
+          },
+        ]}
+      />
 
-          <div className="mt-3 flex flex-col justify-between gap-5 md:flex-row md:items-end">
-            <div>
-              <h1 className="text-4xl font-medium tracking-tight">Create offer</h1>
-
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-black/60">
-                Record a buyer&apos;s offer, assign an agent and begin the negotiation workflow.
-              </p>
-            </div>
-          </div>
-        </div>
-
+      <DashboardWorkspace>
         <OfferCreateForm
           properties={properties}
           buyers={buyers}
           agents={agents}
           initialPropertyId={initialPropertyId}
         />
-      </div>
-    </main>
+      </DashboardWorkspace>
+    </DashboardLayout>
   )
 }

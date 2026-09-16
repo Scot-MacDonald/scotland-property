@@ -1106,6 +1106,16 @@ export interface Buyer {
   lastActiveAt?: string | null;
   savedProperties?: (string | Property)[] | null;
   /**
+   * The most recent properties viewed by this buyer.
+   */
+  recentlyViewed?:
+    | {
+        property: string | Property;
+        viewedAt: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * Property enquiries submitted by this buyer.
    */
   propertyEnquiries?: (string | Enquiry)[] | null;
@@ -1261,7 +1271,14 @@ export interface Activity {
    * ID of the record associated with this activity.
    */
   entityId: string;
-  agency: string | Agency;
+  /**
+   * Buyer who owns or is associated with this activity.
+   */
+  buyer?: (string | null) | Buyer;
+  /**
+   * Agency associated with this activity, when applicable.
+   */
+  agency?: (string | null) | Agency;
   /**
    * The dashboard user who caused the activity.
    */
@@ -2232,6 +2249,13 @@ export interface BuyersSelect<T extends boolean = true> {
   agency?: T;
   lastActiveAt?: T;
   savedProperties?: T;
+  recentlyViewed?:
+    | T
+    | {
+        property?: T;
+        viewedAt?: T;
+        id?: T;
+      };
   propertyEnquiries?: T;
   savedSearches?:
     | T
@@ -2352,6 +2376,7 @@ export interface ActivitiesSelect<T extends boolean = true> {
   severity?: T;
   entityType?: T;
   entityId?: T;
+  buyer?: T;
   agency?: T;
   user?: T;
   metadata?: T;

@@ -2,20 +2,40 @@
 
 import { useEffect } from 'react'
 
-const STORAGE_KEY = 'recentlyViewedProperties'
-const MAX_ITEMS = 12
-
-type Props = {
+type TrackRecentlyViewedProps = {
   propertyId: string
 }
 
-export function TrackRecentlyViewed({ propertyId }: Props) {
+export function TrackRecentlyViewed({ propertyId }: TrackRecentlyViewedProps) {
   useEffect(() => {
-    const current: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+    const controller = new AbortController()
 
-    const next = [propertyId, ...current.filter((id) => id !== propertyId)].slice(0, MAX_ITEMS)
+    async function trackPropertyView() {
+      try {
+        await fetch('/api/recently-viewed', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            propertyId,
+          }),
+          signal: controller.signal,
+        })
+      } catch (error: unknown) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return
+        }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+        console.error('Could not track recently viewed property:', error)
+      }
+    }
+
+    void trackPropertyView()
+
+    return () => {
+      controller.abort()
+    }
   }, [propertyId])
 
   return null

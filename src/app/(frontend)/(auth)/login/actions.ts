@@ -6,7 +6,6 @@ import { login } from '@payloadcms/next/auth'
 export type LoginActionResult =
   | {
       success: true
-      role: string | null
     }
   | {
       success: false
@@ -30,20 +29,15 @@ export async function loginAction({
   }
 
   try {
-    const result = await login({
-      collection: 'users',
+    await login({
+      collection: 'buyers',
       config: configPromise,
       email: cleanEmail,
       password,
     })
 
-    const user = result.user as {
-      role?: string | null
-    }
-
     return {
       success: true,
-      role: user.role || null,
     }
   } catch {
     return {

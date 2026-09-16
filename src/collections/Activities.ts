@@ -1,20 +1,36 @@
-import type { CollectionConfig } from 'payload'
+import type { Access, CollectionConfig, Where } from 'payload'
 
-const isSuperAdmin = ({ req }: any) =>
-  req.user?.collection === 'users' && req.user?.role === 'super-admin'
+const isSuperAdmin: Access = ({ req }) =>
+  req.user?.collection === 'users' && req.user.role === 'super-admin'
 
-const agencyOnly = ({ req }: any) => {
-  if (isSuperAdmin({ req })) return true
-
-  const agency = req.user?.collection === 'users' ? req.user?.agency : null
-
-  if (!agency) return false
-
-  return {
-    agency: {
-      equals: typeof agency === 'object' ? agency.id : agency,
-    },
+const activityReadAccess: Access = ({ req }) => {
+  if (req.user?.collection === 'users' && req.user.role === 'super-admin') {
+    return true
   }
+
+  if (req.user?.collection === 'buyers') {
+    const buyerWhere: Where = {
+      buyer: {
+        equals: req.user.id,
+      },
+    }
+
+    return buyerWhere
+  }
+
+  if (req.user?.collection === 'users' && req.user.agency) {
+    const agencyId = typeof req.user.agency === 'object' ? req.user.agency.id : req.user.agency
+
+    const agencyWhere: Where = {
+      agency: {
+        equals: agencyId,
+      },
+    }
+
+    return agencyWhere
+  }
+
+  return false
 }
 
 export const Activities: CollectionConfig = {
@@ -23,11 +39,11 @@ export const Activities: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     group: 'CRM',
-    defaultColumns: ['title', 'entityType', 'type', 'agency', 'createdAt'],
+    defaultColumns: ['title', 'entityType', 'type', 'buyer', 'agency', 'createdAt'],
   },
 
   access: {
-    read: agencyOnly,
+    read: activityReadAccess,
 
     // Activities must only be generated through our server-side helper.
     create: () => false,
@@ -136,11 +152,22 @@ export const Activities: CollectionConfig = {
       },
     },
     {
+      name: 'buyer',
+      type: 'relationship',
+      relationTo: 'buyers',
+      index: true,
+      admin: {
+        description: 'Buyer who owns or is associated with this activity.',
+      },
+    },
+    {
       name: 'agency',
       type: 'relationship',
       relationTo: 'agencies',
-      required: true,
       index: true,
+      admin: {
+        description: 'Agency associated with this activity, when applicable.',
+      },
     },
     {
       name: 'user',
