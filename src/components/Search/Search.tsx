@@ -23,7 +23,9 @@ export function Search({
   className = '',
 }: Props) {
   const router = useRouter()
+
   const [query, setQuery] = useState(currentQuery || '')
+  const [showSuggestions, setShowSuggestions] = useState(false)
 
   const filteredSuggestions = suggestions
     .filter((suggestion) => suggestion.label.toLowerCase().includes(query.toLowerCase()))
@@ -34,6 +36,8 @@ export function Search({
 
     const trimmedQuery = query.trim()
 
+    setShowSuggestions(false)
+
     if (!trimmedQuery) {
       router.push('/properties')
       return
@@ -42,12 +46,25 @@ export function Search({
     router.push(`/properties?q=${encodeURIComponent(trimmedQuery)}`)
   }
 
+  function handleSuggestionClick(href: string) {
+    setShowSuggestions(false)
+    router.push(href)
+  }
+
   return (
     <div className={`relative mt-8 w-full max-w-4xl ${className}`}>
       <form onSubmit={handleSubmit} className="flex w-full border-b border-t bg-white">
         <input
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setQuery(event.target.value)
+            setShowSuggestions(true)
+          }}
+          onFocus={() => {
+            if (query.trim()) {
+              setShowSuggestions(true)
+            }
+          }}
           placeholder={placeholder}
           className="flex-1 bg-transparent px-2 py-7 text-2xl font-light outline-none placeholder:text-neutral-400"
         />
@@ -60,13 +77,13 @@ export function Search({
         </button>
       </form>
 
-      {query && filteredSuggestions.length > 0 ? (
+      {showSuggestions && query.trim() && filteredSuggestions.length > 0 ? (
         <div className="absolute left-0 right-0 top-full z-40 border bg-white">
           {filteredSuggestions.map((suggestion) => (
             <button
               key={`${suggestion.type}-${suggestion.label}`}
               type="button"
-              onClick={() => router.push(suggestion.href)}
+              onClick={() => handleSuggestionClick(suggestion.href)}
               className="flex w-full items-center justify-between border-b px-5 py-4 text-left last:border-b-0 hover:bg-neutral-50"
             >
               <span>{suggestion.label}</span>
