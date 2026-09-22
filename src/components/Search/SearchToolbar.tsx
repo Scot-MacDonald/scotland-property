@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useState } from 'react'
 import { FilterDrawer } from '@/components/PropertyFiltersBar/FilterDrawer'
 
@@ -56,19 +55,19 @@ export function SearchToolbar({
 
   return (
     <>
-      <nav className="flex flex-wrap items-center gap-x-10 gap-y-4 border-b border-t py-5 text-sm uppercase tracking-[0.25em]">
+      <nav className="flex h-12 items-stretch text-[10px] font-medium uppercase tracking-[0.22em]">
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="hover:text-neutral-500"
+          className="flex items-center px-5 transition hover:bg-black hover:text-white"
         >
-          Type{currentType ? ' •' : ''}
+          Region{currentRegion ? ' •' : ''}
         </button>
 
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="hover:text-neutral-500"
+          className="flex items-center border-l px-5 transition hover:bg-black hover:text-white"
         >
           Price{currentMinPrice || currentMaxPrice ? ' •' : ''}
         </button>
@@ -76,7 +75,7 @@ export function SearchToolbar({
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="hover:text-neutral-500"
+          className="flex items-center border-l px-5 transition hover:bg-black hover:text-white"
         >
           Beds{currentBedrooms ? ' •' : ''}
         </button>
@@ -84,14 +83,10 @@ export function SearchToolbar({
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="hover:text-neutral-500"
+          className="flex items-center whitespace-nowrap border-l px-5 transition hover:bg-black hover:text-white"
         >
-          Filters{count ? ` (${count})` : ''}
+          More Filters{count ? ` (${count})` : ''}
         </button>
-
-        <Link href="/properties/map" className="hover:text-neutral-500">
-          Map
-        </Link>
       </nav>
 
       <FilterDrawer

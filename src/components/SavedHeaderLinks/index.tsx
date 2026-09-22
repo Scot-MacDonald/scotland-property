@@ -69,12 +69,18 @@ export function SavedHeaderLinks() {
   )
 
   return (
-    <div className="flex flex-wrap gap-3 text-sm">
-      <Link href="/saved" className="border px-4 py-2">
+    <div className="flex h-full flex-wrap text-sm">
+      <Link
+        href="/saved"
+        className="flex h-full items-center border-l px-4 transition hover:bg-black hover:text-white"
+      >
         ♥ Saved Properties {savedProperties > 0 ? `(${savedProperties})` : ''}
       </Link>
 
-      <Link href="/saved-searches" className="border px-4 py-2">
+      <Link
+        href="/saved-searches"
+        className="flex h-full items-center border-l px-4 transition hover:bg-black hover:text-white"
+      >
         🔔 Saved Searches {savedSearches > 0 ? `(${savedSearches})` : ''}
       </Link>
     </div>

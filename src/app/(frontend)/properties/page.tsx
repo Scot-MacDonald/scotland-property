@@ -190,8 +190,11 @@ export default async function PropertiesPage({ searchParams }: Props) {
   })
 
   const selectedRegion = regions.docs.find((region) => String(region.id) === params.region)
+
   const selectedTown = towns.docs.find((town) => String(town.id) === params.town)
+
   const selectedType = propertyTypes.docs.find((type) => String(type.id) === params.type)
+
   const selectedAmenity = amenities.docs.find((amenity) => String(amenity.id) === params.amenities)
 
   const savedSearchLabelParts = [
@@ -214,67 +217,93 @@ export default async function PropertiesPage({ searchParams }: Props) {
     savedSearchLabelParts.length > 0 ? savedSearchLabelParts.join(' · ') : 'All properties'
 
   return (
-    <main className="mx-auto w-full max-w-[1680px] px-4 py-16 md:px-8">
-      <div className="mb-10">
-        <PageHeading
-          eyebrow="Scotland Luxury Estates"
-          title="Properties for Sale in Scotland"
-          description="Discover castles, country estates, waterfront homes, lodges and exceptional residences across Scotland."
-        />
+    <main>
+      {/* Search / filter utility bar */}
+      <div className="mx-auto w-full max-w-[1680px] px-4 md:px-8">
+        <div className="border">
+          <div className="flex flex-col lg:h-12 lg:flex-row lg:items-stretch">
+            <div className="flex shrink-0 items-stretch">
+              <SearchToolbar
+                priceHistogram={priceBuckets}
+                currentRegion={params.region}
+                currentTown={params.town}
+                currentBedrooms={params.bedrooms}
+                currentMinPrice={params.minPrice}
+                currentMaxPrice={params.maxPrice}
+                currentType={params.type}
+                currentAmenities={params.amenities}
+                regions={regions.docs}
+                towns={towns.docs}
+                propertyTypes={propertyTypes.docs}
+                amenities={amenities.docs}
+              />
+            </div>
 
-        <Search currentQuery={params.q} suggestions={searchSuggestions} />
+            <div className="w-full border-t lg:w-[480px] lg:border-l lg:border-t-0">
+              <Search currentQuery={params.q} suggestions={searchSuggestions} embedded />
+            </div>
 
-        <SearchToolbar
-          priceHistogram={priceBuckets}
-          currentRegion={params.region}
-          currentTown={params.town}
-          currentBedrooms={params.bedrooms}
-          currentMinPrice={params.minPrice}
-          currentMaxPrice={params.maxPrice}
-          currentType={params.type}
-          currentAmenities={params.amenities}
-          regions={regions.docs}
-          towns={towns.docs}
-          propertyTypes={propertyTypes.docs}
-          amenities={amenities.docs}
-        />
+            {/* Vertical divider immediately after Search */}
+            <div className="hidden lg:block lg:flex-1 lg:border-l" />
 
-        {params.q ? (
-          <p className="mt-6 text-muted-foreground">
-            Search results for <span className="font-medium text-foreground">“{params.q}”</span>
-          </p>
-        ) : null}
-
-        <p className="mt-2 text-muted-foreground">{properties.totalDocs} properties found</p>
+            <div className="shrink-0 border-t lg:border-t-0">
+              <SavedHeaderLinks />
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <SaveSearchButton
-          searchLabel={savedSearchLabel}
-          searchParams={{
-            region: params.region,
-            town: params.town,
-            type: params.type,
-            minPrice: params.minPrice,
-            maxPrice: params.maxPrice,
-            bedrooms: params.bedrooms,
-            amenities: params.amenities,
-            q: params.q,
-          }}
-        />
+      {/* Page content */}
+      <section className="mx-auto w-full max-w-[1680px] px-4 py-10 md:px-8 md:py-12">
+        <div className="mb-8">
+          <PageHeading
+            eyebrow="Property / Scotland"
+            title="Properties for Sale in Scotland"
+            description="Discover castles, country estates, waterfront homes, lodges and exceptional residences across Scotland."
+          />
 
-        <p className="text-sm text-muted-foreground">Save this search and return to it later.</p>
-      </div>
+          {params.q ? (
+            <p className="mt-6 text-muted-foreground">
+              Search results for <span className="font-medium text-foreground">“{params.q}”</span>
+            </p>
+          ) : null}
 
-      <div className="my-10">
-        <SavedHeaderLinks />
-      </div>
+          <div className="mt-6 flex flex-col gap-4 border-y py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm">
+              <span className="font-medium">{properties.totalDocs}</span>{' '}
+              <span className="text-muted-foreground">
+                {properties.totalDocs === 1 ? 'property found' : 'properties found'}
+              </span>
+            </p>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {properties.docs.map((property) => (
-          <PropertyCard key={property.id} property={property} />
-        ))}
-      </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <SaveSearchButton
+                searchLabel={savedSearchLabel}
+                searchParams={{
+                  region: params.region,
+                  town: params.town,
+                  type: params.type,
+                  minPrice: params.minPrice,
+                  maxPrice: params.maxPrice,
+                  bedrooms: params.bedrooms,
+                  amenities: params.amenities,
+                  q: params.q,
+                }}
+              />
+
+              <span className="text-sm text-muted-foreground">
+                Save this search and return to it later.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {properties.docs.map((property) => (
+            <PropertyCard key={property.id} property={property} />
+          ))}
+        </div>
+      </section>
     </main>
   )
 }

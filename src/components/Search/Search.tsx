@@ -14,6 +14,8 @@ type Props = {
   currentQuery?: string
   placeholder?: string
   className?: string
+  embedded?: boolean
+  searchPath?: string
 }
 
 export function Search({
@@ -21,6 +23,8 @@ export function Search({
   currentQuery,
   placeholder = 'Search towns, regions, postcodes or property names',
   className = '',
+  embedded = false,
+  searchPath = '/properties',
 }: Props) {
   const router = useRouter()
 
@@ -39,21 +43,36 @@ export function Search({
     setShowSuggestions(false)
 
     if (!trimmedQuery) {
-      router.push('/properties')
+      router.push(searchPath)
       return
     }
 
-    router.push(`/properties?q=${encodeURIComponent(trimmedQuery)}`)
+    router.push(`${searchPath}?q=${encodeURIComponent(trimmedQuery)}`)
   }
 
-  function handleSuggestionClick(href: string) {
+  function handleSuggestionClick(suggestion: Suggestion) {
+    setQuery(suggestion.label)
     setShowSuggestions(false)
-    router.push(href)
+
+    if (searchPath === '/properties/map') {
+      const url = new URL(suggestion.href, window.location.origin)
+      const suggestionQuery = url.searchParams.get('q')
+
+      if (suggestionQuery) {
+        router.push(`${searchPath}?q=${encodeURIComponent(suggestionQuery)}`)
+        return
+      }
+    }
+
+    router.push(suggestion.href)
   }
 
   return (
-    <div className={`relative mt-8 w-full max-w-4xl ${className}`}>
-      <form onSubmit={handleSubmit} className="flex w-full border-b border-t bg-white">
+    <div className={`relative w-full ${embedded ? '' : 'mt-8 max-w-3xl'} ${className}`}>
+      <form
+        onSubmit={handleSubmit}
+        className={`flex w-full bg-white ${embedded ? 'h-12' : 'border'}`}
+      >
         <input
           value={query}
           onChange={(event) => {
@@ -66,29 +85,33 @@ export function Search({
             }
           }}
           placeholder={placeholder}
-          className="flex-1 bg-transparent px-2 py-7 text-2xl font-light outline-none placeholder:text-neutral-400"
+          className={`min-w-0 flex-1 bg-transparent outline-none placeholder:text-neutral-400 ${
+            embedded ? 'px-5 text-sm' : 'px-4 py-4 text-base'
+          }`}
         />
 
         <button
           type="submit"
-          className="border-l px-10 text-xs uppercase tracking-[0.3em] transition hover:bg-black hover:text-white"
+          className={`shrink-0 border-l text-[10px] font-medium uppercase tracking-[0.22em] transition hover:bg-black hover:text-white ${
+            embedded ? 'px-5' : 'px-7'
+          }`}
         >
           Search
         </button>
       </form>
 
       {showSuggestions && query.trim() && filteredSuggestions.length > 0 ? (
-        <div className="absolute left-0 right-0 top-full z-40 border bg-white">
+        <div className="absolute -left-px -right-px top-full z-[1100] border bg-white">
           {filteredSuggestions.map((suggestion) => (
             <button
               key={`${suggestion.type}-${suggestion.label}`}
               type="button"
-              onClick={() => handleSuggestionClick(suggestion.href)}
-              className="flex w-full items-center justify-between border-b px-5 py-4 text-left last:border-b-0 hover:bg-neutral-50"
+              onClick={() => handleSuggestionClick(suggestion)}
+              className="flex h-12 w-full items-center justify-between border-b px-5 text-left transition last:border-b-0 hover:bg-black hover:text-white"
             >
               <span>{suggestion.label}</span>
 
-              <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              <span className="text-[10px] uppercase tracking-[0.2em] opacity-60">
                 {suggestion.type}
               </span>
             </button>
