@@ -1,54 +1,79 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import Link from 'next/link'
-import { Search } from '@/components/Search'
-import { SavedHeaderLinks } from '@/components/SavedHeaderLinks'
+
 import { PropertyMapClient } from '@/components/PropertyMapClient'
 import { PropertyCard } from '@/components/Property/PropertyCard'
+import { SavedHeaderLinks } from '@/components/SavedHeaderLinks'
+import { Search, SearchToolbar } from '@/components/Search'
 
 export default async function HomePage() {
   const payload = await getPayload({ config: configPromise })
 
-  const properties = await payload.find({
-    collection: 'properties',
-    depth: 1,
-    limit: 7,
-    sort: '-createdAt',
-    overrideAccess: true,
-  })
+  const [properties, agencies, regions, towns, propertyTypes, amenities, allPrices] =
+    await Promise.all([
+      payload.find({
+        collection: 'properties',
+        depth: 1,
+        limit: 7,
+        sort: '-createdAt',
+        overrideAccess: true,
+      }),
 
-  const agencies = await payload.find({
-    collection: 'agencies',
-    depth: 1,
-    limit: 6,
-    where: {
-      featured: {
-        equals: true,
-      },
-    },
-    overrideAccess: true,
-  })
+      payload.find({
+        collection: 'agencies',
+        depth: 1,
+        limit: 6,
+        where: {
+          featured: {
+            equals: true,
+          },
+        },
+        overrideAccess: true,
+      }),
 
-  const regions = await payload.find({
-    collection: 'regions',
-    limit: 100,
-    sort: 'name',
-    overrideAccess: true,
-  })
+      payload.find({
+        collection: 'regions',
+        depth: 0,
+        limit: 100,
+        sort: 'name',
+        overrideAccess: true,
+      }),
 
-  const towns = await payload.find({
-    collection: 'towns',
-    limit: 100,
-    sort: 'name',
-    overrideAccess: true,
-  })
+      payload.find({
+        collection: 'towns',
+        depth: 0,
+        limit: 200,
+        sort: 'name',
+        overrideAccess: true,
+      }),
 
-  const propertyTypes = await payload.find({
-    collection: 'property-types',
-    limit: 100,
-    sort: 'name',
-    overrideAccess: true,
-  })
+      payload.find({
+        collection: 'property-types',
+        depth: 0,
+        limit: 100,
+        sort: 'name',
+        overrideAccess: true,
+      }),
+
+      payload.find({
+        collection: 'amenities',
+        depth: 0,
+        limit: 200,
+        sort: 'name',
+        overrideAccess: true,
+      }),
+
+      payload.find({
+        collection: 'properties',
+        depth: 0,
+        limit: 1000,
+        overrideAccess: true,
+        select: {
+          price: true,
+        },
+      }),
+    ])
 
   const searchSuggestions = [
     ...towns.docs.map((town) => ({
@@ -70,191 +95,176 @@ export default async function HomePage() {
     })),
   ]
 
-  const totalProperties = await payload.count({
-    collection: 'properties',
-    overrideAccess: true,
+  /*
+   * Build the price histogram used by the filter drawer.
+   */
+  const priceBuckets = Array<number>(12).fill(0)
+  const maxHistogramPrice = 10000000
+
+  allPrices.docs.forEach((property) => {
+    if (!property.price) return
+
+    const bucketIndex = Math.min(
+      11,
+      Math.floor((property.price / maxHistogramPrice) * priceBuckets.length),
+    )
+
+    priceBuckets[bucketIndex] += 1
   })
 
-  const totalAgencies = await payload.count({
-    collection: 'agencies',
-    overrideAccess: true,
-  })
-
-  const totalRegions = await payload.count({
-    collection: 'regions',
-    overrideAccess: true,
-  })
-
-  const agencyPropertyCounts = await Promise.all(
-    agencies.docs.map(async (agency) => {
-      const result = await payload.count({
-        collection: 'properties',
-        where: {
-          agency: {
-            equals: agency.id,
-          },
-        },
-        overrideAccess: true,
-      })
-
-      return {
-        agencyId: agency.id,
-        count: result.totalDocs,
-      }
-    }),
-  )
-
-  const propertyCountByAgency = Object.fromEntries(
-    agencyPropertyCounts.map(({ agencyId, count }) => [agencyId, count]),
-  )
-
-  const mapProperties = properties.docs.map((property) => ({
-    id: property.id,
-    title: property.title,
-    slug: property.slug,
-    price: property.price,
-    latitude: property.latitude,
-    longitude: property.longitude,
-    bedrooms: property.bedrooms,
-    bathrooms: property.bathrooms,
-    image:
-      typeof property.featuredImage === 'object' && property.featuredImage?.url
-        ? property.featuredImage.url
-        : null,
-  }))
+  /*
+   * Properties with coordinates for the homepage map.
+   */
+  const mapProperties = properties.docs
+    .filter(
+      (property) => typeof property.latitude === 'number' && typeof property.longitude === 'number',
+    )
+    .map((property) => ({
+      id: String(property.id),
+      title: property.title,
+      slug: property.slug,
+      price: property.price,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      latitude: property.latitude as number,
+      longitude: property.longitude as number,
+      featuredImage: property.featuredImage,
+    }))
 
   return (
     <main>
-      <section className="mx-auto w-full max-w-[1680px] px-4 py-16 md:px-8">
-        <p className="mb-4 text-sm uppercase tracking-[0.25em] text-muted-foreground">
-          Scotland Property
-        </p>
+      {/* Search / filter utility bar */}
+      <div className="mx-auto w-full max-w-[1680px] px-4 md:px-8">
+        <div className="border">
+          <div className="flex flex-col lg:h-12 lg:flex-row lg:items-stretch">
+            <div className="flex shrink-0 items-stretch">
+              <SearchToolbar
+                priceHistogram={priceBuckets}
+                regions={regions.docs}
+                towns={towns.docs}
+                propertyTypes={propertyTypes.docs}
+                amenities={amenities.docs}
+              />
+            </div>
 
-        <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="max-w-5xl text-5xl font-medium tracking-tight md:text-7xl">
-              Luxury homes for sale in Scotland
-            </h1>
+            <div className="w-full border-t lg:w-[480px] lg:border-l lg:border-t-0">
+              <Search suggestions={searchSuggestions} embedded />
+            </div>
 
-            <p className="mt-6 max-w-2xl text-xl leading-relaxed text-muted-foreground">
-              Discover estates, castles, country houses and exceptional homes across Scotland.
-            </p>
+            {/* Empty grid area with divider immediately after Search */}
+            <div className="hidden lg:block lg:flex-1 lg:border-l" />
 
-            <Search suggestions={searchSuggestions} placeholder="⌕ Search Scotland..." />
-
-            <div className="mt-10 grid max-w-3xl grid-cols-3 border-t border-b py-6">
-              <div>
-                <p className="text-3xl font-medium">{totalProperties.totalDocs}+</p>
-                <p className="text-sm text-muted-foreground">Properties</p>
-              </div>
-
-              <div>
-                <p className="text-3xl font-medium">{totalAgencies.totalDocs}+</p>
-                <p className="text-sm text-muted-foreground">Agencies</p>
-              </div>
-
-              <div>
-                <p className="text-3xl font-medium">{totalRegions.totalDocs}</p>
-                <p className="text-sm text-muted-foreground">Regions</p>
-              </div>
+            <div className="shrink-0 border-t lg:border-t-0">
+              <SavedHeaderLinks />
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Link href="/properties" className="bg-black px-6 py-3 text-white">
-              Browse Properties
-            </Link>
+      {/* Homepage content */}
+      <section className="mx-auto w-full max-w-[1680px] px-4 pb-16 pt-8 md:px-8 md:pt-10">
+        {/* Intro */}
+        <div>
+          <p className="mb-3 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            Property / Scotland
+          </p>
 
-            <Link href="/properties/map" className="border px-6 py-3">
-              Map Search
-            </Link>
+          <h1 className="text-4xl font-medium tracking-tight md:text-5xl">
+            Property for sale in Scotland
+          </h1>
+        </div>
+
+        <div className="mt-7 border-b" />
+
+        {/* Latest properties */}
+        <div className="flex items-end justify-between pb-5 pt-7">
+          <div>
+            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.25em] text-muted-foreground">
+              Latest
+            </p>
+
+            <h2 className="text-2xl font-medium tracking-tight md:text-3xl">
+              Properties in Scotland
+            </h2>
           </div>
-        </div>
 
-        <div className="my-10">
-          <SavedHeaderLinks />
-        </div>
-
-        <div className="grid gap-3 lg:grid-cols-3">
-          {properties.docs.slice(0, 2).map((property) => (
-            <PropertyCard key={property.id} property={property} />
-          ))}
-
-          <div className="min-h-[520px] overflow-hidden border lg:row-span-2">
-            <PropertyMapClient properties={mapProperties} />
-          </div>
-
-          {properties.docs.slice(2, 4).map((property) => (
-            <PropertyCard key={property.id} property={property} />
-          ))}
-        </div>
-
-        <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {properties.docs.slice(4, 7).map((property) => (
-            <PropertyCard key={property.id} property={property} />
-          ))}
-        </div>
-
-        <div className="mt-10">
-          <Link href="/properties" className="inline-block border px-6 py-3">
+          <Link
+            href="/properties"
+            className="text-[10px] font-medium uppercase tracking-[0.22em] underline-offset-4 hover:underline"
+          >
             View all properties
           </Link>
         </div>
 
-        <section className="mt-24 border-t pt-16">
-          <div className="mb-8 flex items-end justify-between">
-            <div>
-              <p className="mb-2 text-sm uppercase tracking-[0.25em] text-muted-foreground">
-                Our Partners
-              </p>
-
-              <h2 className="text-3xl font-semibold">Featured Agencies</h2>
-            </div>
+        {/* Properties + map */}
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.8fr)]">
+          <div className="grid gap-6 md:grid-cols-2">
+            {properties.docs.slice(0, 4).map((property) => (
+              <PropertyCard key={property.id} property={property} />
+            ))}
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {agencies.docs.map((agency) => {
-              const logo =
-                typeof agency.logo === 'object' && agency.logo?.url ? agency.logo.url : null
+          <div className="min-h-[520px] overflow-hidden border">
+            <PropertyMapClient properties={mapProperties} />
+          </div>
+        </div>
 
-              const propertyCount = propertyCountByAgency[agency.id] ?? 0
+        {/* More properties */}
+        {properties.docs.length > 4 ? (
+          <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {properties.docs.slice(4).map((property) => (
+              <PropertyCard key={property.id} property={property} />
+            ))}
+          </div>
+        ) : null}
 
-              return (
+        {/* Agencies */}
+        {agencies.docs.length > 0 ? (
+          <section className="mt-20 border-t pt-8">
+            <div className="mb-8 flex items-end justify-between">
+              <div>
+                <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.25em] text-muted-foreground">
+                  Agencies
+                </p>
+
+                <h2 className="text-2xl font-medium tracking-tight md:text-3xl">
+                  Featured agencies
+                </h2>
+              </div>
+
+              <Link
+                href="/agencies"
+                className="text-[10px] font-medium uppercase tracking-[0.22em] underline-offset-4 hover:underline"
+              >
+                View all agencies
+              </Link>
+            </div>
+
+            <div className="grid border-l border-t sm:grid-cols-2 lg:grid-cols-3">
+              {agencies.docs.map((agency) => (
                 <Link
                   key={agency.id}
                   href={`/agency/${agency.slug}`}
-                  className="group border border-gray-200 p-6 transition hover:border-black"
+                  className="group min-h-40 border-b border-r p-6 transition hover:bg-black hover:text-white"
                 >
-                  <div className="mb-6 flex h-24 items-center justify-center">
-                    {logo ? (
-                      <img
-                        src={logo}
-                        alt={agency.name}
-                        className="max-h-16 max-w-[180px] object-contain"
-                      />
-                    ) : (
-                      <span className="text-sm uppercase tracking-[0.2em] text-gray-400">
-                        {agency.name}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <h3 className="text-lg font-medium">{agency.name}</h3>
-
-                    <p className="text-sm text-muted-foreground">
-                      {propertyCount} {propertyCount === 1 ? 'Property' : 'Properties'}
+                  <div className="flex h-full flex-col justify-between">
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground transition group-hover:text-white/60">
+                      Estate Agency
                     </p>
-                  </div>
 
-                  {agency.address?.city && (
-                    <p className="mt-1 text-sm text-muted-foreground">{agency.address.city}</p>
-                  )}
+                    <div>
+                      <h3 className="text-xl font-medium tracking-tight">{agency.name}</h3>
+
+                      <p className="mt-2 text-sm text-muted-foreground transition group-hover:text-white/60">
+                        View agency
+                      </p>
+                    </div>
+                  </div>
                 </Link>
-              )
-            })}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </section>
     </main>
   )

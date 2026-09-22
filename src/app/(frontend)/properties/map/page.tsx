@@ -1,21 +1,221 @@
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
-import Link from 'next/link'
-import { PropertyMapClient } from '@/components/PropertyMapClient'
+import { getPayload, type Where } from 'payload'
 
-export default async function PropertiesMapPage() {
+import { PropertyMapClient } from '@/components/PropertyMapClient'
+import { SavedHeaderLinks } from '@/components/SavedHeaderLinks'
+import { Search, SearchToolbar } from '@/components/Search'
+
+type Props = {
+  searchParams: Promise<{
+    q?: string
+    region?: string
+    town?: string
+    type?: string
+    minPrice?: string
+    maxPrice?: string
+    bedrooms?: string
+    amenities?: string
+  }>
+}
+
+export default async function PropertiesMapPage({ searchParams }: Props) {
+  const params = await searchParams
+
   const payload = await getPayload({ config: configPromise })
 
+  const [regions, towns, propertyTypes, amenities, allPrices] = await Promise.all([
+    payload.find({
+      collection: 'regions',
+      depth: 0,
+      limit: 100,
+      sort: 'name',
+      overrideAccess: true,
+    }),
+
+    payload.find({
+      collection: 'towns',
+      depth: 0,
+      limit: 200,
+      sort: 'name',
+      overrideAccess: true,
+    }),
+
+    payload.find({
+      collection: 'property-types',
+      depth: 0,
+      limit: 100,
+      sort: 'name',
+      overrideAccess: true,
+    }),
+
+    payload.find({
+      collection: 'amenities',
+      depth: 0,
+      limit: 200,
+      sort: 'name',
+      overrideAccess: true,
+    }),
+
+    payload.find({
+      collection: 'properties',
+      depth: 0,
+      limit: 1000,
+      overrideAccess: true,
+      select: {
+        price: true,
+      },
+    }),
+  ])
+
+  /*
+   * Build exactly the same Payload filters as /properties.
+   */
+  const andFilters: Where[] = []
+
+  if (params.q) {
+    andFilters.push({
+      or: [
+        {
+          title: {
+            contains: params.q,
+          },
+        },
+        {
+          excerpt: {
+            contains: params.q,
+          },
+        },
+        {
+          'town.name': {
+            contains: params.q,
+          },
+        },
+        {
+          'region.name': {
+            contains: params.q,
+          },
+        },
+      ],
+    })
+  }
+
+  if (params.region) {
+    andFilters.push({
+      region: {
+        equals: params.region,
+      },
+    })
+  }
+
+  if (params.town) {
+    andFilters.push({
+      town: {
+        equals: params.town,
+      },
+    })
+  }
+
+  if (params.type) {
+    andFilters.push({
+      propertyType: {
+        equals: params.type,
+      },
+    })
+  }
+
+  if (params.minPrice || params.maxPrice) {
+    const priceFilter: {
+      greater_than_equal?: number
+      less_than_equal?: number
+    } = {}
+
+    if (params.minPrice) {
+      priceFilter.greater_than_equal = Number(params.minPrice)
+    }
+
+    if (params.maxPrice) {
+      priceFilter.less_than_equal = Number(params.maxPrice)
+    }
+
+    andFilters.push({
+      price: priceFilter,
+    })
+  }
+
+  if (params.bedrooms) {
+    andFilters.push({
+      bedrooms: {
+        greater_than_equal: Number(params.bedrooms),
+      },
+    })
+  }
+
+  if (params.amenities) {
+    andFilters.push({
+      amenities: {
+        contains: params.amenities,
+      },
+    })
+  }
+
+  const where: Where | undefined =
+    andFilters.length > 0
+      ? {
+          and: andFilters,
+        }
+      : undefined
+
+  /*
+   * Only properties matching the active filters are loaded onto the map.
+   */
   const properties = await payload.find({
     collection: 'properties',
     depth: 2,
     limit: 100,
     sort: '-createdAt',
     overrideAccess: true,
+    where,
+  })
+
+  const searchSuggestions = [
+    ...towns.docs.map((town) => ({
+      label: town.name,
+      href: `/properties?q=${encodeURIComponent(town.name)}`,
+      type: 'Town' as const,
+    })),
+
+    ...regions.docs.map((region) => ({
+      label: region.name,
+      href: `/properties?q=${encodeURIComponent(region.name)}`,
+      type: 'Region' as const,
+    })),
+
+    ...propertyTypes.docs.map((propertyType) => ({
+      label: propertyType.name,
+      href: `/properties?q=${encodeURIComponent(propertyType.name)}`,
+      type: 'Property Type' as const,
+    })),
+  ]
+
+  /*
+   * Price histogram.
+   */
+  const priceBuckets = Array<number>(12).fill(0)
+  const maxHistogramPrice = 10000000
+
+  allPrices.docs.forEach((property) => {
+    if (!property.price) return
+
+    const bucketIndex = Math.min(
+      11,
+      Math.floor((property.price / maxHistogramPrice) * priceBuckets.length),
+    )
+
+    priceBuckets[bucketIndex] += 1
   })
 
   const mapProperties = properties.docs.map((property) => ({
-    id: property.id,
+    id: String(property.id),
     title: property.title,
     slug: property.slug,
     price: property.price,
@@ -30,60 +230,50 @@ export default async function PropertiesMapPage() {
   }))
 
   return (
-    <main className="min-h-screen">
-      <div className="grid min-h-screen lg:grid-cols-[420px_1fr]">
-        <aside className="border-r p-6">
-          <Link href="/properties" className="mb-6 inline-block text-sm underline">
-            ← Back to listings
-          </Link>
+    <main>
+      {/* Search / filter utility bar */}
+      <div className="mx-auto w-full max-w-[1680px] px-4 md:px-8">
+        <div className="border">
+          <div className="flex flex-col lg:h-12 lg:flex-row lg:items-stretch">
+            <div className="flex shrink-0 items-stretch">
+              <SearchToolbar
+                priceHistogram={priceBuckets}
+                currentRegion={params.region}
+                currentTown={params.town}
+                currentBedrooms={params.bedrooms}
+                currentMinPrice={params.minPrice}
+                currentMaxPrice={params.maxPrice}
+                currentType={params.type}
+                currentAmenities={params.amenities}
+                regions={regions.docs}
+                towns={towns.docs}
+                propertyTypes={propertyTypes.docs}
+                amenities={amenities.docs}
+              />
+            </div>
 
-          <h1 className="mb-2 text-3xl font-medium">Map Search</h1>
+            <div className="w-full border-t lg:w-[480px] lg:border-l lg:border-t-0">
+              <Search
+                currentQuery={params.q}
+                suggestions={searchSuggestions}
+                searchPath="/properties/map"
+                embedded
+              />
+            </div>
 
-          <p className="mb-8 text-muted-foreground">
-            Browse properties across Scotland by location.
-          </p>
+            <div className="hidden lg:block lg:flex-1 lg:border-l" />
 
-          <div className="space-y-4">
-            {properties.docs.map((property) => {
-              const image =
-                typeof property.featuredImage === 'object' && property.featuredImage?.url
-                  ? property.featuredImage.url
-                  : null
-
-              return (
-                <Link
-                  key={property.id}
-                  href={`/property/${property.slug}`}
-                  className="grid grid-cols-[120px_1fr] gap-4 border p-3"
-                >
-                  {image ? (
-                    <img
-                      src={image}
-                      alt={property.title}
-                      className="aspect-[4/3] w-full object-cover"
-                    />
-                  ) : (
-                    <div className="aspect-[4/3] bg-muted" />
-                  )}
-
-                  <div>
-                    <p className="font-medium">£{property.price?.toLocaleString('en-GB')}</p>
-
-                    <h2 className="text-sm">{property.title}</h2>
-
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {property.bedrooms ? `${property.bedrooms} beds` : null}
-                      {property.bathrooms ? ` · ${property.bathrooms} baths` : null}
-                    </p>
-                  </div>
-                </Link>
-              )
-            })}
+            <div className="shrink-0 border-t lg:border-t-0">
+              <SavedHeaderLinks />
+            </div>
           </div>
-        </aside>
+        </div>
+      </div>
 
-        <section className="h-screen">
-          <PropertyMapClient properties={mapProperties} />
+      {/* Map */}
+      <div className="mx-auto w-full max-w-[1680px] px-4 md:px-8">
+        <section className="relative h-[calc(100vh-145px)] min-h-[620px] overflow-hidden border-x border-b">
+          <PropertyMapClient properties={mapProperties} showListControl />
         </section>
       </div>
     </main>

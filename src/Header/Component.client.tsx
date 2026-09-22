@@ -6,7 +6,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import React, { useEffect, useState, useSyncExternalStore } from 'react'
 import type { Header } from '@/payload-types'
 
-import { Logo } from '@/components/Logo/Logo'
 import { HeaderNav } from './Nav'
 
 type HeaderSearchSuggestion = {
@@ -75,10 +74,16 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   return (
     <header className="relative z-20" {...(theme ? { 'data-theme': theme } : {})}>
       <div className="mx-auto flex w-full max-w-[1680px] items-center justify-between gap-6 px-4 py-6 md:px-8">
-        <Link href="/" className="shrink-0">
+        {/* <Link href="/" className="shrink-0">
           <Logo loading="eager" priority="high" className="invert dark:invert-0" />
-        </Link>
+        </Link> */}
+        <Link href="/" aria-label="Hame home" className="group flex shrink-0 flex-col leading-none">
+          <span className="text-[30px] font-semibold uppercase tracking-[-0.06em]">HAME</span>
 
+          <span className="mt-1 text-[8px] font-medium uppercase tracking-[0.28em] text-muted-foreground">
+            Homes · Commercial · Land
+          </span>
+        </Link>
         <div className="flex flex-1 items-center justify-end gap-6">
           <HeaderNav data={data} />
 

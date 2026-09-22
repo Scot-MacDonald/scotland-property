@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 import { PriceSlider } from '@/components/Search/PriceSlider'
 
@@ -85,6 +86,7 @@ function FilterDrawerContent({
   propertyTypes,
   amenities,
 }: DrawerContentProps) {
+  const pathname = usePathname()
   const [draft, setDraft] = useState<DraftFilters>(() => ({
     type: currentType,
     minPrice: currentMinPrice,
@@ -149,9 +151,8 @@ function FilterDrawerContent({
 
     const queryString = params.toString()
 
-    window.location.href = queryString ? `/properties?${queryString}` : '/properties'
+    window.location.href = queryString ? `${pathname}?${queryString}` : pathname
   }
-
   function clearDraft() {
     setDraft({})
   }
