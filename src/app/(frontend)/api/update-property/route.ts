@@ -227,6 +227,47 @@ export async function POST(req: Request) {
       data.town = optionalString(formData.get('town'))
     }
 
+    if (formData.has('region') || formData.has('town')) {
+      const existingRegionId = getRelationshipId(existingProperty.region)
+      const existingTownId = getRelationshipId(existingProperty.town)
+
+      const nextRegionId = formData.has('region')
+        ? optionalString(formData.get('region'))
+        : existingRegionId
+
+      const nextTownId = formData.has('town')
+        ? optionalString(formData.get('town'))
+        : existingTownId
+
+      if (!nextRegionId) {
+        return NextResponse.json({ error: 'Region is required.' }, { status: 400 })
+      }
+
+      if (!nextTownId) {
+        return NextResponse.json({ error: 'Town is required.' }, { status: 400 })
+      }
+
+      const selectedTown = await payload.findByID({
+        collection: 'towns',
+        id: nextTownId,
+        depth: 0,
+        overrideAccess: true,
+      })
+
+      const townRegionId = getRelationshipId(selectedTown.region)
+
+      if (townRegionId !== nextRegionId) {
+        return NextResponse.json(
+          {
+            error: 'Selected town does not belong to the selected region.',
+          },
+          {
+            status: 400,
+          },
+        )
+      }
+    }
+
     if (formData.has('propertyType')) {
       data.propertyType = optionalString(formData.get('propertyType'))
     }

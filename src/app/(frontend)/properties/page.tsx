@@ -1,10 +1,11 @@
 import configPromise from '@payload-config'
 import { getPayload, type Where } from 'payload'
+
+import { PageHeading } from '@/components/design'
+import { PropertyCard } from '@/components/Property/PropertyCard'
 import { SaveSearchButton } from '@/components/SaveSearchButton'
 import { SavedHeaderLinks } from '@/components/SavedHeaderLinks'
-import { PageHeading } from '@/components/design'
 import { Search, SearchToolbar } from '@/components/Search'
-import { PropertyCard } from '@/components/Property/PropertyCard'
 
 type Props = {
   searchParams: Promise<{
@@ -27,41 +28,97 @@ export default async function PropertiesPage({ searchParams }: Props) {
   const [regions, towns, propertyTypes, amenities] = await Promise.all([
     payload.find({
       collection: 'regions',
+      depth: 0,
       limit: 100,
+      sort: 'name',
+      overrideAccess: true,
     }),
 
     payload.find({
       collection: 'towns',
-      limit: 100,
+      depth: 1,
+      limit: 200,
+      sort: 'name',
+      overrideAccess: true,
     }),
 
     payload.find({
       collection: 'property-types',
+      depth: 0,
       limit: 100,
+      sort: 'name',
+      overrideAccess: true,
     }),
 
     payload.find({
       collection: 'amenities',
+      depth: 0,
       limit: 100,
+      sort: 'name',
+      overrideAccess: true,
     }),
   ])
 
+  /*
+   * Public Region/Town/Property Type filters use readable slugs.
+   *
+   * Examples:
+   * /properties?region=highland&town=inverness
+   * /properties?type=house
+   * /properties?region=highland&type=country-house
+   *
+   * Payload still receives the underlying relationship IDs below.
+   */
+  const selectedRegion = params.region
+    ? regions.docs.find((region) => region.slug === params.region)
+    : undefined
+
+  const selectedTown = params.town
+    ? towns.docs.find((town) => town.slug === params.town)
+    : undefined
+
+  const selectedType = params.type
+    ? propertyTypes.docs.find((propertyType) => propertyType.slug === params.type)
+    : undefined
+
+  const selectedAmenity = amenities.docs.find((amenity) => String(amenity.id) === params.amenities)
+
+  /*
+   * Search suggestions.
+   *
+   * Town suggestions include their parent Region where available,
+   * giving us canonical URLs such as:
+   *
+   * /properties?region=highland&town=inverness
+   *
+   * Property Type suggestions use their public slug:
+   *
+   * /properties?type=house
+   */
   const searchSuggestions = [
-    ...towns.docs.map((town) => ({
-      label: town.name,
-      href: `/properties?q=${encodeURIComponent(town.name)}`,
-      type: 'Town' as const,
-    })),
+    ...towns.docs.map((town) => {
+      const region = typeof town.region === 'object' && town.region ? town.region : undefined
+
+      return {
+        label: town.name,
+        href: region
+          ? `/properties?region=${encodeURIComponent(
+              region.slug,
+            )}&town=${encodeURIComponent(town.slug)}`
+          : `/properties?town=${encodeURIComponent(town.slug)}`,
+        type: 'Town' as const,
+      }
+    }),
 
     ...regions.docs.map((region) => ({
       label: region.name,
-      href: `/properties?q=${encodeURIComponent(region.name)}`,
+      href: `/properties?region=${encodeURIComponent(region.slug)}`,
       type: 'Region' as const,
     })),
 
     ...propertyTypes.docs.map((propertyType) => ({
       label: propertyType.name,
-      href: `/properties?q=${encodeURIComponent(propertyType.name)}`,
+      href: `/properties?type=${encodeURIComponent(propertyType.slug)}`,
       type: 'Property Type' as const,
     })),
   ]
@@ -95,26 +152,29 @@ export default async function PropertiesPage({ searchParams }: Props) {
     })
   }
 
-  if (params.region) {
+  /*
+   * Resolve public slugs back to Payload relationship IDs.
+   */
+  if (selectedRegion) {
     andFilters.push({
       region: {
-        equals: params.region,
+        equals: selectedRegion.id,
       },
     })
   }
 
-  if (params.town) {
+  if (selectedTown) {
     andFilters.push({
       town: {
-        equals: params.town,
+        equals: selectedTown.id,
       },
     })
   }
 
-  if (params.type) {
+  if (selectedType) {
     andFilters.push({
       propertyType: {
-        equals: params.type,
+        equals: selectedType.id,
       },
     })
   }
@@ -154,7 +214,12 @@ export default async function PropertiesPage({ searchParams }: Props) {
     })
   }
 
-  const where: Where | undefined = andFilters.length > 0 ? { and: andFilters } : undefined
+  const where: Where | undefined =
+    andFilters.length > 0
+      ? {
+          and: andFilters,
+        }
+      : undefined
 
   const properties = await payload.find({
     collection: 'properties',
@@ -188,14 +253,6 @@ export default async function PropertiesPage({ searchParams }: Props) {
 
     priceBuckets[bucketIndex] += 1
   })
-
-  const selectedRegion = regions.docs.find((region) => String(region.id) === params.region)
-
-  const selectedTown = towns.docs.find((town) => String(town.id) === params.town)
-
-  const selectedType = propertyTypes.docs.find((type) => String(type.id) === params.type)
-
-  const selectedAmenity = amenities.docs.find((amenity) => String(amenity.id) === params.amenities)
 
   const savedSearchLabelParts = [
     selectedTown?.name,

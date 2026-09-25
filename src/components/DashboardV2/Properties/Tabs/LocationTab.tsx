@@ -10,6 +10,10 @@ import {
 } from '@/components/DashboardV2/Fields'
 import { WorkspacePanel } from '@/components/DashboardV2/Workspace'
 
+type TownOption = RelationOption & {
+  regionId: string
+}
+
 type LocationTabProps = {
   propertyId: string
   title: string
@@ -20,7 +24,7 @@ type LocationTabProps = {
   latitude?: number | null
   longitude?: number | null
   regions: RelationOption[]
-  towns: RelationOption[]
+  towns: TownOption[]
   propertyTypes: RelationOption[]
   agents: RelationOption[]
 }
@@ -62,6 +66,8 @@ export function LocationTab({
   const [savedValues, setSavedValues] = useState(initialValues)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+
+  const filteredTowns = region ? towns.filter((townOption) => townOption.regionId === region) : []
 
   const hasChanges =
     region !== savedValues.region ||
@@ -153,7 +159,9 @@ export function LocationTab({
             options={regions}
             onChange={(value) => {
               setRegion(value)
+              setTown('')
               setSaveState('idle')
+              setErrorMessage('')
             }}
           />
 
@@ -161,10 +169,11 @@ export function LocationTab({
             label="Town"
             name="town"
             value={town}
-            options={towns}
+            options={filteredTowns}
             onChange={(value) => {
               setTown(value)
               setSaveState('idle')
+              setErrorMessage('')
             }}
           />
 
@@ -176,6 +185,7 @@ export function LocationTab({
             onChange={(value) => {
               setPropertyType(value)
               setSaveState('idle')
+              setErrorMessage('')
             }}
           />
 
@@ -187,6 +197,7 @@ export function LocationTab({
             onChange={(value) => {
               setAgent(value)
               setSaveState('idle')
+              setErrorMessage('')
             }}
           />
         </div>
@@ -206,6 +217,7 @@ export function LocationTab({
             onChange={(event) => {
               setLatitude(event.target.value)
               setSaveState('idle')
+              setErrorMessage('')
             }}
           />
 
@@ -218,6 +230,7 @@ export function LocationTab({
             onChange={(event) => {
               setLongitude(event.target.value)
               setSaveState('idle')
+              setErrorMessage('')
             }}
           />
         </div>

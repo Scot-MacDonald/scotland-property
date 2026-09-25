@@ -157,6 +157,29 @@ export async function POST(req: Request) {
       )
     }
 
+    const selectedTown = await payload.findByID({
+      collection: 'towns',
+      id: townId,
+      depth: 0,
+      overrideAccess: true,
+    })
+
+    const townRegionId =
+      typeof selectedTown.region === 'object' && selectedTown.region
+        ? String(selectedTown.region.id)
+        : String(selectedTown.region)
+
+    if (townRegionId !== regionId) {
+      return NextResponse.json(
+        {
+          error: 'Selected town does not belong to the selected region.',
+        },
+        {
+          status: 400,
+        },
+      )
+    }
+
     const selectedAgencyId = isSuperAdmin
       ? optionalString(formData.get('agency')) || userAgencyId
       : userAgencyId

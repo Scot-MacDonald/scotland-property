@@ -951,6 +951,7 @@ export interface Town {
 export interface PropertyType {
   id: string;
   name: string;
+  slug: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -2101,6 +2102,7 @@ export interface TownsSelect<T extends boolean = true> {
  */
 export interface PropertyTypesSelect<T extends boolean = true> {
   name?: T;
+  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }
