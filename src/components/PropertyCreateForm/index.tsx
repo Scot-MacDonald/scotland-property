@@ -10,9 +10,13 @@ type RelationshipOption = {
   email?: string | null
 }
 
+type TownOption = RelationshipOption & {
+  regionId: string
+}
+
 type PropertyCreateFormProps = {
   regions: RelationshipOption[]
-  towns: RelationshipOption[]
+  towns: TownOption[]
   propertyTypes: RelationshipOption[]
   amenities: RelationshipOption[]
   agents: RelationshipOption[]
@@ -29,6 +33,13 @@ export default function PropertyCreateForm({
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const [selectedRegion, setSelectedRegion] = useState('')
+  const [selectedTown, setSelectedTown] = useState('')
+
+  const filteredTowns = selectedRegion
+    ? towns.filter((town) => town.regionId === selectedRegion)
+    : []
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -137,8 +148,17 @@ export default function PropertyCreateForm({
         description="Assign the listing to its region and town, with optional map coordinates."
       >
         <div className="grid gap-6 md:grid-cols-2">
-          <Field label="Region">
-            <select name="region" className={inputClasses} defaultValue="">
+          <Field label="Region" required>
+            <select
+              name="region"
+              className={inputClasses}
+              value={selectedRegion}
+              required
+              onChange={(event) => {
+                setSelectedRegion(event.target.value)
+                setSelectedTown('')
+              }}
+            >
               <option value="">Select region</option>
 
               {regions.map((region) => (
@@ -149,11 +169,18 @@ export default function PropertyCreateForm({
             </select>
           </Field>
 
-          <Field label="Town">
-            <select name="town" className={inputClasses} defaultValue="">
-              <option value="">Select town</option>
+          <Field label="Town" required>
+            <select
+              name="town"
+              className={inputClasses}
+              value={selectedTown}
+              required
+              disabled={!selectedRegion}
+              onChange={(event) => setSelectedTown(event.target.value)}
+            >
+              <option value="">{selectedRegion ? 'Select town' : 'Select a region first'}</option>
 
-              {towns.map((town) => (
+              {filteredTowns.map((town) => (
                 <option key={String(town.id)} value={String(town.id)}>
                   {town.name || 'Unnamed town'}
                 </option>

@@ -34,7 +34,7 @@ export default async function PropertiesMapPage({ searchParams }: Props) {
 
     payload.find({
       collection: 'towns',
-      depth: 0,
+      depth: 1,
       limit: 200,
       sort: 'name',
       overrideAccess: true,
@@ -68,7 +68,29 @@ export default async function PropertiesMapPage({ searchParams }: Props) {
   ])
 
   /*
-   * Build exactly the same Payload filters as /properties.
+   * Public Region/Town/Property Type filters use readable slugs.
+   *
+   * Examples:
+   * /properties/map?region=highland&town=inverness
+   * /properties/map?type=house
+   * /properties/map?region=highland&type=country-house
+   *
+   * Payload still receives the underlying relationship IDs below.
+   */
+  const selectedRegion = params.region
+    ? regions.docs.find((region) => region.slug === params.region)
+    : undefined
+
+  const selectedTown = params.town
+    ? towns.docs.find((town) => town.slug === params.town)
+    : undefined
+
+  const selectedType = params.type
+    ? propertyTypes.docs.find((propertyType) => propertyType.slug === params.type)
+    : undefined
+
+  /*
+   * Build the same Payload filters as /properties.
    */
   const andFilters: Where[] = []
 
@@ -99,26 +121,29 @@ export default async function PropertiesMapPage({ searchParams }: Props) {
     })
   }
 
-  if (params.region) {
+  /*
+   * Resolve public slugs back to Payload relationship IDs.
+   */
+  if (selectedRegion) {
     andFilters.push({
       region: {
-        equals: params.region,
+        equals: selectedRegion.id,
       },
     })
   }
 
-  if (params.town) {
+  if (selectedTown) {
     andFilters.push({
       town: {
-        equals: params.town,
+        equals: selectedTown.id,
       },
     })
   }
 
-  if (params.type) {
+  if (selectedType) {
     andFilters.push({
       propertyType: {
-        equals: params.type,
+        equals: selectedType.id,
       },
     })
   }
@@ -177,22 +202,34 @@ export default async function PropertiesMapPage({ searchParams }: Props) {
     where,
   })
 
+  /*
+   * Map search suggestions stay on /properties/map and use
+   * the same canonical Region/Town/Property Type slug structure.
+   */
   const searchSuggestions = [
-    ...towns.docs.map((town) => ({
-      label: town.name,
-      href: `/properties?q=${encodeURIComponent(town.name)}`,
-      type: 'Town' as const,
-    })),
+    ...towns.docs.map((town) => {
+      const region = typeof town.region === 'object' && town.region ? town.region : undefined
+
+      return {
+        label: town.name,
+        href: region
+          ? `/properties/map?region=${encodeURIComponent(
+              region.slug,
+            )}&town=${encodeURIComponent(town.slug)}`
+          : `/properties/map?town=${encodeURIComponent(town.slug)}`,
+        type: 'Town' as const,
+      }
+    }),
 
     ...regions.docs.map((region) => ({
       label: region.name,
-      href: `/properties?q=${encodeURIComponent(region.name)}`,
+      href: `/properties/map?region=${encodeURIComponent(region.slug)}`,
       type: 'Region' as const,
     })),
 
     ...propertyTypes.docs.map((propertyType) => ({
       label: propertyType.name,
-      href: `/properties?q=${encodeURIComponent(propertyType.name)}`,
+      href: `/properties/map?type=${encodeURIComponent(propertyType.slug)}`,
       type: 'Property Type' as const,
     })),
   ]

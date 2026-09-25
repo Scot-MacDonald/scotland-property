@@ -42,7 +42,7 @@ export default async function HomePage() {
 
       payload.find({
         collection: 'towns',
-        depth: 0,
+        depth: 1,
         limit: 200,
         sort: 'name',
         overrideAccess: true,
@@ -75,22 +75,37 @@ export default async function HomePage() {
       }),
     ])
 
+  /*
+   * Public search suggestions use readable Region/Town slugs.
+   *
+   * Examples:
+   * /properties?region=highland
+   * /properties?region=highland&town=inverness
+   */
   const searchSuggestions = [
-    ...towns.docs.map((town) => ({
-      label: town.name,
-      href: `/properties?q=${encodeURIComponent(town.name)}`,
-      type: 'Town' as const,
-    })),
+    ...towns.docs.map((town) => {
+      const region = typeof town.region === 'object' && town.region ? town.region : undefined
+
+      return {
+        label: town.name,
+        href: region
+          ? `/properties?region=${encodeURIComponent(region.slug)}&town=${encodeURIComponent(
+              town.slug,
+            )}`
+          : `/properties?town=${encodeURIComponent(town.slug)}`,
+        type: 'Town' as const,
+      }
+    }),
 
     ...regions.docs.map((region) => ({
       label: region.name,
-      href: `/properties?q=${encodeURIComponent(region.name)}`,
+      href: `/properties?region=${encodeURIComponent(region.slug)}`,
       type: 'Region' as const,
     })),
 
     ...propertyTypes.docs.map((propertyType) => ({
       label: propertyType.name,
-      href: `/properties?q=${encodeURIComponent(propertyType.name)}`,
+      href: `/properties?type=${encodeURIComponent(propertyType.slug)}`,
       type: 'Property Type' as const,
     })),
   ]

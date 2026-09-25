@@ -103,7 +103,13 @@ export default async function NewPropertyPage() {
 
         <PropertyCreateForm
           regions={regions.docs}
-          towns={towns.docs}
+          towns={towns.docs.map((town) => ({
+            ...town,
+            regionId:
+              typeof town.region === 'object' && town.region
+                ? String(town.region.id)
+                : String(town.region),
+          }))}
           propertyTypes={propertyTypes.docs}
           amenities={amenities.docs}
           agents={agents.docs}

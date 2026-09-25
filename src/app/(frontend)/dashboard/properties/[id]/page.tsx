@@ -239,6 +239,8 @@ export default async function PropertyWorkspacePage({
   const towns = townsResult.docs.map((town) => ({
     value: String(town.id),
     label: town.name,
+    regionId:
+      typeof town.region === 'object' && town.region ? String(town.region.id) : String(town.region),
   }))
 
   const propertyTypes = propertyTypesResult.docs.map((propertyType) => ({
