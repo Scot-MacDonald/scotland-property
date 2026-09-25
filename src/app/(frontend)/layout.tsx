@@ -28,7 +28,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
       </head>
 
-      <body>
+      <body id="top">
         <Providers>
           <div data-public-site-chrome="admin-bar">
             <AdminBar
